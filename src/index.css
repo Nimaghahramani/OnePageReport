@@ -1,0 +1,1117 @@
+@import "tailwindcss";
+
+/* ======================================================== */
+/* 0. NOTO SANS ARABIC FONT-FACE REGISTRATION & FALLBACKS   */
+/* ======================================================== */
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  src: url('/fonts/NotoSansArabic-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  src: url('/fonts/NotoSansArabic-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  src: url('/fonts/NotoSansArabic-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Noto Sans Arabic';
+  src: url('/fonts/NotoSansArabic-Bold.woff2') format('woff2');
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-persian: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  --font-latin: Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  }
+}
+
+/* Persian typography class */
+#executive-report,
+#executive-report *,
+#print-report-root,
+#print-report-root *,
+#print-report-sheet,
+#print-report-sheet *,
+.print-canvas,
+.print-canvas *,
+#executive-report-sheet,
+#executive-report-sheet *,
+.font-fa,
+.report-header,
+.project-header,
+.report-project-info,
+.executive-summary-card,
+.kpi-title,
+.equipment-section-card,
+.ipc-section-card,
+.key-issues-card,
+.report-footer {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+}
+
+/* Dedicated Print & PDF Container Strict Root Rules */
+#print-report-root {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif !important;
+}
+
+#print-report-root[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+#print-report-root,
+#print-report-root * {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif !important;
+}
+
+/* Latin & numerical font class for screen UI */
+.font-en,
+.font-number,
+.font-latin,
+.font-mono,
+.kpi-value,
+.kpi-delay-badge,
+.report-data-date-badge,
+.report-meta-date,
+.fin-metric-irr,
+.fin-metric-eur,
+.equipment-metric-val {
+  font-family: Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* RTL / Bidi isolation */
+.bidi-isolate,
+.ltr-inline,
+[dir="ltr"] {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  display: inline-block;
+}
+
+/* Report Typography Hierarchy with Noto Sans Arabic */
+.report-project-title {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-weight: 800;
+  font-size: 15.5px;
+  line-height: 1.3;
+}
+
+.report-section-heading {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.executive-summary-text {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.report-table-text {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.report-meta-text {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 9.5px;
+  line-height: 1.35;
+}
+
+.report-footer-text {
+  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 9.5px;
+}
+
+/* ======================================================== */
+/* 1. SEMANTIC THEME TOKENS & SYSTEM TRANSITIONS            */
+/* ======================================================== */
+:root,
+[data-theme="light"] {
+  --bg-page: #f1f5f9;
+  --report-bg: #ffffff;
+  --report-border: #cbd5e1;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-hover-bg: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-very-muted: #94a3b8;
+  --accent-blue: #2563eb;
+  --accent-cyan: #0284c7;
+  --track-bg: #f1f5f9;
+  --line-plan: #94a3b8;
+  --line-actual: #2563eb;
+  --chart-grid: #f1f5f9;
+  --chart-axis: #64748b;
+  --chart-axis-line: #e2e8f0;
+  --header-bg: #f8fafc;
+  --header-text-primary: #0f172a;
+  --header-text-secondary: #1e3a8a;
+  --header-text-muted: #64748b;
+  --header-border: #e2e8f0;
+}
+
+[data-theme="loico-blue"] {
+  --bg-page: linear-gradient(135deg, #061B3A 0%, #082B62 45%, #075FBE 100%);
+  --report-bg: rgba(5, 30, 70, 0.94);
+  --report-border: rgba(125, 211, 252, 0.35);
+  --card-bg: rgba(15, 60, 120, 0.55);
+  --card-border: rgba(125, 211, 252, 0.28);
+  --card-hover-bg: rgba(25, 75, 145, 0.65);
+  --text-primary: #ffffff;
+  --text-secondary: #dbeafe;
+  --text-muted: #93c5fd;
+  --text-very-muted: #7dd3fc;
+  --accent-blue: #0a8cff;
+  --accent-cyan: #38bdf8;
+  --track-bg: rgba(255, 255, 255, 0.10);
+  --line-plan: #93c5fd;
+  --line-actual: #38bdf8;
+  --chart-grid: rgba(255, 255, 255, 0.10);
+  --chart-axis: #bfdbfe;
+  --chart-axis-line: rgba(125, 211, 252, 0.30);
+  --header-bg: linear-gradient(135deg, #06224A 0%, #0A3268 55%, #0C4C92 100%);
+  --header-text-primary: #FFFFFF;
+  --header-text-secondary: #BFDBFE;
+  --header-text-muted: #93C5FD;
+  --header-border: rgba(125, 211, 252, 0.28);
+}
+
+/* Color transition without any layout shift */
+body, header, nav, main, section, div, button, input, select, textarea, table, th, td, p, span, h1, h2, h3, h4 {
+  transition: background-color 0.25s ease, color 0.20s ease, border-color 0.20s ease, box-shadow 0.25s ease;
+}
+
+/* ======================================================== */
+/* 2. THEME 2 — LOICO EXECUTIVE BLUE SCREEN STYLING         */
+/* ======================================================== */
+[data-theme="loico-blue"] body,
+[data-theme="loico-blue"] #root,
+[data-theme="loico-blue"] .app-screen-container {
+  background: linear-gradient(135deg, #041026 0%, #071f45 40%, #092e66 80%, #061e43 100%) !important;
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* Subtle Persian Geometric Overlay Pattern in Upper-Right */
+[data-theme="loico-blue"] .app-screen-container {
+  position: relative;
+}
+[data-theme="loico-blue"] .app-screen-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 500px;
+  height: 500px;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: radial-gradient(#38bdf8 1.2px, transparent 1.2px), radial-gradient(#38bdf8 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  z-index: 1;
+}
+
+/* LOICO Executive Blue: Navbar */
+[data-theme="loico-blue"] header.no-print {
+  background: rgba(4, 18, 42, 0.95) !important;
+  backdrop-filter: blur(14px) !important;
+  border-bottom: 1px solid rgba(125, 211, 252, 0.25) !important;
+  box-shadow: 0 4px 20px rgba(2, 10, 25, 0.6) !important;
+}
+[data-theme="loico-blue"] header h1 {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] header span.text-blue-700 {
+  color: #38bdf8 !important;
+}
+[data-theme="loico-blue"] header nav {
+  background: rgba(8, 28, 62, 0.85) !important;
+  border: 1px solid rgba(125, 211, 252, 0.20) !important;
+}
+[data-theme="loico-blue"] header nav button:not(.bg-white) {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] header nav button:not(.bg-white):hover {
+  background: rgba(255, 255, 255, 0.10) !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] header nav button.bg-white {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.5) !important;
+}
+[data-theme="loico-blue"] header button.bg-slate-50 {
+  background: rgba(12, 38, 80, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.30) !important;
+  color: #e0f2fe !important;
+}
+[data-theme="loico-blue"] header button.bg-slate-50:hover {
+  background: rgba(20, 58, 120, 0.90) !important;
+  color: #ffffff !important;
+}
+
+/* ======================================================== */
+/* 2.1 LOICO EXECUTIVE BLUE: REPORT SHEET & ALL CARDS       */
+/* ======================================================== */
+[data-theme="loico-blue"] #executive-report-sheet {
+  background: rgba(4, 18, 44, 0.96) !important;
+  border: 1px solid rgba(125, 211, 252, 0.35) !important;
+  color: #ffffff !important;
+  box-shadow: 0 14px 45px rgba(1, 8, 20, 0.75), 0 0 25px rgba(7, 95, 190, 0.20) !important;
+}
+
+/* Base card override inside report sheet */
+[data-theme="loico-blue"] #executive-report-sheet .bg-white {
+  background: rgba(9, 32, 70, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Light gray elements inside cards become dark navy */
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-50,
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-50\/70,
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-50\/80,
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-100,
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-100\/80,
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-100\/90 {
+  background: rgba(13, 44, 94, 0.70) !important;
+  border-color: rgba(125, 211, 252, 0.20) !important;
+  color: #f1f5f9 !important;
+}
+
+/* All borders in Blue Mode */
+[data-theme="loico-blue"] #executive-report-sheet .border-slate-100,
+[data-theme="loico-blue"] #executive-report-sheet .border-slate-150,
+[data-theme="loico-blue"] #executive-report-sheet .border-slate-200,
+[data-theme="loico-blue"] #executive-report-sheet .border-slate-250,
+[data-theme="loico-blue"] #executive-report-sheet .border-slate-300,
+[data-theme="loico-blue"] #executive-report-sheet .border-blue-200,
+[data-theme="loico-blue"] #executive-report-sheet .border-blue-200\/60,
+[data-theme="loico-blue"] #executive-report-sheet .border-blue-200\/80 {
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+
+/* Universal Typography in Blue Mode */
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-950,
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-900,
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-800,
+[data-theme="loico-blue"] #executive-report-sheet .text-blue-950,
+[data-theme="loico-blue"] #executive-report-sheet .text-blue-900 {
+  color: #ffffff !important;
+}
+
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-700,
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-600,
+[data-theme="loico-blue"] #executive-report-sheet .text-blue-800,
+[data-theme="loico-blue"] #executive-report-sheet .text-blue-700 {
+  color: #dbeafe !important;
+}
+
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-500,
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-400,
+[data-theme="loico-blue"] #executive-report-sheet .text-slate-300 {
+  color: #93c5fd !important;
+}
+
+/* ======================================================== */
+/* 2.2 TOP REPORT HEADER (LOICO EXECUTIVE BLUE UNIFIED)     */
+/* ======================================================== */
+[data-theme="loico-blue"] #report-header-card,
+[data-theme="loico-blue"] .report-header,
+[data-theme="loico-blue"] .project-header,
+[data-theme="loico-blue"] .report-header-container,
+[data-theme="loico-blue"] #report-header-banner {
+  background: linear-gradient(135deg, #06224A 0%, #0A3268 55%, #0C4C92 100%) !important;
+  border: 1px solid rgba(125, 211, 252, 0.28) !important;
+  box-shadow: 0 4px 18px rgba(0, 30, 80, 0.22) !important;
+  color: #ffffff !important;
+}
+
+/* Header Logo Container (Subtle Halo) */
+[data-theme="loico-blue"] .report-header-logo-container {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-radius: 10px !important;
+}
+
+/* Main Project Title: #FFFFFF, 800 */
+[data-theme="loico-blue"] .report-project-title {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+}
+
+/* Subtitle & Location */
+[data-theme="loico-blue"] .report-project-subtitle {
+  color: #BFDBFE !important;
+  font-weight: 500 !important;
+}
+[data-theme="loico-blue"] .report-subtitle-badge {
+  background: rgba(2, 132, 199, 0.35) !important;
+  border: 1px solid rgba(56, 189, 248, 0.40) !important;
+  color: #E0F2FE !important;
+}
+[data-theme="loico-blue"] .report-subtitle-divider {
+  color: rgba(147, 197, 253, 0.40) !important;
+}
+[data-theme="loico-blue"] .report-location-text {
+  color: #BFDBFE !important;
+}
+
+/* Date Area: dark-blue internal surfaces */
+[data-theme="loico-blue"] .report-date-row {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(147, 197, 253, 0.18) !important;
+}
+[data-theme="loico-blue"] .report-meta-label,
+[data-theme="loico-blue"] .report-data-date-label {
+  color: #93C5FD !important;
+  font-weight: 500 !important;
+}
+[data-theme="loico-blue"] .report-meta-date,
+[data-theme="loico-blue"] .report-data-date-badge {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+/* Project Information Row & Stakeholders Grid */
+[data-theme="loico-blue"] .report-stakeholders-grid {
+  border-top: 1px solid rgba(147, 197, 253, 0.16) !important;
+}
+[data-theme="loico-blue"] .report-info-label {
+  color: #93C5FD !important;
+  font-weight: 500 !important;
+}
+[data-theme="loico-blue"] .report-info-value {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+[data-theme="loico-blue"] .report-info-icon,
+[data-theme="loico-blue"] .report-stakeholder-item svg {
+  color: #38BDF8 !important;
+}
+
+/* Status Badge: Semantic light badge with crisp dark text */
+[data-theme="loico-blue"] .report-status-critical {
+  background: #FEE2E2 !important;
+  color: #B91C1C !important;
+  border: 1px solid #FCA5A5 !important;
+}
+[data-theme="loico-blue"] .report-status-critical svg {
+  color: #DC2626 !important;
+}
+
+[data-theme="loico-blue"] .report-status-attention {
+  background: #FEF3C7 !important;
+  color: #92400E !important;
+  border: 1px solid #FCD34D !important;
+}
+[data-theme="loico-blue"] .report-status-attention svg {
+  color: #D97706 !important;
+}
+
+[data-theme="loico-blue"] .report-status-normal {
+  background: #D1FAE5 !important;
+  color: #065F46 !important;
+  border: 1px solid #6EE7B7 !important;
+}
+[data-theme="loico-blue"] .report-status-normal svg {
+  color: #059669 !important;
+}
+
+[data-theme="loico-blue"] #project-info-strip {
+  background: rgba(11, 38, 84, 0.80) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+}
+[data-theme="loico-blue"] .report-info-box,
+[data-theme="loico-blue"] .report-meta-box {
+  background: rgba(6, 24, 56, 0.65) !important;
+  border-color: rgba(125, 211, 252, 0.20) !important;
+}
+[data-theme="loico-blue"] .report-info-val,
+[data-theme="loico-blue"] .report-meta-val {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .report-badge-accent {
+  background: rgba(2, 132, 199, 0.35) !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  color: #e0f2fe !important;
+}
+
+/* ======================================================== */
+/* 2.3 KPI CARDS GRID                                       */
+/* ======================================================== */
+[data-theme="loico-blue"] .kpi-card {
+  background: rgba(10, 35, 78, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+}
+[data-theme="loico-blue"] .kpi-title {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .kpi-value {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .kpi-sub {
+  color: #7dd3fc !important;
+}
+
+/* Actual Progress Card */
+[data-theme="loico-blue"] #kpi-card-actual {
+  background: rgba(14, 55, 120, 0.85) !important;
+  border-color: rgba(56, 189, 248, 0.50) !important;
+}
+[data-theme="loico-blue"] #kpi-card-actual .kpi-title {
+  color: #7dd3fc !important;
+}
+[data-theme="loico-blue"] #kpi-card-actual .kpi-value {
+  color: #38bdf8 !important;
+}
+[data-theme="loico-blue"] #kpi-card-actual .kpi-sub {
+  color: #bae6fd !important;
+}
+
+/* Variance Card */
+[data-theme="loico-blue"] #kpi-card-variance {
+  background: rgba(10, 35, 78, 0.85) !important;
+}
+[data-theme="loico-blue"] #kpi-card-variance.bg-rose-50\/80 {
+  background: rgba(76, 12, 28, 0.55) !important;
+  border-color: rgba(244, 63, 94, 0.45) !important;
+}
+[data-theme="loico-blue"] #kpi-card-variance.bg-emerald-50\/70 {
+  background: rgba(6, 60, 48, 0.55) !important;
+  border-color: rgba(52, 211, 153, 0.45) !important;
+}
+[data-theme="loico-blue"] .kpi-delay-text {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .kpi-elapsed-meta {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .kpi-elapsed-meta span.text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+/* Progress bar tracks */
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-100,
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-200,
+[data-theme="loico-blue"] #executive-report-sheet .bg-blue-200\/80 {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+[data-theme="loico-blue"] #executive-report-sheet .bg-slate-600 {
+  background: #94a3b8 !important;
+}
+[data-theme="loico-blue"] #executive-report-sheet .bg-blue-600 {
+  background: #38bdf8 !important;
+}
+[data-theme="loico-blue"] #executive-report-sheet .bg-amber-600 {
+  background: #f59e0b !important;
+}
+[data-theme="loico-blue"] #executive-report-sheet .bg-teal-600 {
+  background: #2dd4bf !important;
+}
+[data-theme="loico-blue"] #executive-report-sheet .bg-emerald-600 {
+  background: #10b981 !important;
+}
+
+/* ======================================================== */
+/* 2.4 EXECUTIVE SUMMARY CARD                               */
+/* ======================================================== */
+[data-theme="loico-blue"] #executive-summary-card {
+  background: rgba(10, 36, 80, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.32) !important;
+}
+[data-theme="loico-blue"] .executive-summary-title {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .executive-summary-badge {
+  background: rgba(2, 132, 199, 0.35) !important;
+  border-color: rgba(56, 189, 248, 0.40) !important;
+  color: #bae6fd !important;
+}
+[data-theme="loico-blue"] .executive-summary-text p {
+  color: #e2e8f0 !important;
+}
+
+/* ======================================================== */
+/* 2.5 S-CURVE & PMS SECTION                                */
+/* ======================================================== */
+[data-theme="loico-blue"] #progress-chart-card {
+  background: rgba(9, 32, 70, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+}
+[data-theme="loico-blue"] .scurve-cutoff-label {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .pms-header-row {
+  background: rgba(16, 52, 110, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+}
+[data-theme="loico-blue"] .pms-header-title {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .pms-header-sub {
+  color: #7dd3fc !important;
+}
+[data-theme="loico-blue"] .pms-discipline-row {
+  background: rgba(13, 44, 94, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.20) !important;
+}
+[data-theme="loico-blue"] .pms-wbs-name {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .pms-plan-val {
+  color: #94a3b8 !important;
+}
+[data-theme="loico-blue"] .pms-actual-val {
+  color: #38bdf8 !important;
+}
+[data-theme="loico-blue"] .pms-wbs-tag {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .pms-wbs-code {
+  color: #7dd3fc !important;
+}
+[data-theme="loico-blue"] .pms-detail-row:hover {
+  background: rgba(20, 60, 125, 0.50) !important;
+}
+
+/* ======================================================== */
+/* 2.6 EQUIPMENT SECTION                                    */
+/* ======================================================== */
+[data-theme="loico-blue"] #equipment-section-card {
+  background: rgba(9, 32, 70, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+}
+[data-theme="loico-blue"] .equipment-overall-badge {
+  background: rgba(13, 148, 136, 0.35) !important;
+  border-color: rgba(45, 212, 191, 0.45) !important;
+  color: #5eead4 !important;
+}
+[data-theme="loico-blue"] .equipment-metric-box {
+  background: rgba(12, 42, 90, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] .equipment-total-box .equipment-metric-val {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .equipment-installed-box .equipment-metric-val {
+  color: #2dd4bf !important;
+}
+[data-theme="loico-blue"] .equipment-remaining-box .equipment-metric-val {
+  color: #fbbf24 !important;
+}
+[data-theme="loico-blue"] .equipment-progress-box .equipment-metric-val {
+  color: #38bdf8 !important;
+}
+[data-theme="loico-blue"] .equipment-metric-label {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .equipment-table thead {
+  background: rgba(16, 54, 114, 0.90) !important;
+  color: #e0f2fe !important;
+}
+[data-theme="loico-blue"] .equipment-table thead th {
+  color: #bae6fd !important;
+}
+[data-theme="loico-blue"] .equipment-table tbody tr {
+  color: #ffffff !important;
+  border-color: rgba(125, 211, 252, 0.15) !important;
+}
+[data-theme="loico-blue"] .equipment-table tbody tr:hover {
+  background: rgba(22, 68, 140, 0.40) !important;
+}
+[data-theme="loico-blue"] .equipment-table tbody td {
+  color: #e2e8f0 !important;
+}
+
+/* ======================================================== */
+/* 2.7 FINANCIAL & IPC SECTION                              */
+/* ======================================================== */
+[data-theme="loico-blue"] #ipc-section-card {
+  background: rgba(9, 32, 70, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+}
+[data-theme="loico-blue"] .ipc-period-badge {
+  background: rgba(16, 52, 110, 0.70) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+  color: #bae6fd !important;
+}
+[data-theme="loico-blue"] .ipc-number-badge {
+  background: rgba(2, 132, 199, 0.35) !important;
+  border-color: rgba(56, 189, 248, 0.40) !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .financial-metric-box {
+  background: rgba(12, 42, 90, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] .financial-cumulative-box {
+  background: rgba(14, 52, 115, 0.75) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+}
+[data-theme="loico-blue"] .financial-received-box {
+  background: rgba(6, 60, 50, 0.55) !important;
+  border-color: rgba(52, 211, 153, 0.35) !important;
+}
+[data-theme="loico-blue"] .financial-outstanding-box {
+  background: rgba(70, 40, 10, 0.50) !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+[data-theme="loico-blue"] .financial-advance-box {
+  background: rgba(12, 42, 90, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] .fin-metric-title {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .fin-metric-irr {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .fin-metric-eur {
+  color: #7dd3fc !important;
+}
+[data-theme="loico-blue"] .fin-metric-curr {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .fin-metric-ratio {
+  color: #bae6fd !important;
+  border-color: rgba(125, 211, 252, 0.20) !important;
+}
+[data-theme="loico-blue"] .resource-metric-box {
+  background: rgba(12, 42, 90, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] .res-label {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .res-val {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .res-sub {
+  color: #7dd3fc !important;
+}
+
+/* ======================================================== */
+/* 2.8 ISSUES, CONSTRAINTS & IMPORTANT ACTIVITIES           */
+/* ======================================================== */
+[data-theme="loico-blue"] #key-issues-card,
+[data-theme="loico-blue"] #activities-decisions-card {
+  background: rgba(9, 32, 70, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+}
+[data-theme="loico-blue"] .issue-item-card {
+  background: rgba(13, 44, 94, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] .issue-desc {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .issue-action-box {
+  background: rgba(8, 28, 62, 0.70) !important;
+  border-color: rgba(125, 211, 252, 0.18) !important;
+  color: #cbd5e1 !important;
+}
+[data-theme="loico-blue"] .activity-item-card {
+  background: rgba(13, 44, 94, 0.75) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] .activity-title {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .activity-action-box {
+  background: rgba(8, 28, 62, 0.70) !important;
+  border-color: rgba(125, 211, 252, 0.18) !important;
+  color: #cbd5e1 !important;
+}
+
+/* ======================================================== */
+/* 2.9 REPORT FOOTER                                        */
+/* ======================================================== */
+[data-theme="loico-blue"] #report-footer {
+  border-color: rgba(125, 211, 252, 0.25) !important;
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] .report-footer-source-heading {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .report-footer-source-label {
+  color: #7dd3fc !important;
+}
+[data-theme="loico-blue"] .report-footer-source-val {
+  color: #e2e8f0 !important;
+}
+[data-theme="loico-blue"] .report-footer-attribution {
+  background: rgba(12, 42, 90, 0.80) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] .report-footer-attribution svg {
+  color: #38bdf8 !important;
+}
+
+/* ======================================================== */
+/* 2.10 BADGES CONTRAST RULE (LIGHT/TINTED SURFACE EXCEPTION)*/
+/* ======================================================== */
+/* Keep badges high contrast: dark text on light badge, or crisp contrast */
+[data-theme="loico-blue"] .bg-rose-100,
+[data-theme="loico-blue"] .bg-rose-200,
+[data-theme="loico-blue"] .bg-rose-200\/70 {
+  background: #ffe4e6 !important;
+  color: #9f1239 !important;
+}
+[data-theme="loico-blue"] .bg-emerald-100,
+[data-theme="loico-blue"] .bg-emerald-200,
+[data-theme="loico-blue"] .bg-emerald-200\/70 {
+  background: #d1fae5 !important;
+  color: #065f46 !important;
+}
+[data-theme="loico-blue"] .bg-amber-100,
+[data-theme="loico-blue"] .bg-amber-200 {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+[data-theme="loico-blue"] .bg-blue-100,
+[data-theme="loico-blue"] .bg-blue-200 {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+/* ======================================================== */
+/* 2.11 RECHARTS TOOLTIPS & SVGS IN BLUE MODE               */
+/* ======================================================== */
+[data-theme="loico-blue"] .recharts-default-tooltip {
+  background-color: #051838 !important;
+  border: 1px solid rgba(125, 211, 252, 0.45) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+}
+[data-theme="loico-blue"] .recharts-cartesian-grid line {
+  stroke: rgba(255, 255, 255, 0.10) !important;
+}
+[data-theme="loico-blue"] .recharts-text,
+[data-theme="loico-blue"] .recharts-cartesian-axis-tick-value {
+  fill: #93c5fd !important;
+}
+
+/* ======================================================== */
+/* 2.12 OTHER VIEWS (Data Update, History, Settings)        */
+/* ======================================================== */
+[data-theme="loico-blue"] main .bg-white {
+  background: rgba(10, 36, 80, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(8px) !important;
+}
+[data-theme="loico-blue"] main .bg-slate-50,
+[data-theme="loico-blue"] main .bg-slate-100 {
+  background: rgba(14, 46, 98, 0.70) !important;
+  border-color: rgba(125, 211, 252, 0.20) !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] main .text-slate-900,
+[data-theme="loico-blue"] main .text-slate-800,
+[data-theme="loico-blue"] main .text-slate-700 {
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] main .text-slate-600,
+[data-theme="loico-blue"] main .text-slate-500 {
+  color: #dbeafe !important;
+}
+[data-theme="loico-blue"] main .text-slate-400 {
+  color: #93c5fd !important;
+}
+[data-theme="loico-blue"] main input,
+[data-theme="loico-blue"] main textarea,
+[data-theme="loico-blue"] main select {
+  background: rgba(6, 24, 54, 0.90) !important;
+  border-color: rgba(125, 211, 252, 0.35) !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] main table thead {
+  background: rgba(16, 54, 114, 0.90) !important;
+  color: #ffffff !important;
+}
+[data-theme="loico-blue"] main table tbody tr {
+  color: #ffffff !important;
+  border-color: rgba(125, 211, 252, 0.15) !important;
+}
+[data-theme="loico-blue"] main table tbody tr:hover {
+  background: rgba(22, 68, 140, 0.40) !important;
+}
+
+/* Modals & Popovers in Blue Mode */
+[data-theme="loico-blue"] .modal-content-card,
+[data-theme="loico-blue"] .theme-popover-menu {
+  background: #082452 !important;
+  border: 1px solid rgba(125, 211, 252, 0.35) !important;
+  color: #ffffff !important;
+  box-shadow: 0 8px 30px rgba(2, 10, 25, 0.8) !important;
+}
+
+/* ======================================================== */
+/* 3. PRINT & PDF SPECIFIC RULES (1-PAGE A4 LANDSCAPE)     */
+/* ======================================================== */
+/* Screen Mode: Position dedicated print root offscreen with full standard layout (1140px)
+   so html2canvas can snapshot it at un-transformed 1:1 scale with pure light theme */
+@media screen {
+  #print-report-root {
+    position: fixed !important;
+    top: 0 !important;
+    left: -99999px !important;
+    width: 1140px !important;
+    min-width: 1140px !important;
+    max-width: 1140px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    pointer-events: none !important;
+    visibility: visible !important;
+    z-index: -9999 !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
+
+  /* CRITICAL PRINT RULE: Force white background and dark text regardless of theme */
+  html, body, #root, .app-screen-container, #print-report-root, #executive-report-sheet, #print-report-sheet {
+    width: 297mm !important;
+    height: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide screen container and interactive elements */
+  .no-print,
+  .app-screen-container,
+  .print-preview-ui,
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+
+  /* Dedicated Print Root is visible only when printing */
+  #print-report-root {
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 287mm !important;
+    height: 200mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+    z-index: 99999 !important;
+  }
+
+  /* Exactly fit within A4 Landscape 287mm x 200mm printable box */
+  .print-canvas {
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 287mm !important;
+    max-width: 287mm !important;
+    height: 200mm !important;
+    max-height: 200mm !important;
+    margin: 0 auto !important;
+    padding: 3.5mm 4.5mm !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 4px !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    overflow: hidden !important;
+  }
+
+  /* Force print elements to have dark text & crisp borders */
+  #executive-report-sheet *,
+  #print-report-root * {
+    backdrop-filter: none !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  #executive-report-sheet .bg-white,
+  #print-report-root .bg-white {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Force print light styling for report header */
+  .report-header,
+  .project-header,
+  #report-header-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border-color: #cbd5e1 !important;
+  }
+  .report-header .report-project-title,
+  #report-header-card .report-project-title {
+    color: #0f172a !important;
+  }
+  .report-header .report-project-subtitle,
+  #report-header-card .report-project-subtitle {
+    color: #1e3a8a !important;
+  }
+  .report-header .report-location-text {
+    color: #475569 !important;
+  }
+  .report-header .report-date-row {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+  .report-header .report-meta-label,
+  .report-header .report-data-date-label,
+  .report-header .report-info-label {
+    color: #64748b !important;
+  }
+  .report-header .report-meta-date,
+  .report-header .report-data-date-badge,
+  .report-header .report-info-value {
+    color: #0f172a !important;
+  }
+  .report-header .report-info-icon,
+  .report-header .report-stakeholder-item svg {
+    color: #475569 !important;
+  }
+
+  #executive-report-sheet .text-slate-950,
+  #executive-report-sheet .text-slate-900,
+  #executive-report-sheet .text-slate-800,
+  #print-report-root .text-slate-950,
+  #print-report-root .text-slate-900,
+  #print-report-root .text-slate-800 {
+    color: #0f172a !important;
+  }
+
+  #executive-report-sheet .text-slate-700,
+  #executive-report-sheet .text-slate-600,
+  #print-report-root .text-slate-700,
+  #print-report-root .text-slate-600 {
+    color: #334155 !important;
+  }
+
+  #executive-report-sheet .text-slate-500,
+  #executive-report-sheet .text-slate-400,
+  #print-report-root .text-slate-500,
+  #print-report-root .text-slate-400 {
+    color: #64748b !important;
+  }
+
+  /* Explicit Persian Print Typography: strictly enforced for #print-report-root and all children */
+  html,
+  body,
+  #executive-report,
+  #executive-report *,
+  #executive-report-sheet,
+  #executive-report-sheet *,
+  #print-report-root,
+  #print-report-root *,
+  #print-report-sheet,
+  #print-report-sheet *,
+  .print-canvas,
+  .print-canvas * {
+    font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif !important;
+  }
+
+  /* LOICO Animated Flame Print Rule: animations must not affect PDF generation */
+  .loico-anim-flame-outer,
+  .loico-anim-flame-inner,
+  .loico-anim-glow {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .loico-anim-flame-outer,
+  .loico-anim-flame-inner,
+  .loico-anim-glow {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* Custom scrollbars for clean high-density UI */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+[data-theme="loico-blue"] ::-webkit-scrollbar-track {
+  background: #061B3A;
+}
+[data-theme="loico-blue"] ::-webkit-scrollbar-thumb {
+  background: rgba(125, 211, 252, 0.3);
+}
+[data-theme="loico-blue"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(125, 211, 252, 0.5);
+}
+

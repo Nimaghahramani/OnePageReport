@@ -1,0 +1,6 @@
+{
+  "name": "One-Page Executive Daily Project Report",
+  "description": "سامانه جامع گزارش مدیریتی تک‌صفحه‌ای روزانه پروژه با قابلیت پردازش PMS، Daily Report، IPC، وضعیت تجهیزات و خروجی چاپی A4 Landscape",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
