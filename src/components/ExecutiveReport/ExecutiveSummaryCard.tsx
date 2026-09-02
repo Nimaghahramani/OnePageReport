@@ -12,14 +12,14 @@ export const ExecutiveSummaryCard: React.FC<ExecutiveSummaryCardProps> = ({ kpis
   const lines = isFa ? kpis.executiveSummaryLinesFa : kpis.executiveSummaryLinesEn;
 
   return (
-    <div id="executive-summary-card" className="executive-summary-card border border-blue-200 bg-blue-50/50 rounded p-2 shadow-2xs mb-2">
+    <div id="executive-summary-section" className="executive-summary-card border border-blue-200 bg-blue-50/50 rounded p-2 shadow-2xs mb-2">
       <div className="flex items-center justify-between border-b border-blue-200/80 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">
           <FileText className="w-3.5 h-3.5 text-blue-700" />
           <h2 className="executive-summary-title text-[11px] font-bold text-blue-950 uppercase tracking-tight">
             {isFa ? (
               <>
-                خلاصه مدیریتی و تحلیل عملکرد پروژه <span className="ltr-inline text-[9.5px] font-mono text-blue-800">(Executive Summary)</span>
+                خلاصه مدیریتی و تحلیل عملکرد پروژه <span className="ltr-inline text-[9.5px] font-semibold text-blue-800">(Executive Summary)</span>
               </>
             ) : (
               'EXECUTIVE MANAGEMENT SUMMARY'

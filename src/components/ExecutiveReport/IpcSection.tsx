@@ -44,15 +44,15 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
   const outstandingRatio = fin?.outstandingRatio ?? (100 - collectionRatio);
 
   return (
-    <div id="ipc-section-card" className="ipc-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full">
+    <div id="financial-section" className="ipc-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">
           <CreditCard className="w-3.5 h-3.5 text-emerald-600" />
-          <h2 className="text-[10.5px] font-extrabold text-slate-900 uppercase tracking-tight">
+          <h2 className="text-[10.5px] font-bold text-slate-900 uppercase tracking-tight">
             {isFa ? (
               <>
-                وضعیت مالی و صورت‌وضعیت <span className="ltr-inline text-[9.5px] font-mono text-slate-500 font-bold">(INVOICE & IPC)</span>
+                وضعیت مالی و صورت‌وضعیت <span className="ltr-inline text-[9.5px] font-semibold text-slate-500">(INVOICE & IPC)</span>
               </>
             ) : (
               'FINANCIAL & INVOICE STATUS'
@@ -73,7 +73,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
 
       {/* IPC Financial Dual-Currency & Ratio Grid */}
       {fin ? (
-        <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center font-mono">
+        <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center">
           {/* 1. Cumulative Invoice / Approved */}
           <div className="financial-metric-box financial-cumulative-box bg-blue-50/70 border border-blue-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-blue-800 font-sans block font-semibold">{isFa ? 'کارکرد تجمعی' : 'Cumulative'}</span>
@@ -87,7 +87,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
             </div>
             <div className="fin-metric-ratio text-[7.5px] text-blue-700 font-sans mt-0.5 pt-0.5 border-t border-blue-200/60 flex items-center justify-center gap-0.5">
               <span>{isFa ? 'پیشرفت مالی' : 'Fin Prog'}:</span>
-              <span className="font-bold font-mono">{finProgress}%</span>
+              <span className="font-bold">{finProgress}%</span>
             </div>
           </div>
 
@@ -104,7 +104,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
             </div>
             <div className="fin-metric-ratio text-[7.5px] text-emerald-700 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/60 flex items-center justify-center gap-0.5">
               <span>{isFa ? 'نسبت وصول' : 'Col Ratio'}:</span>
-              <span className="font-bold font-mono">{collectionRatio}%</span>
+              <span className="font-bold">{collectionRatio}%</span>
             </div>
           </div>
 
@@ -121,7 +121,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
             </div>
             <div className="fin-metric-ratio text-[7.5px] text-amber-700 font-sans mt-0.5 pt-0.5 border-t border-amber-200/60 flex items-center justify-center gap-0.5">
               <span>{isFa ? 'نسبت مطالبات' : 'Out Ratio'}:</span>
-              <span className="font-bold font-mono">{outstandingRatio.toFixed(1)}%</span>
+              <span className="font-bold">{outstandingRatio.toFixed(1)}%</span>
             </div>
           </div>
 
@@ -142,7 +142,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center font-mono">
+        <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center">
           <div className="financial-metric-box financial-cumulative-box bg-slate-50 border border-slate-200 rounded p-1">
             <span className="fin-metric-title text-[7.5px] text-slate-500 font-sans block">{isFa ? 'ارائه‌شده' : 'Submitted'}</span>
             <span className="fin-metric-irr text-[10.5px] font-bold text-slate-800">
@@ -175,12 +175,12 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
       )}
 
       {/* Site Resources Compact Strip */}
-      <div className="ipc-resources-strip mt-1 pt-1.5 border-t border-slate-200 grid grid-cols-3 gap-1.5 text-[8.5px]">
+      <div id="manpower-section" className="ipc-resources-strip mt-1 pt-1.5 border-t border-slate-200 grid grid-cols-3 gap-1.5 text-[8.5px]">
         <div className="resource-metric-box flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded px-1.5 py-1">
           <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           <div className="truncate">
             <span className="res-label text-slate-500 text-[7.5px] block">{isFa ? 'نیروی انسانی کل' : 'Total Manpower'}</span>
-            <span className="res-val font-bold font-mono text-slate-800 text-[10px]">
+            <span className="res-val font-bold text-slate-800 text-[10px]">
               {daily.manpower.total} <span className="res-sub text-[7.5px] font-normal text-slate-500">({daily.manpower.direct} {isFa ? 'مستقیم' : 'Dir'})</span>
             </span>
           </div>
@@ -190,7 +190,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           <div className="truncate">
             <span className="res-label text-slate-500 text-[7.5px] block">{isFa ? 'ماشین‌آلات فعال' : 'Machinery Active'}</span>
-            <span className="res-val font-bold font-mono text-slate-800 text-[10px]">
+            <span className="res-val font-bold text-slate-800 text-[10px]">
               {daily.machinery.active} / {daily.machinery.total}
             </span>
           </div>
@@ -200,7 +200,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           <div className="truncate">
             <span className="res-label text-slate-500 text-[7.5px] block">{isFa ? 'ساعت کار بدون حادثه' : 'Safe Man-Hours'}</span>
-            <span className="res-val font-bold font-mono text-emerald-800 text-[10px]">
+            <span className="res-val font-bold text-emerald-800 text-[10px]">
               {daily.safetyHSE?.safeManHours !== null && daily.safetyHSE?.safeManHours !== undefined
                 ? `${(daily.safetyHSE.safeManHours / 1000000).toFixed(2)}M`
                 : 'N/A'}{' '}

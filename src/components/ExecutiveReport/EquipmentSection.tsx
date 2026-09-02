@@ -12,45 +12,45 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
   const isFa = lang === 'fa';
   const [activeRemark, setActiveRemark] = useState<{ name: string; text: string } | null>(null);
 
-  // Derive items
+  // Derive items strictly from current equipment record
   const items: EquipmentProgressItem[] =
     equipment.items && equipment.items.length > 0
       ? equipment.items
       : equipment.equipmentSummary?.items && equipment.equipmentSummary.items.length > 0
       ? equipment.equipmentSummary.items
-      : initialEquipmentItems;
+      : (equipment.totalEquipment ? [] : initialEquipmentItems);
 
   // Calculate totals
   const totalCount =
     equipment.equipmentSummary?.total ??
-    (items.length > 0 ? items.reduce((s, it) => s + (it.total || 0), 0) : equipment.totalEquipment || 252);
+    (items.length > 0 ? items.reduce((s, it) => s + (it.total || 0), 0) : (equipment.totalEquipment ?? 0));
 
   const completedCount =
     equipment.equipmentSummary?.completed ??
-    (items.length > 0 ? items.reduce((s, it) => s + (it.completed || 0), 0) : equipment.installed || 29);
+    (items.length > 0 ? items.reduce((s, it) => s + (it.completed || 0), 0) : (equipment.installed ?? 0));
 
   const remainingCount = Math.max(0, totalCount - completedCount);
   const weightedProgress =
     equipment.equipmentSummary?.weightedProgress ??
-    (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : equipment.installationPercentage || 11.51);
+    (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment.installationPercentage ?? 0));
 
   return (
-    <div id="equipment-section-card" className="equipment-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full relative">
+    <div id="equipment-section" className="equipment-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full relative">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
         <div className="flex items-center gap-1.5">
           <Wrench className="w-3.5 h-3.5 text-teal-600" />
-          <h2 className="text-[10px] font-extrabold text-slate-900 uppercase tracking-tight">
+          <h2 className="text-[10px] font-bold text-slate-900 uppercase tracking-tight">
             {isFa ? (
               <>
-                وضعیت نصب تجهیزات <span className="ltr-inline text-[9px] font-mono text-slate-500 font-bold">(Equipment Sheet)</span>
+                وضعیت نصب تجهیزات <span className="ltr-inline text-[9px] font-semibold text-slate-500">(Equipment Sheet)</span>
               </>
             ) : (
               'EQUIPMENT INSTALLATION STATUS'
             )}
           </h2>
         </div>
-        <span className="equipment-overall-badge text-[8.5px] font-mono text-teal-800 font-bold bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded">
+        <span className="equipment-overall-badge text-[8.5px] text-teal-800 font-bold bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded">
           <span className="ltr-inline">{weightedProgress}%</span> {isFa ? 'پیشرفت کل' : 'Progress'}
         </span>
       </div>
@@ -59,19 +59,19 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
       <div className="grid grid-cols-4 gap-1 mb-1.5 text-center">
         <div className="equipment-metric-box equipment-total-box bg-slate-50 border border-slate-200 rounded p-0.5">
           <span className="equipment-metric-label text-[7.5px] text-slate-500 block leading-tight">{isFa ? 'کل آیتم‌ها' : 'Total'}</span>
-          <span className="equipment-metric-val text-[11px] font-black font-mono text-slate-800">{totalCount}</span>
+          <span className="equipment-metric-val text-[11px] font-bold text-slate-800">{totalCount}</span>
         </div>
         <div className="equipment-metric-box equipment-installed-box bg-teal-50/70 border border-teal-200 rounded p-0.5">
           <span className="equipment-metric-label text-[7.5px] text-teal-700 block leading-tight">{isFa ? 'انجام‌شده' : 'Completed'}</span>
-          <span className="equipment-metric-val text-[11px] font-black font-mono text-teal-900">{completedCount}</span>
+          <span className="equipment-metric-val text-[11px] font-bold text-teal-900">{completedCount}</span>
         </div>
         <div className="equipment-metric-box equipment-remaining-box bg-amber-50/70 border border-amber-200 rounded p-0.5">
           <span className="equipment-metric-label text-[7.5px] text-amber-700 block leading-tight">{isFa ? 'باقیمانده' : 'Remaining'}</span>
-          <span className="equipment-metric-val text-[11px] font-black font-mono text-amber-900">{remainingCount}</span>
+          <span className="equipment-metric-val text-[11px] font-bold text-amber-900">{remainingCount}</span>
         </div>
         <div className="equipment-metric-box equipment-progress-box bg-blue-50/70 border border-blue-200 rounded p-0.5">
           <span className="equipment-metric-label text-[7.5px] text-blue-700 block leading-tight">{isFa ? 'پیشرفت کل' : 'Progress'}</span>
-          <span className="equipment-metric-val text-[11px] font-black font-mono text-blue-900">{weightedProgress}%</span>
+          <span className="equipment-metric-val text-[11px] font-bold text-blue-900">{weightedProgress}%</span>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
               <th className="px-1 py-0.5 text-center w-14">{isFa ? 'پیشرفت' : 'Progress'}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 font-mono">
+          <tbody className="divide-y divide-slate-100">
             {items.map((item, idx) => {
               const itemTotal = Number(item.total) || 0;
               const itemCompleted = Number(item.completed) || 0;

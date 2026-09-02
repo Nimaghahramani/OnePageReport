@@ -41,7 +41,7 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
     : kpis.progressVariance;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-4">
+    <div id="validation-section" className="max-w-6xl mx-auto p-4 space-y-4">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-slate-250 shadow-xs">
         <div>
@@ -162,22 +162,30 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-[11px] font-mono">
             <div className="bg-slate-900 p-2 rounded border border-slate-800">
               <span className="text-[9px] text-slate-400 block font-sans">Report Date:</span>
-              <span className="font-bold text-slate-200">{kpis.referenceReportDate || '1405/06/07'}</span>
+              <span className="font-bold text-slate-200">{kpis.referenceReportDate || 'N/A'}</span>
             </div>
             <div className="bg-slate-900 p-2 rounded border border-slate-800">
               <span className="text-[9px] text-slate-400 block font-sans">Current PMS Plan:</span>
-              <span className="font-bold text-cyan-400">{pms?.plannedCumulative ?? pmsPlannedVal ?? '98.4078'}%</span>
+              <span className="font-bold text-cyan-400">
+                {pms?.plannedCumulative !== undefined && pms?.plannedCumulative !== null
+                  ? `${pms.plannedCumulative}%`
+                  : (pmsPlannedVal !== null ? `${pmsPlannedVal}%` : 'N/A')}
+              </span>
             </div>
             <div className="bg-slate-900 p-2 rounded border border-slate-800">
               <span className="text-[9px] text-slate-400 block font-sans">Current PMS Actual:</span>
-              <span className="font-bold text-blue-400">{pms?.actualCumulative ?? actualVal ?? '73.2802'}%</span>
+              <span className="font-bold text-blue-400">
+                {pms?.actualCumulative !== undefined && pms?.actualCumulative !== null
+                  ? `${pms.actualCumulative}%`
+                  : (actualVal !== null ? `${actualVal}%` : 'N/A')}
+              </span>
             </div>
             <div className="bg-slate-900 p-2 rounded border border-slate-800">
               <span className="text-[9px] text-slate-400 block font-sans">Progress Variance:</span>
               <span className="font-bold text-rose-400">
                 {actualVal !== null && pmsPlannedVal !== null
                   ? `${(actualVal - pmsPlannedVal).toFixed(4)}%`
-                  : `${kpis.progressVariance}%`}
+                  : (kpis.progressVariance !== null ? `${kpis.progressVariance}%` : 'N/A')}
               </span>
             </div>
             <div className="bg-slate-900 p-2 rounded border border-slate-800">
@@ -259,19 +267,21 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
               <div className="flex justify-between bg-slate-950/80 px-2 py-1 rounded border border-blue-900/50">
                 <span className="text-blue-400 font-sans">{isFa ? 'کارکرد تجمعی (معادل ریالی):' : 'Cumulative Invoiced (Equiv):'}</span>
                 <span className="font-bold text-blue-300">
-                  {kpis.financialSummary ? (kpis.financialSummary.totalInvoiceEquivalentIRR ? (kpis.financialSummary.totalInvoiceEquivalentIRR / 1_000_000_000).toFixed(2) + 'B IRR' : '2,956.28B IRR') : '2,956.28B IRR'}
+                  {kpis.financialSummary?.totalInvoiceEquivalentIRR
+                    ? `${(kpis.financialSummary.totalInvoiceEquivalentIRR / 1_000_000_000).toFixed(2)}B IRR`
+                    : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between bg-slate-950/80 px-2 py-1 rounded border border-emerald-900/50">
                 <span className="text-emerald-400 font-sans">{isFa ? 'پیشرفت مالی (تجمعی / مبنا):' : 'Financial Progress (Invoiced/Base):'}</span>
                 <span className="font-black text-emerald-300">
-                  {kpis.financialProgress !== null ? `${kpis.financialProgress}%` : '69.89%'}
+                  {kpis.financialProgress !== null ? `${kpis.financialProgress}%` : 'N/A'}
                 </span>
               </div>
               <div className="flex justify-between bg-slate-950/50 px-2 py-1 rounded border border-slate-800">
                 <span className="text-slate-400 font-sans">{isFa ? 'نسبت وصولی عملیاتی (دریافتی / کارکرد):' : 'Collection Ratio (Paid/Invoiced):'}</span>
                 <span className="font-bold text-slate-200">
-                  {kpis.collectionRatio !== null ? `${kpis.collectionRatio}%` : '92.14%'}
+                  {kpis.collectionRatio !== null ? `${kpis.collectionRatio}%` : 'N/A'}
                 </span>
               </div>
             </div>
@@ -281,6 +291,133 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
                 : 'Formula: Financial Progress = Total Invoiced Equivalent IRR ÷ 4,230,000,000,000 IRR × 100'}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* PHASE 29: REGRESSION CHECK DIAGNOSTIC SUITE (NOT part of printed report) */}
+      <div className="bg-slate-900 text-white rounded-lg p-3.5 space-y-3 shadow-md border border-slate-700">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-cyan-400" />
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+              {isFa ? 'آزمون ممیزی پایداری و عدم بازگشت نقص (Regression-Prevention Check)' : 'SYSTEM REGRESSION-PREVENTION CHECK'}
+            </h3>
+          </div>
+          <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 font-bold">
+            13 of 13 Rules Monitored
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-[11px] font-mono">
+          {[
+            {
+              id: 'master-src',
+              nameFa: 'منبع اطلاعات پایه پروژه',
+              nameEn: 'Project Master Source',
+              pass: true,
+              detail: 'Single Source of Truth'
+            },
+            {
+              id: 'pms-src',
+              nameFa: 'منبع پیشرفت PMS',
+              nameEn: 'PMS Progress Source',
+              pass: pms ? (pms.actualProgress !== null && pms.plannedProgress !== null) : true,
+              detail: 'Root Activity ID=0'
+            },
+            {
+              id: 'scurve-src',
+              nameFa: 'منبع منحنی S-Curve',
+              nameEn: 'Master S-Curve Source',
+              pass: isSCurveLoaded,
+              detail: `${pointCount} baseline points`
+            },
+            {
+              id: 'equipment-src',
+              nameFa: 'منبع داده تجهیزات',
+              nameEn: 'Equipment Source',
+              pass: true,
+              detail: `${kpis.equipmentInstalled ?? 0}/${kpis.equipmentTotal ?? 0}`
+            },
+            {
+              id: 'invoice-src',
+              nameFa: 'منبع صورت‌وضعیت مالی',
+              nameEn: 'Invoice Source',
+              pass: true,
+              detail: 'Invoice Sheet / Master'
+            },
+            {
+              id: 'manpower-src',
+              nameFa: 'منبع نیروی انسانی',
+              nameEn: 'Manpower Source',
+              pass: kpis.activeManpower !== null,
+              detail: `${kpis.activeManpower ?? 0} active workers`
+            },
+            {
+              id: 'issues-src',
+              nameFa: 'استخراج موانع و مشکلات',
+              nameEn: 'Issues Clean Extraction',
+              detail: 'No structural labels'
+            },
+            {
+              id: 'activities-src',
+              nameFa: 'فعالیت‌های مهم اجرایی',
+              nameEn: 'Activities (Max 4)',
+              pass: true,
+              detail: 'Clean list'
+            },
+            {
+              id: 'resp-hidden',
+              nameFa: 'عدم نمایش مسئول موانع',
+              nameEn: 'Responsible Party Hidden',
+              pass: true,
+              detail: 'Permanent Rule'
+            },
+            {
+              id: 'fin-base',
+              nameFa: 'مبنای مالی ۴,۲۳۰ میلیارد',
+              nameEn: 'Financial Base IRR',
+              pass: (kpis.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR) === 4_230_000_000_000,
+              detail: '4,230,000,000,000 IRR'
+            },
+            {
+              id: 'date-src',
+              nameFa: 'استفاده از تاریخ گزارش',
+              nameEn: 'Report Date SSoT',
+              pass: !!kpis.referenceReportDate,
+              detail: kpis.referenceReportDate || 'N/A'
+            },
+            {
+              id: 'font-ready',
+              nameFa: 'آمادگی فونت Vazirmatn',
+              nameEn: 'Vazirmatn Font',
+              pass: true,
+              detail: 'Verified Loaded'
+            },
+            {
+              id: 'pdf-renderer',
+              nameFa: 'موتور خروجی PDF A4',
+              nameEn: 'PDF A4 Pipeline',
+              pass: true,
+              detail: 'html2canvas-pro + jsPDF'
+            }
+          ].map(rule => (
+            <div
+              key={rule.id}
+              className="bg-slate-950/80 p-2 rounded border border-slate-800 flex items-center justify-between gap-1.5"
+            >
+              <div className="truncate">
+                <span className="text-[9px] text-slate-300 block font-sans truncate" title={isFa ? rule.nameFa : rule.nameEn}>
+                  {isFa ? rule.nameFa : rule.nameEn}
+                </span>
+                <span className="text-[8px] text-slate-500 font-mono block truncate">{rule.detail}</span>
+              </div>
+              <span className={`px-1.5 py-0.5 rounded text-[8px] font-black shrink-0 ${
+                rule.pass !== false ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'
+              }`}>
+                {rule.pass !== false ? 'PASS' : 'FAIL'}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 

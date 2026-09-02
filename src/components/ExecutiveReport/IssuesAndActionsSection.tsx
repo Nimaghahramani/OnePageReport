@@ -1,5 +1,5 @@
 import React from 'react';
-import { DailyReportRecord, Language } from '../../types';
+import { DailyReportRecord, Language, EXECUTIVE_REPORT_CONFIG } from '../../types';
 import { AlertOctagon, ArrowUpRight, CheckCircle2, ChevronRight } from 'lucide-react';
 
 interface IssuesAndActionsSectionProps {
@@ -35,11 +35,11 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
   return (
     <div className="grid grid-cols-12 gap-2 h-full">
       {/* Key Issues & Constraints (7 cols) */}
-      <div id="key-issues-card" className="key-issues-card col-span-7 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between">
+      <div id="issues-section" className="key-issues-card col-span-7 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
           <div className="flex items-center gap-1.5">
             <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
-            <h2 className="text-[10.5px] font-extrabold text-slate-900 uppercase tracking-tight">
+            <h2 className="text-[10.5px] font-bold text-slate-900 uppercase tracking-tight">
               {isFa ? 'موانع، مشکلات و ریسک‌های کلیدی پروژه' : 'KEY ISSUES & CONSTRAINTS'}
             </h2>
           </div>
@@ -55,48 +55,22 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
             </div>
           ) : (
             issues.map((item, idx) => (
-              <div key={item.id || idx} className="issue-item-card p-1.5 bg-slate-50/80 border border-slate-200 rounded space-y-1">
-                {/* Issue Text & Optional Severity */}
-                <div className="flex items-start justify-between gap-1.5">
-                  <div className="flex items-start gap-1">
-                    <span className="issue-num text-slate-400 font-mono font-bold text-[8.5px] shrink-0 mt-0.5">#{idx + 1}</span>
-                    <span className="issue-text font-bold text-slate-900 leading-snug text-[8.5px]">
-                      {isFa ? item.issueFa : (item.issueEn || item.issueFa)}
-                    </span>
-                  </div>
-                  {item.severity && (
-                    <span className={`shrink-0 px-1 py-0.2 rounded text-[7.5px] font-bold uppercase ${
-                      item.severity === 'critical'
-                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                        : 'bg-amber-100 text-amber-800 border border-amber-300'
-                    }`}>
-                      {item.severity}
-                    </span>
-                  )}
+              <div key={item.id || idx} className="issue-item-card p-1.5 bg-slate-50/80 border border-slate-200 rounded flex items-center justify-between gap-1.5">
+                {/* Clean Issue Presentation: Number + Description ONLY */}
+                <div className="flex items-start gap-1 flex-1">
+                  <span className="issue-num text-blue-600/90 font-bold text-[8.5px] shrink-0 mt-0.5">#{idx + 1}</span>
+                  <span className="issue-text font-semibold text-slate-900 leading-snug text-[8.5px]">
+                    {isFa ? item.issueFa : (item.issueEn || item.issueFa)}
+                  </span>
                 </div>
-
-                {/* Optional fields rendered ONLY if explicitly present in source */}
-                {(item.responsiblePartyFa || item.impactFa || item.requiredActionFa) && (
-                  <div className="flex flex-wrap items-center gap-2 pt-0.5 border-t border-slate-200/80 text-[7.5px]">
-                    {item.responsiblePartyFa && (
-                      <div>
-                        <span className="text-slate-500">{isFa ? 'مسئول: ' : 'Responsible: '}</span>
-                        <span className="text-blue-900 font-semibold">{item.responsiblePartyFa}</span>
-                      </div>
-                    )}
-                    {item.impactFa && (
-                      <div>
-                        <span className="text-slate-500">{isFa ? 'اثر: ' : 'Impact: '}</span>
-                        <span className="text-rose-900 font-medium">{item.impactFa}</span>
-                      </div>
-                    )}
-                    {item.requiredActionFa && (
-                      <div>
-                        <span className="text-slate-500">{isFa ? 'اقدام: ' : 'Action: '}</span>
-                        <span className="text-slate-800 font-medium">{item.requiredActionFa}</span>
-                      </div>
-                    )}
-                  </div>
+                {item.severity && (
+                  <span className={`shrink-0 px-1 py-0.2 rounded text-[7.5px] font-bold uppercase ${
+                    item.severity === 'critical'
+                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                      : 'bg-amber-100 text-amber-800 border border-amber-300'
+                  }`}>
+                    {item.severity}
+                  </span>
                 )}
               </div>
             ))
@@ -105,11 +79,11 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
       </div>
 
       {/* Activities & Management Decisions (5 cols) */}
-      <div id="activities-decisions-card" className="activities-decisions-card col-span-5 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between">
+      <div id="activities-section" className="activities-decisions-card col-span-5 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
-            <h2 className="text-[10.5px] font-extrabold text-slate-900 uppercase tracking-tight">
+            <h2 className="text-[10.5px] font-bold text-slate-900 uppercase tracking-tight">
               {isFa ? 'فعالیت‌های مهم و تصمیمات مدیریتی' : 'KEY ACTIVITIES & DECISIONS'}
             </h2>
           </div>
@@ -153,7 +127,7 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
                     <div className="leading-tight">
                       <span className="decision-text font-semibold">{isFa ? d.titleFa : d.titleEn}</span>
                       {d.targetParty && (
-                        <span className="decision-meta text-slate-500 text-[7.5px] block font-mono">
+                        <span className="decision-meta text-slate-500 text-[7.5px] block">
                           {isFa ? `مرجع: ${d.targetParty} ${d.deadline ? `| مهلت: ${d.deadline}` : ''}` : `Target: ${d.targetParty} ${d.deadline ? `| Due: ${d.deadline}` : ''}`}
                         </span>
                       )}

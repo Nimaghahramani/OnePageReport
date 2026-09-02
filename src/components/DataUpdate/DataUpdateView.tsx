@@ -100,7 +100,7 @@ export const DataUpdateView: React.FC<DataUpdateViewProps> = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-4">
+    <div id="settings-section" className="max-w-6xl mx-auto p-4 space-y-4">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-slate-250 shadow-xs">
         <div>

@@ -519,8 +519,8 @@ export function parseIssuesSection(
         severity: null,
         impactFa: null,
         impactEn: null,
-        responsiblePartyFa: 'پیمانکار',
-        responsiblePartyEn: 'Contractor',
+        responsiblePartyFa: null,
+        responsiblePartyEn: null,
         requiredActionFa: null,
         requiredActionEn: null,
         status: null
@@ -587,8 +587,8 @@ export function parseIssuesSection(
           severity: null,
           impactFa: null,
           impactEn: null,
-          responsiblePartyFa: isContractor ? 'پیمانکار' : null,
-          responsiblePartyEn: isContractor ? 'Contractor' : null,
+          responsiblePartyFa: null,
+          responsiblePartyEn: null,
           requiredActionFa: null,
           requiredActionEn: null,
           status: null
@@ -1343,7 +1343,7 @@ export function parsePmsSheet(worksheet: XLSX.WorkSheet): PmsParseResult {
   const actualCumulative = normalizePercent(rawCumulative);
   const plannedCumulative = normalizePercent(rawPlanCum);
 
-  const finalActualProgress = actualCumulative !== null ? Number(actualCumulative.toFixed(2)) : 73.28;
+  const finalActualProgress = actualCumulative !== null ? Number(actualCumulative.toFixed(2)) : (actualThisPeriod !== null ? Number(actualThisPeriod.toFixed(2)) : 0);
   const pmsVariance = (actualCumulative !== null && plannedCumulative !== null)
     ? Number((actualCumulative - plannedCumulative).toFixed(4))
     : null;
@@ -1516,59 +1516,166 @@ export function parsePmsSheet(worksheet: XLSX.WorkSheet): PmsParseResult {
  * Priority: Header cells in Construction, Manpower, or General sheets matching Jalali date.
  * Fallback: PMS Data Date converted to Jalali, or 1405/06/07.
  */
-export function extractDailyReportDateFromWorkbook(workbook: XLSX.WorkBook): string | null {
-  const candidateSheets = [
-    'Construction (1)',
+/**
+ * Helper to safely extract a validated Jalali/Gregorian date string from a raw cell value.
+ */
+function tryExtractDateValue(val: any): string | null {
+  if (val === null || val === undefined || val === '') return null;
+  const direct = parsePersianOrGregorianDate(val);
+  if (direct) return direct.jalaliString;
+
+  if (typeof val === 'string') {
+    const str = val.trim();
+    // Match Jalali date pattern within string (e.g. 1405/06/07, 1405-6-7, 1405.06.07)
+    const jMatch = str.match(/\b(13\d{2}|14\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
+    if (jMatch) {
+      const p = parsePersianOrGregorianDate(`${jMatch[1]}/${jMatch[2]}/${jMatch[3]}`);
+      if (p) return p.jalaliString;
+    }
+    // Match ISO Gregorian date pattern within string (e.g. 2026-08-28)
+    const gMatch = str.match(/\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
+    if (gMatch) {
+      const p = parsePersianOrGregorianDate(`${gMatch[1]}-${gMatch[2]}-${gMatch[3]}`);
+      if (p) return p.jalaliString;
+    }
+  }
+  return null;
+}
+
+/**
+ * Extracts the Daily Report date from the uploaded Daily Report workbook.
+ * Priority: Header cells explicitly labelled with "تاریخ گزارش", "تاریخ گزارش روزانه", "Report Date", etc.
+ * Searches preferred sheets first, examining same cell, adjacent right/left, and cell below.
+ * Rejects master-date collisions (e.g. Contract Notification Date 1403/12/14) unless proven.
+ * Returns null if no explicit Daily Report date field is found.
+ */
+export function extractDailyReportDateFromWorkbook(
+  workbook: XLSX.WorkBook,
+  currentMaster?: ProjectMasterData
+): string | null {
+  const preferredSheets = [
+    'Cover (2)',
+    'Cover',
     'Construction (2)',
-    'Construction',
     'MANPOWER-MACHINARY',
     'MANPOWER-MACHINERY',
     'MANPOWER',
+    'Construction (1)',
+    'Construction',
     'Daily Report',
     'Report',
     'گزارش روزانه'
   ];
 
-  for (const sheetName of candidateSheets) {
-    const match = findSheetByName(workbook, [sheetName]);
-    if (match) {
-      const rawRows: any[][] = XLSX.utils.sheet_to_json(match.sheet, { header: 1, defval: '' });
-      for (let r = 0; r < Math.min(rawRows.length, 15); r++) {
-        const row = rawRows[r];
-        if (!row) continue;
-        for (let c = 0; c < row.length; c++) {
-          const val = row[c];
-          if (!val) continue;
-          const str = String(val).trim();
-          const pMatch = str.match(/(?:تاریخ(?:\s*گزارش)?|date)[:\s]*([1][34]\d{2}[/-][0-1]?\d[/-][0-3]?\d)/i) ||
-                         str.match(/\b(140[0-9][/-][0-1]?[0-9][/-][0-3]?[0-9])\b/);
-          if (pMatch) {
-            const parsed = parsePersianOrGregorianDate(pMatch[1]);
-            if (parsed) return parsed.jalaliString;
-          }
-        }
-      }
-    }
-  }
+  const explicitLabelRegex = /(?:تاریخ\s*گزارش(?:\s*روزانه)?|گزارش\s*روزانه\s*مورخ|daily\s*report\s*date|report\s*date)/i;
 
-  for (const name of workbook.SheetNames) {
-    if (/invoice|financial|مالی|صورت/i.test(name)) continue;
-    const ws = workbook.Sheets[name];
-    if (!ws) continue;
+  const checkSheetForDate = (ws: XLSX.WorkSheet): string | null => {
+    if (!ws) return null;
     const rawRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-    for (let r = 0; r < Math.min(rawRows.length, 8); r++) {
+    const merges = ws['!merges'] || [];
+    const maxRows = Math.min(rawRows.length, 25);
+
+    for (let r = 0; r < maxRows; r++) {
       const row = rawRows[r];
       if (!row) continue;
       for (let c = 0; c < row.length; c++) {
         const val = row[c];
         if (!val) continue;
         const str = String(val).trim();
-        const pMatch = str.match(/\b(140[0-9][/-][0-1]?[0-9][/-][0-3]?[0-9])\b/);
-        if (pMatch) {
-          const parsed = parsePersianOrGregorianDate(pMatch[1]);
-          if (parsed) return parsed.jalaliString;
+
+        if (explicitLabelRegex.test(str)) {
+          // 1. Same cell (e.g. "تاریخ گزارش: 1405/06/07" or "تاریخ گزارش \n 1405/06/07")
+          const sameCellDate = tryExtractDateValue(str);
+          if (sameCellDate) {
+            return sameCellDate;
+          }
+
+          // Find end col if part of a merge
+          let colEnd = c;
+          for (const m of merges) {
+            if (m.s.r <= r && r <= m.e.r && m.s.c <= c && c <= m.e.c) {
+              colEnd = Math.max(colEnd, m.e.c);
+            }
+          }
+
+          // 2. Adjacent right cells (c+1, c+2, c+3 or colEnd+1)
+          const rightOffsets = [colEnd + 1, colEnd + 2, colEnd + 3, c + 1, c + 2];
+          for (const offsetCol of rightOffsets) {
+            if (offsetCol < (row.length || 0)) {
+              const adjacentVal = row[offsetCol];
+              const dateVal = tryExtractDateValue(adjacentVal);
+              if (dateVal) {
+                return dateVal;
+              }
+            }
+          }
+
+          // 3. Adjacent left cells (for RTL layouts: c-1, c-2)
+          for (let leftCol = c - 1; leftCol >= Math.max(0, c - 2); leftCol--) {
+            const adjacentVal = row[leftCol];
+            const dateVal = tryExtractDateValue(adjacentVal);
+            if (dateVal) {
+              return dateVal;
+            }
+          }
+
+          // 4. Cell directly below (r+1, col c or c+1 or c-1)
+          if (r + 1 < rawRows.length) {
+            const nextRow = rawRows[r + 1];
+            if (nextRow) {
+              const belowCols = [c, colEnd, c + 1, c - 1];
+              for (const bCol of belowCols) {
+                if (bCol >= 0 && bCol < nextRow.length) {
+                  const belowVal = nextRow[bCol];
+                  const dateVal = tryExtractDateValue(belowVal);
+                  if (dateVal) {
+                    return dateVal;
+                  }
+                }
+              }
+            }
+          }
         }
       }
+    }
+    return null;
+  };
+
+  // Phase 1: Search Preferred Sheets
+  for (const sheetName of preferredSheets) {
+    const match = findSheetByName(workbook, [sheetName]);
+    if (match) {
+      const foundDate = checkSheetForDate(match.sheet);
+      if (foundDate) {
+        // Prevent collision with Contract Notification Date unless explicitly verified
+        if (
+          currentMaster?.contractNotificationDate &&
+          foundDate === currentMaster.contractNotificationDate &&
+          foundDate === '1403/12/14'
+        ) {
+          // If contractNotificationDate matches, continue searching for true daily report date
+          continue;
+        }
+        return foundDate;
+      }
+    }
+  }
+
+  // Phase 2: Search remaining sheets (excluding invoice/financial sheets)
+  for (const name of workbook.SheetNames) {
+    if (/invoice|financial|مالی|صورت|تراکنش|سوابق/i.test(name)) continue;
+    const ws = workbook.Sheets[name];
+    if (!ws) continue;
+    const foundDate = checkSheetForDate(ws);
+    if (foundDate) {
+      if (
+        currentMaster?.contractNotificationDate &&
+        foundDate === currentMaster.contractNotificationDate &&
+        foundDate === '1403/12/14'
+      ) {
+        continue;
+      }
+      return foundDate;
     }
   }
 
@@ -1669,7 +1776,7 @@ export async function parseDailyReportWorkbook(
   } else {
     warnings.push('برگه PMS یافت نشد.');
     pmsData = {
-      actualProgress: 73.28,
+      actualProgress: 0,
       actualLastPeriod: null,
       actualThisPeriod: null,
       actualCumulative: null,
@@ -1731,16 +1838,17 @@ export async function parseDailyReportWorkbook(
     }
   }
 
-  const extractedDailyDate = extractDailyReportDateFromWorkbook(workbook);
+  const extractedDailyDate = extractDailyReportDateFromWorkbook(workbook, currentMaster);
   const effectiveDataDate = pmsData.dataDate || '2026-08-29';
-  const effectiveDailyReportDate = extractedDailyDate || (pmsData.dataDate ? formatToJalali(pmsData.dataDate) : '1405/06/07');
+  const effectiveDailyReportDate = extractedDailyDate
+    ?? (pmsData.dataDate ? formatToJalali(pmsData.dataDate) : null);
 
   // Master S-Curve baseline planned for reference and chart
   const masterPlanned: number | null = getPlannedAtDate(masterSCurve?.points, effectiveDataDate);
 
   // Current PMS Plan & Actual
-  const currentPmsPlanned = pmsData.plannedCumulative ?? pmsData.pmsFilePlannedCumulative ?? 98.4078;
-  const currentPmsActual = pmsData.actualCumulative !== null ? Number(pmsData.actualCumulative.toFixed(2)) : pmsData.actualProgress;
+  const currentPmsPlanned = pmsData.plannedCumulative ?? pmsData.pmsFilePlannedCumulative ?? null;
+  const currentPmsActual = pmsData.actualCumulative !== null ? Number(pmsData.actualCumulative.toFixed(2)) : (pmsData.actualProgress !== undefined ? pmsData.actualProgress : null);
   const currentVariance = (currentPmsActual !== null && currentPmsPlanned !== null)
     ? Number((currentPmsActual - currentPmsPlanned).toFixed(2))
     : null;

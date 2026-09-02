@@ -1,48 +1,9 @@
 @import "tailwindcss";
-
-/* ======================================================== */
-/* 0. NOTO SANS ARABIC FONT-FACE REGISTRATION & FALLBACKS   */
-/* ======================================================== */
-@font-face {
-  font-family: 'Noto Sans Arabic';
-  src: url('/fonts/NotoSansArabic-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Noto Sans Arabic';
-  src: url('/fonts/NotoSansArabic-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Noto Sans Arabic';
-  src: url('/fonts/NotoSansArabic-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Noto Sans Arabic';
-  src: url('/fonts/NotoSansArabic-Bold.woff2') format('woff2');
-  font-weight: 700 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-:root {
-  --font-persian: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
-  --font-latin: Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-}
+@import "./theme/tokens.css";
 
 @layer base {
   body {
-    font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+    font-family: var(--font-persian);
   }
 }
 
@@ -67,14 +28,14 @@
 .ipc-section-card,
 .key-issues-card,
 .report-footer {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-family: var(--font-persian);
 }
 
 /* Dedicated Print & PDF Container Strict Root Rules */
 #print-report-root {
   direction: rtl;
   text-align: right;
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif !important;
+  font-family: var(--font-persian) !important;
 }
 
 #print-report-root[dir="ltr"] {
@@ -84,14 +45,13 @@
 
 #print-report-root,
 #print-report-root * {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif !important;
+  font-family: var(--font-persian) !important;
 }
 
 /* Latin & numerical font class for screen UI */
 .font-en,
 .font-number,
 .font-latin,
-.font-mono,
 .kpi-value,
 .kpi-delay-badge,
 .report-data-date-badge,
@@ -99,7 +59,7 @@
 .fin-metric-irr,
 .fin-metric-eur,
 .equipment-metric-val {
-  font-family: Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-latin);
 }
 
 /* RTL / Bidi isolation */
@@ -111,46 +71,235 @@
   display: inline-block;
 }
 
-/* Report Typography Hierarchy with Noto Sans Arabic */
+/* Report Typography Hierarchy with Vazirmatn Standard */
 .report-project-title {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
-  font-weight: 800;
+  font-family: var(--font-persian);
+  font-weight: 700;
   font-size: 15.5px;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 .report-section-heading {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-family: var(--font-persian);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11.5px;
   line-height: 1.35;
 }
 
 .executive-summary-text {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-family: var(--font-persian);
   font-weight: 500;
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 10px;
+  line-height: 1.7;
 }
 
 .report-table-text {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
-  font-weight: 500;
-  font-size: 10px;
-  line-height: 1.4;
+  font-family: var(--font-persian);
+  font-weight: 400;
+  font-size: 9px;
+  line-height: 1.35;
 }
 
 .report-meta-text {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-family: var(--font-persian);
   font-weight: 500;
   font-size: 9.5px;
   line-height: 1.35;
 }
 
 .report-footer-text {
-  font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif;
+  font-family: var(--font-persian);
   font-weight: 500;
-  font-size: 9.5px;
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+/* ======================================================== */
+/* 1. EXECUTIVE APPSHELL, RIGHT SIDEBAR & REPORT STAGE      */
+/* ======================================================== */
+.executive-app-shell {
+  min-height: 100vh;
+  display: flex;
+  background: #eef2f7;
+}
+
+[dir="rtl"] .executive-app-shell {
+  flex-direction: row-reverse;
+  direction: rtl;
+}
+
+[dir="ltr"] .executive-app-shell {
+  flex-direction: row;
+  direction: ltr;
+}
+
+[data-theme="loico-blue"] .executive-app-shell {
+  background: #041026 !important;
+}
+
+/* Right-Side Executive Compact Sidebar (96px width) */
+.app-sidebar {
+  width: 96px;
+  min-width: 96px;
+  max-width: 96px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    180deg,
+    #061a3a 0%,
+    #08265a 50%,
+    #061a3a 100%
+  );
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  z-index: 100;
+  font-family: var(--font-persian);
+  color: #d9e5f5;
+}
+
+/* Force All Sidebar Children to Transparent Background */
+.sidebar-logo,
+.sidebar-nav,
+.sidebar-bottom {
+  background: transparent !important;
+}
+
+.sidebar-logo {
+  height: 84px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 8px 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sidebar Navigation Container & Clean Scrollbar */
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+/* Sidebar Item & Button State */
+.sidebar-item {
+  width: calc(100% - 14px);
+  margin: 3px 7px;
+  min-height: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #b9cff1;
+  cursor: pointer;
+  font-family: var(--font-persian);
+  transition: all 0.15s ease;
+}
+
+.sidebar-item .sidebar-icon-wrap,
+.sidebar-item svg {
+  color: #b9cff1;
+  transition: color 0.15s ease;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.sidebar-item:hover .sidebar-icon-wrap,
+.sidebar-item:hover svg {
+  color: #ffffff;
+}
+
+.sidebar-item.active {
+  background: linear-gradient(
+    135deg,
+    #0d4ca8,
+    #0a63d8
+  ) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(10, 99, 216, 0.22);
+}
+
+.sidebar-item.active .sidebar-icon-wrap,
+.sidebar-item.active svg {
+  color: #ffffff !important;
+}
+
+.executive-main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.executive-report-stage {
+  width: 100%;
+  max-width: 1500px;
+  margin-inline: auto;
+  padding: 8px;
+  background: #dfe6ef;
+  border-radius: 14px;
+}
+
+[data-theme="loico-blue"] .executive-report-stage {
+  background: rgba(8, 30, 68, 0.7) !important;
+  border: 1px solid rgba(125, 211, 252, 0.2) !important;
+}
+
+#executive-report {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 9px;
+  box-shadow: 0 9px 26px rgba(15, 23, 42, 0.10);
+  overflow: hidden;
+}
+
+[data-theme="loico-blue"] #executive-report {
+  background: rgba(4, 18, 44, 0.96) !important;
+  box-shadow: 0 14px 45px rgba(1, 8, 20, 0.75), 0 0 25px rgba(7, 95, 190, 0.20) !important;
+}
+
+/* Scroll margin offset for smooth anchor scrolling */
+#executive-report,
+#executive-summary-section,
+#pms-section,
+#scurve-section,
+#equipment-section,
+#financial-section,
+#manpower-section,
+#issues-section,
+#activities-section,
+#validation-section,
+#settings-section {
+  scroll-margin-top: 16px;
 }
 
 /* ======================================================== */
@@ -739,6 +888,10 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   background: rgba(13, 44, 94, 0.75) !important;
   border-color: rgba(125, 211, 252, 0.22) !important;
 }
+[data-theme="loico-blue"] .issue-num {
+  color: #7dd3fc !important;
+}
+[data-theme="loico-blue"] .issue-text,
 [data-theme="loico-blue"] .issue-desc {
   color: #ffffff !important;
 }
@@ -927,10 +1080,10 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     overflow: hidden !important;
   }
 
-  /* Hide screen container and interactive elements */
+  /* Hide screen container, sidebar and interactive elements */
   .no-print,
+  .app-sidebar,
   .app-screen-container,
-  .print-preview-ui,
   nav,
   header,
   aside {
@@ -1065,7 +1218,7 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   #print-report-sheet *,
   .print-canvas,
   .print-canvas * {
-    font-family: 'Noto Sans Arabic', Tahoma, Arial, sans-serif !important;
+    font-family: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif !important;
   }
 
   /* LOICO Animated Flame Print Rule: animations must not affect PDF generation */

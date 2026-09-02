@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ActiveTab, Language, Theme } from './types';
 import { projectDataStore } from './services/dataStore';
-import { Navbar } from './components/Navbar';
+import { AppSidebar, SidebarMenuItemId } from './components/AppSidebar';
 import { ExecutiveReportView } from './components/ExecutiveReport/ExecutiveReportView';
 import { DataUpdateView } from './components/DataUpdate/DataUpdateView';
 import { ProjectMasterDataView } from './components/MasterData/ProjectMasterDataView';
 import { VersionHistoryView } from './components/VersionHistory/VersionHistoryView';
 import { DataValidationPanel } from './components/Validation/DataValidationPanel';
-import { PrintPreviewModal } from './components/PrintPreviewModal';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('report');
+  const [activeMenuItem, setActiveMenuItem] = useState<SidebarMenuItemId>('dashboard');
   const [lang, setLang] = useState<Language>('fa');
   const [theme, setTheme] = useState<Theme>(() => {
     try {
@@ -20,7 +20,6 @@ export default function App() {
       return 'light';
     }
   });
-  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [, setRenderTrigger] = useState(0);
 
   // Subscribe to Project Data Store
@@ -61,7 +60,16 @@ export default function App() {
     setLang(l => l === 'fa' ? 'en' : 'fa');
   };
 
-  const handleDirectPrint = () => {
+  const handleDirectPrint = async () => {
+    try {
+      if (typeof document !== 'undefined' && document.fonts) {
+        await document.fonts.ready;
+        const fontReady = document.fonts.check('12px "Vazirmatn"');
+        console.log('Direct print font readiness - Vazirmatn:', fontReady);
+      }
+    } catch {
+      // Font readiness fallback
+    }
     window.print();
   };
 
@@ -71,39 +79,128 @@ export default function App() {
     }
   };
 
-  return (
-    <div className={`min-h-screen bg-[#f1f5f9] text-slate-800 flex flex-col ${lang === 'fa' ? 'font-sans' : 'font-sans'}`}>
-      {/* Screen Interactive App Container */}
-      <div className="app-screen-container flex flex-col flex-1">
-        {/* Top Main Navigation */}
-        <Navbar
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          lang={lang}
-          onToggleLang={handleToggleLang}
-          theme={theme}
-          onSelectTheme={setTheme}
-          onOpenPrintPreview={() => setIsPrintPreviewOpen(true)}
-          onDirectPrint={handleDirectPrint}
-          onResetData={handleResetData}
-          issues={issues}
-        />
+  // Smooth scroll and menu handler
+  const handleSelectMenu = useCallback((itemId: SidebarMenuItemId) => {
+    setActiveMenuItem(itemId);
 
-        {/* Main View Container */}
-        <main className="flex-1 overflow-x-hidden">
+    if (itemId === 'validation') {
+      setActiveTab('validation');
+      return;
+    }
+
+    if (itemId === 'settings') {
+      setActiveTab('update');
+      return;
+    }
+
+    if (itemId === 'master') {
+      setActiveTab('master');
+      return;
+    }
+
+    if (itemId === 'history') {
+      setActiveTab('history');
+      return;
+    }
+
+    // Report section navigation
+    if (activeTab !== 'report') {
+      setActiveTab('report');
+      // Wait for DOM update before scrolling
+      setTimeout(() => {
+        scrollToSection(itemId);
+      }, 100);
+    } else {
+      scrollToSection(itemId);
+    }
+  }, [activeTab]);
+
+  const scrollToSection = (itemId: SidebarMenuItemId) => {
+    const sectionMap: Record<string, string> = {
+      dashboard: 'executive-report',
+      summary: 'executive-summary-section',
+      pms: 'pms-section',
+      scurve: 'scurve-section',
+      equipment: 'equipment-section',
+      financial: 'financial-section',
+      manpower: 'manpower-section',
+      issues: 'issues-section',
+      activities: 'activities-section'
+    };
+
+    const targetId = sectionMap[itemId] || 'executive-report';
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
+  // IntersectionObserver to auto-update active menu item when scrolling report
+  useEffect(() => {
+    if (activeTab !== 'report') return;
+
+    const sections = [
+      { id: 'executive-report', menu: 'dashboard' as SidebarMenuItemId },
+      { id: 'executive-summary-section', menu: 'summary' as SidebarMenuItemId },
+      { id: 'pms-section', menu: 'pms' as SidebarMenuItemId },
+      { id: 'scurve-section', menu: 'scurve' as SidebarMenuItemId },
+      { id: 'equipment-section', menu: 'equipment' as SidebarMenuItemId },
+      { id: 'financial-section', menu: 'financial' as SidebarMenuItemId },
+      { id: 'manpower-section', menu: 'manpower' as SidebarMenuItemId },
+      { id: 'issues-section', menu: 'issues' as SidebarMenuItemId },
+      { id: 'activities-section', menu: 'activities' as SidebarMenuItemId }
+    ];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Find visible entry with highest ratio or first intersecting
+        const visibleEntries = entries.filter((e) => e.isIntersecting);
+        if (visibleEntries.length > 0) {
+          // Sort by intersection ratio or proximity
+          const topEntry = visibleEntries.reduce((prev, curr) =>
+            curr.intersectionRatio > prev.intersectionRatio ? curr : prev
+          );
+          const match = sections.find((s) => s.id === topEntry.target.id);
+          if (match) {
+            setActiveMenuItem(match.menu);
+          }
+        }
+      },
+      {
+        threshold: 0.35,
+        rootMargin: '-5% 0px -40% 0px'
+      }
+    );
+
+    sections.forEach((s) => {
+      const el = document.getElementById(s.id);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [activeTab]);
+
+  return (
+    <div className={`executive-app-shell min-h-screen bg-[#eef2f7] text-slate-800 flex`} dir={lang === 'fa' ? 'rtl' : 'ltr'}>
+      {/* Main Content Area */}
+      <main className="executive-main-content flex-1 min-w-0 p-2 sm:p-3 md:p-3.5 flex justify-center items-start overflow-y-auto">
+        <div className="executive-report-stage w-full max-w-[1500px] p-1.5 sm:p-2 bg-[#dfe6ef] rounded-xl shadow-xs">
           {activeTab === 'report' && (
-            <div className="py-4">
-              <ExecutiveReportView
-                master={master}
-                pms={pms}
-                daily={daily}
-                ipc={ipc}
-                equipment={equipment}
-                kpis={kpis}
-                masterSCurve={masterSCurve}
-                lang={lang}
-              />
-            </div>
+            <ExecutiveReportView
+              master={master}
+              pms={pms}
+              daily={daily}
+              ipc={ipc}
+              equipment={equipment}
+              kpis={kpis}
+              masterSCurve={masterSCurve}
+              lang={lang}
+            />
           )}
 
           {activeTab === 'update' && (
@@ -114,7 +211,10 @@ export default function App() {
               equipment={equipment}
               issues={issues}
               lang={lang}
-              onNavigateToReport={() => setActiveTab('report')}
+              onNavigateToReport={() => {
+                setActiveTab('report');
+                setActiveMenuItem('dashboard');
+              }}
             />
           )}
 
@@ -135,10 +235,24 @@ export default function App() {
               pms={pms}
             />
           )}
-        </main>
-      </div>
+        </div>
+      </main>
 
-      {/* Dedicated Print-Only Root Container (Part 9 of user instructions) */}
+      {/* Right-Side Executive LOICO Sidebar */}
+      <AppSidebar
+        activeItem={activeMenuItem}
+        activeTab={activeTab}
+        onSelectMenu={handleSelectMenu}
+        lang={lang}
+        onToggleLang={handleToggleLang}
+        theme={theme}
+        onSelectTheme={setTheme}
+        onDirectPrint={handleDirectPrint}
+        onResetData={handleResetData}
+        issues={issues}
+      />
+
+      {/* Dedicated Print-Only Root Container (Part 9 & 23 of user instructions) */}
       <div id="print-report-root" className="print-only-report" data-theme="light" dir={lang === 'fa' ? 'rtl' : 'ltr'}>
         <ExecutiveReportView
           sheetId="print-report-sheet"
@@ -152,20 +266,6 @@ export default function App() {
           lang={lang}
         />
       </div>
-
-      {/* Print Preview Modal */}
-      <PrintPreviewModal
-        isOpen={isPrintPreviewOpen}
-        onClose={() => setIsPrintPreviewOpen(false)}
-        master={master}
-        pms={pms}
-        daily={daily}
-        ipc={ipc}
-        equipment={equipment}
-        kpis={kpis}
-        masterSCurve={masterSCurve}
-        lang={lang}
-      />
     </div>
   );
 }

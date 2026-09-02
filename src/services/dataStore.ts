@@ -27,6 +27,7 @@ import { validateAllDatasets, checkDateSuperseded } from './validationService';
 import { calculateExecutiveKPIs } from './kpiEngine';
 import { getPlannedAtDate, calculateScheduleDelayFromPlannedCurve } from './scurveEngine';
 import { DailyReportWorkbookResult, ProjectMasterImportResult } from './excelParser';
+import { formatToJalali } from '../utils/jalaliDate';
 
 const defaultFinancialSettings: FinancialSettings = {
   calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 4,230,000,000,000 IRR
@@ -462,7 +463,7 @@ export class ProjectDataStore {
       id: `aud-master-${Date.now()}`,
       datasetType: 'master' as any,
       version: 1,
-      dataDate: result.startDate || '1403/12/21',
+      dataDate: this.masterData.lastUpdated || '1403/12/21',
       uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
       fileName: result.fileName || 'Project_Master_Excel.xlsx',
       source: `Master Sheet: ${result.sheetName}`,
@@ -576,13 +577,20 @@ export class ProjectDataStore {
 
     // 1. Update Daily Report (Active Manpower = Direct + Indirect = 78, Key Issues from Construction (2))
     const dailyVersion = (this.currentDaily?.version || 0) + 1;
-    const reportDateStr = result.reportDate || result.dailyReportDate || result.dataDate || '1405/06/07';
+    const reportDateStr =
+      result.reportDate
+      ?? result.dailyReportDate
+      ?? (
+           result.pmsDataDate
+             ? formatToJalali(result.pmsDataDate)
+             : null
+         );
     const dailyFull: DailyReportRecord = {
       ...this.currentDaily,
       id: `daily-v${dailyVersion}`,
       version: dailyVersion,
-      dataDate: result.dataDate,
-      reportDate: reportDateStr,
+      dataDate: result.pmsDataDate || result.dataDate,
+      reportDate: reportDateStr || 'N/A',
       uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
       fileName: result.fileName,
       source: `Daily Report Workbook: ${result.fileName}`,

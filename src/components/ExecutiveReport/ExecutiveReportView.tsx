@@ -42,7 +42,7 @@ export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
   lang
 }) => {
   return (
-    <div className="w-full flex justify-center py-2 px-1">
+    <div id="executive-report" className="w-full flex justify-center py-2 px-1">
       {/* 
         A4 Landscape Sheet Container 
         Standard A4 Landscape: 297mm x 210mm (~ 1122px x 794px at 96 DPI)

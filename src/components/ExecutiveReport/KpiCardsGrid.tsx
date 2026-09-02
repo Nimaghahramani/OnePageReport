@@ -16,7 +16,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
   const isPositiveVariance = variance !== null && variance >= 0;
 
   return (
-    <div className="grid grid-cols-6 gap-2 mb-2">
+    <div id="pms-section" className="grid grid-cols-6 gap-2 mb-2">
       {/* 1. Planned Progress */}
       <div id="kpi-card-planned" className="kpi-card kpi-card-planned bg-white border border-slate-250 rounded p-1.5 flex flex-col justify-between shadow-2xs">
         <div className="flex items-center justify-between text-slate-600 text-[9.5px] font-semibold">
@@ -24,7 +24,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           <Activity className="w-3 h-3 text-slate-400" />
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
-          <span className="kpi-value text-base font-extrabold text-slate-900 font-mono tracking-tight">{planned}</span>
+          <span className="kpi-value text-base font-extrabold text-slate-900 tracking-tight">{planned}</span>
           <span className="kpi-sub text-[8.5px] text-slate-400 font-medium">Target</span>
         </div>
         <div className="w-full bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
@@ -42,7 +42,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           <TrendingUp className="w-3 h-3 text-blue-600" />
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
-          <span className="kpi-value text-base font-extrabold text-blue-950 font-mono tracking-tight">{actual}</span>
+          <span className="kpi-value text-base font-extrabold text-blue-950 tracking-tight">{actual}</span>
           <span className="kpi-sub text-[8.5px] text-blue-700 font-bold">Actual</span>
         </div>
         <div className="w-full bg-blue-200/80 h-1 rounded-full mt-1 overflow-hidden">
@@ -72,13 +72,13 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           )}
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
-          <span className={`kpi-value text-base font-extrabold font-mono tracking-tight ${
+          <span className={`kpi-value text-base font-extrabold tracking-tight ${
             variance === null ? 'text-slate-900' : isPositiveVariance ? 'text-emerald-800' : 'text-rose-800'
           }`}>
             {variance !== null ? `${variance > 0 ? '+' : ''}${variance.toFixed(2)}%` : 'N/A'}
           </span>
           {kpis.scheduleDelayDays !== null && kpis.scheduleDelayDays !== undefined && (
-            <span className={`kpi-delay-badge text-[8.5px] font-bold font-mono px-1 rounded ${
+            <span className={`kpi-delay-badge text-[8.5px] font-bold px-1 rounded ${
               kpis.scheduleDelayDays > 0 ? 'bg-rose-200/70 text-rose-900' : 'bg-emerald-200/70 text-emerald-900'
             }`}>
               {kpis.scheduleDelayDays > 0 ? `-${kpis.scheduleDelayDays}d` : `${kpis.scheduleDelayDays}d`}
@@ -104,10 +104,10 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           <Clock className="w-3 h-3 text-slate-400" />
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
-          <span className="kpi-value text-base font-extrabold text-slate-900 font-mono tracking-tight">
+          <span className="kpi-value text-base font-extrabold text-slate-900 tracking-tight">
             {kpis.timeElapsedPercentage !== null ? `${kpis.timeElapsedPercentage}%` : 'N/A'}
           </span>
-          <span className="kpi-sub text-[8.5px] text-slate-500 font-mono">
+          <span className="kpi-sub text-[8.5px] text-slate-500 font-semibold">
             {kpis.timeElapsedDays !== null ? `${kpis.timeElapsedDays}/${kpis.totalDurationDays}d` : `${kpis.totalDurationDays}d`}
           </span>
         </div>
@@ -118,7 +118,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           />
         </div>
         <div className="kpi-elapsed-meta text-[7.5px] text-slate-500 font-medium truncate mt-0.5 flex items-center justify-between gap-1">
-          <span className="truncate">{isFa ? `مرجع: ${kpis.referenceReportDate || '1405/06/07'}` : `Ref: ${kpis.referenceReportDate || '1405/06/07'}`}</span>
+          <span className="truncate">{isFa ? `مرجع: ${kpis.referenceReportDate || 'N/A'}` : `Ref: ${kpis.referenceReportDate || 'N/A'}`}</span>
           <span className="font-semibold text-slate-700 truncate">{isFa ? kpis.effectiveEndLabelFa : kpis.effectiveEndLabelEn}</span>
         </div>
       </div>
@@ -130,10 +130,10 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           <Wrench className="w-3 h-3 text-slate-400" />
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
-          <span className="kpi-value text-base font-extrabold text-slate-900 font-mono tracking-tight">
+          <span className="kpi-value text-base font-extrabold text-slate-900 tracking-tight">
             {kpis.equipmentInstallationPercentage !== null ? `${kpis.equipmentInstallationPercentage.toFixed(1)}%` : 'N/A'}
           </span>
-          <span className="kpi-sub text-[8.5px] text-slate-500 font-mono">
+          <span className="kpi-sub text-[8.5px] text-slate-500 font-semibold">
             {kpis.equipmentInstalled || 0}/{kpis.equipmentTotal || 0}
           </span>
         </div>
@@ -152,12 +152,12 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
           <CreditCard className="w-3 h-3 text-slate-400" />
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
-          <span className="kpi-value text-base font-extrabold text-slate-900 font-mono tracking-tight">
+          <span className="kpi-value text-base font-extrabold text-slate-900 tracking-tight">
             {kpis.financialSummary?.financialProgress !== undefined && kpis.financialSummary?.financialProgress !== null
               ? `${kpis.financialSummary.financialProgress.toFixed(1)}%`
               : (kpis.ipcCachedRatio !== null ? `${kpis.ipcCachedRatio}%` : 'N/A')}
           </span>
-          <span className="kpi-sub text-[8.5px] text-emerald-700 font-bold font-mono">
+          <span className="kpi-sub text-[8.5px] text-emerald-700 font-bold">
             {kpis.financialSummary?.collectionRatio !== undefined && kpis.financialSummary?.collectionRatio !== null
               ? `${isFa ? 'وصول' : 'Col'}: ${kpis.financialSummary.collectionRatio.toFixed(1)}%`
               : (isFa ? 'وصولی' : 'Paid')}

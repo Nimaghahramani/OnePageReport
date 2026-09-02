@@ -24,8 +24,10 @@ export function calculateExecutiveKPIs(
   masterSCurve?: MasterSCurveRecord | null
 ): CalculatedReportKPIs {
   // 1. Time Elapsed Calculation
-  // Priority: 1. Daily Report Date, 2. PMS Data Date, 3. Never system/browser date
-  const rawReportDate = daily?.reportDate || daily?.dataDate || pms?.dataDate || null;
+  // Priority: 1. Daily Report Date (daily.reportDate), 2. PMS Data Date (converted to Jalali), 3. Never system/browser date
+  const rawReportDate = (daily?.reportDate && daily.reportDate !== 'N/A')
+    ? daily.reportDate
+    : (pms?.dataDate ? formatToJalali(pms.dataDate) : null);
   const parsedReportDate = parsePersianOrGregorianDate(rawReportDate);
 
   const rawStartDate = master?.startDate || '1403/12/21';
@@ -75,17 +77,19 @@ export function calculateExecutiveKPIs(
     effectiveEndLabelEn = `Baseline Finish: ${effectiveEndDate}`;
   }
 
-  if (parsedStartDate && parsedReportDate && effectiveEndDateParsed) {
-    const elapsed = differenceInCalendarDays(parsedReportDate.jalaliString, parsedStartDate.jalaliString);
+  // Calculate Total Duration Days from Date Difference: Effective End - Project Start
+  if (parsedStartDate && effectiveEndDateParsed) {
     const total = differenceInCalendarDays(effectiveEndDateParsed.jalaliString, parsedStartDate.jalaliString);
-
-    if (elapsed !== null && elapsed >= 0) {
-      timeElapsedDays = elapsed;
-    }
     if (total !== null && total > 0) {
       totalDurationDays = total;
     }
-    if (timeElapsedDays !== null && totalDurationDays > 0) {
+  }
+
+  // Calculate Elapsed Days from Date Difference: Daily Report Date - Project Start
+  if (parsedStartDate && parsedReportDate && totalDurationDays > 0) {
+    const elapsed = differenceInCalendarDays(parsedReportDate.jalaliString, parsedStartDate.jalaliString);
+    if (elapsed !== null && elapsed >= 0) {
+      timeElapsedDays = elapsed;
       timeElapsedPercentage = Number(((timeElapsedDays / totalDurationDays) * 100).toFixed(1));
     }
   }

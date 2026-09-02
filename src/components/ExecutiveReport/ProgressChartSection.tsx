@@ -170,25 +170,25 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
   });
 
   return (
-    <div id="progress-chart-card" className="progress-chart-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full">
+    <div id="scurve-section" className="progress-chart-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full">
       {/* Title */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-          <h2 className="text-[10.5px] font-extrabold text-slate-900 uppercase tracking-tight">
+          <h2 className="text-[10.5px] font-bold text-slate-900 uppercase tracking-tight">
             {isFa ? (
               <>
-                منحنی پیشرفت پروژه <span className="ltr-inline text-[9.5px] font-mono text-slate-500 font-bold">(Master S-Curve vs Actual)</span>
+                منحنی پیشرفت پروژه <span className="ltr-inline text-[9.5px] font-semibold text-slate-500">(Master S-Curve vs Actual)</span>
               </>
             ) : (
               'MASTER S-CURVE VS ACTUAL TREND'
             )}
           </h2>
         </div>
-        <span className="scurve-cutoff-label text-[9px] font-mono text-slate-500 font-medium">
+        <span className="scurve-cutoff-label text-[9px] text-slate-500 font-medium">
           {isFa ? (
             <>
-              تاریخ داده: <span className="ltr-inline font-mono">{pms.dataDate}</span>
+              تاریخ داده: <span className="ltr-inline font-bold">{pms.dataDate}</span>
             </>
           ) : (
             `Cut-off: ${pms.dataDate}`

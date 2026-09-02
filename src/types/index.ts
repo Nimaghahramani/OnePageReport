@@ -175,6 +175,42 @@ export interface DailyIssue {
   status?: 'open' | 'in_progress' | 'resolved' | null;
 }
 
+export const FINANCIAL_CALCULATION_BASE_IRR = 4230000000000; // 4,230,000,000,000 IRR (Current Approved Financial Calculation Base)
+export const EUR_TO_IRR = 556286; // 1 EUR = 556,286 IRR (Contractual Exchange Rate)
+
+/**
+ * Consolidated permanent business & presentation rules for the Executive Report.
+ * Establishes one source of truth for presentation and calculations.
+ */
+export const EXECUTIVE_REPORT_CONFIG = {
+  issues: {
+    maxItems: 3,
+    showResponsibleParty: false,
+    showEmptyPlaceholder: true,
+  },
+  activities: {
+    maxItems: 4,
+    showEmptyPlaceholder: false, // Do NOT show "موردی ثبت نشده است" when empty; collapse/hide
+  },
+  financial: {
+    calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 4,230,000,000,000 IRR
+    eurToIrrRate: EUR_TO_IRR, // 556,286 IRR/EUR
+  },
+  pdf: {
+    fontFamily: 'Vazirmatn',
+    orientation: 'landscape' as const,
+  },
+  masterDates: {
+    defaultStartDate: '1403/12/21',
+    contractualEndDate: '1405/06/21',
+    temporaryExtendedEndDate: '1405/10/30',
+  },
+  footer: {
+    preparedByFa: 'تهیه‌کننده: نیما قهرمانی',
+    preparedByEn: 'Prepared by: Nima Ghahramani',
+  }
+} as const;
+
 export interface DailyImportantActivity {
   id: string;
   sequence: number;
@@ -239,9 +275,6 @@ export interface DailyReportRecord {
     priority: 'urgent' | 'high' | 'normal';
   }[];
 }
-
-export const FINANCIAL_CALCULATION_BASE_IRR = 4230000000000; // 4,230,000,000,000 IRR (Current Approved Financial Calculation Base)
-export const EUR_TO_IRR = 556286; // 1 EUR = 556,286 IRR (Contractual Exchange Rate)
 
 export interface FinancialSettings {
   calculationBaseIRR: number; // e.g. 4230000000000

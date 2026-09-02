@@ -6,6 +6,7 @@ import {
   EquipmentRecord,
   ValidationIssue
 } from '../types';
+import { comparePersianOrIsoDates } from '../utils/jalaliDate';
 
 export function validateAllDatasets(
   master: ProjectMasterData | null,
@@ -227,6 +228,38 @@ export function validateAllDatasets(
         source: daily.source,
         dataDate: daily.dataDate
       });
+    }
+
+    if (daily.reportDate && daily.reportDate !== 'N/A' && master?.startDate) {
+      const cmpStart = comparePersianOrIsoDates(daily.reportDate, master.startDate);
+      if (cmpStart < 0) {
+        issues.push({
+          id: 'v-d-date-before-start',
+          type: 'error',
+          dataset: 'daily',
+          field: 'reportDate',
+          messageFa: `تاریخ گزارش (${daily.reportDate}) قبل از تاریخ شروع پروژه (${master.startDate}) است؛ منبع تاریخ گزارش بررسی شود.`,
+          messageEn: `Report Date (${daily.reportDate}) precedes Project Start Date (${master.startDate}). Check Report Date source.`,
+          source: daily.source || 'Daily Report',
+          dataDate: daily.reportDate,
+          isBlocking: true
+        });
+      }
+    }
+
+    if (daily.reportDate && daily.reportDate !== 'N/A' && master?.contractNotificationDate) {
+      if (daily.reportDate === master.contractNotificationDate) {
+        issues.push({
+          id: 'v-d-date-equals-notification',
+          type: 'warning',
+          dataset: 'daily',
+          field: 'reportDate',
+          messageFa: `تاریخ گزارش (${daily.reportDate}) با تاریخ ابلاغ قرارداد یکسان است؛ منبع تاریخ گزارش بررسی شود.`,
+          messageEn: `Report Date (${daily.reportDate}) matches Contract Notification Date. Check Report Date source.`,
+          source: daily.source || 'Daily Report',
+          dataDate: daily.reportDate
+        });
+      }
     }
   }
 

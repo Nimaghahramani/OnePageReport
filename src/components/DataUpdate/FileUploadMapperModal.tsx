@@ -528,17 +528,12 @@ export const FileUploadMapperModal: React.FC<FileUploadMapperModalProps> = ({
                     {workbookResult.keyIssues.map((iss, idx) => (
                       <div key={iss.id || idx} className="p-2 bg-slate-50/80 rounded border border-slate-200 space-y-1">
                         <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-start gap-1.5">
+                          <div className="flex items-start gap-1.5 flex-1">
                             <span className="font-mono font-bold text-slate-400 text-[11px]">#{idx + 1}</span>
                             <span className="font-bold text-slate-900 text-[11px] leading-snug">
                               {iss.issueFa}
                             </span>
                           </div>
-                          {iss.responsiblePartyFa && (
-                            <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-medium shrink-0">
-                              {iss.responsiblePartyFa}
-                            </span>
-                          )}
                         </div>
                         <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono pt-0.5">
                           <span>{isFa ? 'برگه مرجع:' : 'Sheet:'} {iss.sourceSheet || 'Construction (2)'}</span>

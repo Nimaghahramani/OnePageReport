@@ -1,0 +1,242 @@
+/* ========================================================================== */
+/* LOICO EXECUTIVE DAILY REPORT — CENTRAL THEME & TYPOGRAPHY TOKENS           */
+/* Design & Typography Reference: loico-delay-claim-analyzer (19)             */
+/* ========================================================================== */
+
+/* -------------------------------------------------------------------------- */
+/* 1. PRIMARY PERSIAN FONT: Vazirmatn                                          */
+/* -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/fonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2. SECONDARY LOCAL FALLBACK: IRANSansWeb                                    */
+/* -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'IRANSansWeb';
+  src: url('/fonts/IRANSansWeb-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSansWeb';
+  src: url('/fonts/IRANSansWeb-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IRANSansWeb';
+  src: url('/fonts/IRANSansWeb-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3. GLOBAL VARIABLES & LIGHT THEME (DEFAULT)                                 */
+/* -------------------------------------------------------------------------- */
+:root {
+  /* Proven Typography Hierarchy */
+  --font-persian: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif;
+  --font-persian-display: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif;
+  --font-latin: 'Vazirmatn', Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+
+  /* Screen App & Report Palette (Light Executive Standard) */
+  --bg-app: #F7F5EE;
+  --bg-report: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #EDF5FC;
+  --bg-surface-subtle: #F1F5F9;
+  --bg-card: #FFFFFF;
+  --bg-card-soft: #F8FAFC;
+
+  /* Borders */
+  --border: #CBD5E1;
+  --border-default: #CBD5E1;
+  --border-soft: #E2E8F0;
+
+  /* Typography Colors */
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+
+  /* Accent & Status Colors */
+  --primary: #0284C7;
+  --primary-dark: #0369A1;
+  --navy: #003366;
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #BE123C;
+
+  /* Executive Continuous Sidebar (Dark Surface) */
+  --sidebar-bg-top: #040E38;
+  --sidebar-bg-bottom: #07174A;
+  --sidebar-text: #D9E5F5;
+  --sidebar-icon: #B9CFF1;
+  --sidebar-active: #0A63D8;
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4. LOICO EXECUTIVE BLUE SCREEN THEME                                       */
+/* -------------------------------------------------------------------------- */
+[data-theme="loico-blue"] {
+  --bg-app: #030A28;
+  --bg-surface: #040E38;
+  --bg-surface-elevated: #081F5C;
+  --bg-report: #040E38;
+  --bg-card: #040E38;
+  --bg-card-soft: #081F5C;
+
+  --border: rgba(255, 255, 255, 0.12);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-soft: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+
+  --primary: #38BDF8;
+  --primary-dark: #0284C7;
+  --navy: #38BDF8;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #F43F5E;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5. GLOBAL ELEMENT TYPOGRAPHY & RTL/LTR UTILITIES                            */
+/* -------------------------------------------------------------------------- */
+html,
+body,
+#root {
+  font-family: var(--font-persian);
+  direction: rtl;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea,
+table,
+th,
+td {
+  font-family: var(--font-persian);
+}
+
+/* Explicit Report Font Rule — do not depend only on body inheritance */
+#executive-report,
+#executive-report *,
+#executive-report-sheet,
+#executive-report-sheet *,
+#print-report-root,
+#print-report-root *,
+#print-report-sheet,
+#print-report-sheet *,
+.print-canvas,
+.print-canvas * {
+  font-family: var(--font-persian);
+}
+
+/* Bidi & Inline Mixed English / Number Standard */
+.ltr-inline,
+.bidi-isolate,
+[dir="ltr"] {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  display: inline-block;
+}
+
+/* Line Height Standards to Prevent Persian Glyph Clipping */
+.report-persian-body {
+  line-height: 1.65;
+}
+
+.report-table-body {
+  line-height: 1.35;
+}
+
+.report-summary-text {
+  line-height: 1.7;
+}
+
+.report-heading-text {
+  line-height: 1.35;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6. STRICT PRINT & PDF OVERRIDE (ALWAYS EXECUTIVE LIGHT)                    */
+/* -------------------------------------------------------------------------- */
+@media print {
+  :root,
+  [data-theme="loico-blue"],
+  html,
+  body {
+    --bg-app: #FFFFFF !important;
+    --bg-report: #FFFFFF !important;
+    --bg-card: #FFFFFF !important;
+    --bg-card-soft: #F8FAFC !important;
+    --text-primary: #111827 !important;
+    --text-secondary: #374151 !important;
+    --text-muted: #64748B !important;
+    --border: #CBD5E1 !important;
+    --border-default: #CBD5E1 !important;
+    --border-soft: #E2E8F0 !important;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+  }
+
+  #executive-report,
+  #executive-report-sheet,
+  #print-report-root,
+  #print-report-sheet,
+  .print-canvas {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    box-shadow: none !important;
+  }
+
+  #executive-report,
+  #executive-report *,
+  #print-report-root,
+  #print-report-root * {
+    font-family: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif !important;
+  }
+}
