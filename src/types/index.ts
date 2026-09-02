@@ -220,6 +220,22 @@ export interface DailyImportantActivity {
   sourceRow: number;
 }
 
+export interface ManpowerCategoryBreakdown {
+  total: number | null;
+  present: number | null;
+  absent: number | null;
+  attendanceRatio?: number | null;
+}
+
+export interface SiteManpowerKPI {
+  direct: ManpowerCategoryBreakdown;
+  indirect: ManpowerCategoryBreakdown;
+  total: number | null;
+  present: number | null;
+  absent: number | null;
+  attendanceRatio: number | null;
+}
+
 export interface DailyReportRecord {
   id: string;
   version: number;
@@ -251,9 +267,15 @@ export interface DailyReportRecord {
   manpower: {
     direct: number | null;
     indirect: number | null;
-    subcontractor: number | null;
+    subcontractor?: number | null;
     total: number | null;
+    present?: number | null;
+    absent?: number | null;
+    attendanceRatio?: number | null;
+    directBreakdown?: ManpowerCategoryBreakdown;
+    indirectBreakdown?: ManpowerCategoryBreakdown;
   };
+  siteManpower?: SiteManpowerKPI;
   machinery: {
     active: number;
     standby: number;
@@ -542,6 +564,7 @@ export interface CalculatedReportKPIs {
   outstandingRatio: number | null;
   financialSummary: FinancialSummary | null;
   activeManpower: number | null;
+  siteManpower?: SiteManpowerKPI | null;
   activeMachinery: number | null;
   executiveSummaryLinesFa: string[];
   executiveSummaryLinesEn: string[];

@@ -564,7 +564,7 @@ export class ProjectDataStore {
       source: dailyFull.source || 'Site Supervision',
       user,
       status: warning ? 'warning' : 'active',
-      recordSummary: `Manpower: ${dailyFull.manpower.total} | Active Machinery: ${dailyFull.machinery.active} | Safe Hours: ${(dailyFull.safetyHSE.safeManHours / 1000000).toFixed(2)}M`
+      recordSummary: `Site Manpower: Total ${dailyFull.manpower.total ?? '—'} (Present: ${dailyFull.manpower.present ?? dailyFull.manpower.total ?? '—'}, Direct: ${dailyFull.manpower.direct ?? '—'}, Indirect: ${dailyFull.manpower.indirect ?? '—'}) | Active Machinery: ${dailyFull.machinery.active}`
     });
 
     this.notify();
@@ -575,7 +575,7 @@ export class ProjectDataStore {
   public applyDailyReportWorkbook(result: DailyReportWorkbookResult, user = 'Lead Planning Engineer'): { success: boolean; warnings: string[] } {
     const warnings: string[] = [...(result.warnings || [])];
 
-    // 1. Update Daily Report (Active Manpower = Direct + Indirect = 78, Key Issues from Construction (2))
+    // 1. Update Daily Report
     const dailyVersion = (this.currentDaily?.version || 0) + 1;
     const reportDateStr =
       result.reportDate
@@ -598,12 +598,25 @@ export class ProjectDataStore {
       workPerformedToday: [],
       managementDecisionsRequired: [],
       manpower: {
-        ...this.currentDaily.manpower,
-        direct: result.directPresent,
-        indirect: result.indirectPresent,
-        total: result.totalPresent, // 78
-        subcontractor: result.subcontractorPresent || this.currentDaily.manpower.subcontractor
+        ...this.currentDaily?.manpower,
+        direct: result.directPresent ?? result.directBreakdown?.present ?? null,
+        indirect: result.indirectPresent ?? result.indirectBreakdown?.present ?? null,
+        total: result.totalManpower ?? result.totalPresent ?? null,
+        present: result.totalPresent ?? null,
+        absent: result.absentManpower ?? null,
+        attendanceRatio: result.attendanceRatio ?? null,
+        directBreakdown: result.directBreakdown,
+        indirectBreakdown: result.indirectBreakdown,
+        subcontractor: result.subcontractorPresent || this.currentDaily?.manpower?.subcontractor || null
       },
+      siteManpower: result.siteManpower || (result.directBreakdown && result.indirectBreakdown ? {
+        direct: result.directBreakdown,
+        indirect: result.indirectBreakdown,
+        total: result.totalManpower ?? null,
+        present: result.totalPresent ?? null,
+        absent: result.absentManpower ?? null,
+        attendanceRatio: result.attendanceRatio ?? null
+      } : undefined),
       machinery: {
         ...this.currentDaily.machinery,
         active: result.machineryActive || this.currentDaily.machinery.active,
@@ -812,7 +825,7 @@ export class ProjectDataStore {
       source: `Daily Report Workbook`,
       user,
       status: 'active',
-      recordSummary: `Active Manpower: ${dailyFull.manpower.total} (Direct: ${dailyFull.manpower.direct}, Indirect: ${dailyFull.manpower.indirect}) | Detected Issues: ${dailyFull.keyIssues.length}`
+      recordSummary: `Site Manpower: Total ${dailyFull.manpower.total ?? '—'} (Present: ${dailyFull.manpower.present ?? dailyFull.manpower.total ?? '—'}, Direct: ${dailyFull.manpower.direct ?? '—'}, Indirect: ${dailyFull.manpower.indirect ?? '—'}) | Detected Issues: ${dailyFull.keyIssues.length}`
     });
 
     this.addAuditEntry({

@@ -346,10 +346,43 @@ export const initialDailyReportRecord: DailyReportRecord = {
   workOngoing: [],
   workPlannedTomorrow: [],
   manpower: {
-    direct: 342,
-    indirect: 86,
-    subcontractor: 194,
-    total: 622
+    direct: 39,
+    indirect: 38,
+    subcontractor: null,
+    total: 99,
+    present: 77,
+    absent: 22,
+    attendanceRatio: 77.78,
+    directBreakdown: {
+      total: 47,
+      present: 39,
+      absent: 8,
+      attendanceRatio: 82.98
+    },
+    indirectBreakdown: {
+      total: 52,
+      present: 38,
+      absent: 14,
+      attendanceRatio: 73.08
+    }
+  },
+  siteManpower: {
+    direct: {
+      total: 47,
+      present: 39,
+      absent: 8,
+      attendanceRatio: 82.98
+    },
+    indirect: {
+      total: 52,
+      present: 38,
+      absent: 14,
+      attendanceRatio: 73.08
+    },
+    total: 99,
+    present: 77,
+    absent: 22,
+    attendanceRatio: 77.78
   },
   machinery: {
     active: 38,
@@ -358,7 +391,7 @@ export const initialDailyReportRecord: DailyReportRecord = {
     total: 46
   },
   safetyHSE: {
-    safeManHours: 1845200,
+    safeManHours: null,
     lostTimeInjuries: 0,
     incidentsToday: 0
   },

@@ -6,6 +6,7 @@ import {
   IpcRecord,
   EquipmentRecord,
   CalculatedReportKPIs,
+  SiteManpowerKPI,
   FINANCIAL_CALCULATION_BASE_IRR
 } from '../types';
 import { getPlannedAtDate, calculateScheduleDelayFromPlannedCurve } from './scurveEngine';
@@ -210,9 +211,48 @@ export function calculateExecutiveKPIs(
     ? Number(((ipcPaid / ipcApproved) * 100).toFixed(1))
     : null;
 
-  // 5. Site Resources
-  const activeManpower = daily ? daily.manpower.total : null;
+  // 5. Site Resources & Manpower
+  const activeManpower = daily ? (daily.siteManpower?.total ?? daily.manpower?.total ?? null) : null;
   const activeMachinery = daily ? daily.machinery.active : null;
+
+  let siteManpower: SiteManpowerKPI | null = null;
+  if (daily) {
+    if (daily.siteManpower) {
+      siteManpower = daily.siteManpower;
+    } else if (daily.manpower) {
+      const dirTotal = daily.manpower.directBreakdown?.total ?? null;
+      const dirPresent = daily.manpower.directBreakdown?.present ?? daily.manpower.direct ?? null;
+      const dirAbsent = daily.manpower.directBreakdown?.absent ?? (dirTotal !== null && dirPresent !== null ? Math.max(0, dirTotal - dirPresent) : null);
+
+      const indTotal = daily.manpower.indirectBreakdown?.total ?? null;
+      const indPresent = daily.manpower.indirectBreakdown?.present ?? daily.manpower.indirect ?? null;
+      const indAbsent = daily.manpower.indirectBreakdown?.absent ?? (indTotal !== null && indPresent !== null ? Math.max(0, indTotal - indPresent) : null);
+
+      const total = daily.manpower.total ?? ((dirTotal || 0) + (indTotal || 0) || null);
+      const present = daily.manpower.present ?? ((dirPresent || 0) + (indPresent || 0) || null);
+      const absent = daily.manpower.absent ?? (total !== null && present !== null ? Math.max(0, total - present) : null);
+      const attendanceRatio = daily.manpower.attendanceRatio ?? (total && total > 0 && present !== null ? Number(((present / total) * 100).toFixed(1)) : null);
+
+      siteManpower = {
+        direct: {
+          total: dirTotal,
+          present: dirPresent,
+          absent: dirAbsent,
+          attendanceRatio: (dirTotal && dirTotal > 0 && dirPresent !== null) ? Number(((dirPresent / dirTotal) * 100).toFixed(2)) : null
+        },
+        indirect: {
+          total: indTotal,
+          present: indPresent,
+          absent: indAbsent,
+          attendanceRatio: (indTotal && indTotal > 0 && indPresent !== null) ? Number(((indPresent / indTotal) * 100).toFixed(2)) : null
+        },
+        total,
+        present,
+        absent,
+        attendanceRatio
+      };
+    }
+  }
 
   // 6. Generate Factual Executive Summary (3-5 Lines)
   const summaryFa: string[] = [];
@@ -405,6 +445,7 @@ export function calculateExecutiveKPIs(
     outstandingRatio: finSummary?.outstandingRatio ?? (ipcCachedRatio !== null ? Number((100 - ipcCachedRatio).toFixed(1)) : null),
     financialSummary: finSummary,
     activeManpower,
+    siteManpower,
     activeMachinery,
     executiveSummaryLinesFa: summaryFa.slice(0, 5),
     executiveSummaryLinesEn: summaryEn.slice(0, 5)

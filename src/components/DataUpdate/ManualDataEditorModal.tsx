@@ -146,57 +146,179 @@ export const ManualDataEditorModal: React.FC<ManualDataEditorModalProps> = ({
           {/* Daily Report Specific Fields */}
           {datasetType === 'daily' && (
             <div className="space-y-3">
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">{isFa ? 'نیروی مستقیم:' : 'Direct Manpower:'}</label>
-                  <input
-                    type="number"
-                    value={formData.manpower?.direct || 0}
-                    onChange={e => {
-                      const dir = parseInt(e.target.value) || 0;
-                      const ind = formData.manpower?.indirect || 0;
-                      const sub = formData.manpower?.subcontractor || 0;
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        manpower: { direct: dir, indirect: ind, subcontractor: sub, total: dir + ind + sub }
-                      }));
-                    }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:bg-white focus:border-blue-600 outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">{isFa ? 'نیروی غیرمستقیم:' : 'Indirect:'}</label>
-                  <input
-                    type="number"
-                    value={formData.manpower?.indirect || 0}
-                    onChange={e => {
-                      const ind = parseInt(e.target.value) || 0;
-                      const dir = formData.manpower?.direct || 0;
-                      const sub = formData.manpower?.subcontractor || 0;
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        manpower: { direct: dir, indirect: ind, subcontractor: sub, total: dir + ind + sub }
-                      }));
-                    }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:bg-white focus:border-blue-600 outline-hidden"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">{isFa ? 'پیمانکار دست‌دوم:' : 'Subcontractor:'}</label>
-                  <input
-                    type="number"
-                    value={formData.manpower?.subcontractor || 0}
-                    onChange={e => {
-                      const sub = parseInt(e.target.value) || 0;
-                      const dir = formData.manpower?.direct || 0;
-                      const ind = formData.manpower?.indirect || 0;
-                      setFormData((prev: any) => ({
-                        ...prev,
-                        manpower: { direct: dir, indirect: ind, subcontractor: sub, total: dir + ind + sub }
-                      }));
-                    }}
-                    className="w-full bg-slate-50 border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:bg-white focus:border-blue-600 outline-hidden"
-                  />
+              {/* Site Manpower Inputs */}
+              <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-2">
+                <span className="block text-xs font-bold text-slate-800">
+                  {isFa ? 'نیروی انسانی کارگاه (Site Manpower)' : 'Site Manpower'}
+                </span>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'مستقیم (حاضر / کل):' : 'Direct (Present / Total):'}</label>
+                    <div className="grid grid-cols-2 gap-1">
+                      <input
+                        type="number"
+                        placeholder={isFa ? 'حاضر' : 'Present'}
+                        value={formData.siteManpower?.direct?.present ?? formData.manpower?.direct ?? 0}
+                        onChange={e => {
+                          const dirP = parseInt(e.target.value) || 0;
+                          setFormData((prev: any) => {
+                            const cur = prev.siteManpower || {};
+                            const dirT = cur.direct?.total ?? prev.manpower?.directBreakdown?.total ?? 47;
+                            const indP = cur.indirect?.present ?? prev.manpower?.indirectBreakdown?.present ?? prev.manpower?.indirect ?? 38;
+                            const indT = cur.indirect?.total ?? prev.manpower?.indirectBreakdown?.total ?? 52;
+                            const tot = dirT + indT;
+                            const pres = dirP + indP;
+                            return {
+                              ...prev,
+                              manpower: {
+                                ...prev.manpower,
+                                direct: dirP,
+                                indirect: indP,
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null,
+                                directBreakdown: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirectBreakdown: { total: indT, present: indP, absent: Math.max(0, indT - indP) }
+                              },
+                              siteManpower: {
+                                direct: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirect: { total: indT, present: indP, absent: Math.max(0, indT - indP) },
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null
+                              }
+                            };
+                          });
+                        }}
+                        className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:border-blue-600 outline-hidden"
+                      />
+                      <input
+                        type="number"
+                        placeholder={isFa ? 'کل' : 'Total'}
+                        value={formData.siteManpower?.direct?.total ?? formData.manpower?.directBreakdown?.total ?? 0}
+                        onChange={e => {
+                          const dirT = parseInt(e.target.value) || 0;
+                          setFormData((prev: any) => {
+                            const cur = prev.siteManpower || {};
+                            const dirP = cur.direct?.present ?? prev.manpower?.directBreakdown?.present ?? prev.manpower?.direct ?? 39;
+                            const indP = cur.indirect?.present ?? prev.manpower?.indirectBreakdown?.present ?? prev.manpower?.indirect ?? 38;
+                            const indT = cur.indirect?.total ?? prev.manpower?.indirectBreakdown?.total ?? 52;
+                            const tot = dirT + indT;
+                            const pres = dirP + indP;
+                            return {
+                              ...prev,
+                              manpower: {
+                                ...prev.manpower,
+                                direct: dirP,
+                                indirect: indP,
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null,
+                                directBreakdown: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirectBreakdown: { total: indT, present: indP, absent: Math.max(0, indT - indP) }
+                              },
+                              siteManpower: {
+                                direct: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirect: { total: indT, present: indP, absent: Math.max(0, indT - indP) },
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null
+                              }
+                            };
+                          });
+                        }}
+                        className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:border-blue-600 outline-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'غیرمستقیم (حاضر / کل):' : 'Indirect (Present / Total):'}</label>
+                    <div className="grid grid-cols-2 gap-1">
+                      <input
+                        type="number"
+                        placeholder={isFa ? 'حاضر' : 'Present'}
+                        value={formData.siteManpower?.indirect?.present ?? formData.manpower?.indirect ?? 0}
+                        onChange={e => {
+                          const indP = parseInt(e.target.value) || 0;
+                          setFormData((prev: any) => {
+                            const cur = prev.siteManpower || {};
+                            const indT = cur.indirect?.total ?? prev.manpower?.indirectBreakdown?.total ?? 52;
+                            const dirP = cur.direct?.present ?? prev.manpower?.directBreakdown?.present ?? prev.manpower?.direct ?? 39;
+                            const dirT = cur.direct?.total ?? prev.manpower?.directBreakdown?.total ?? 47;
+                            const tot = dirT + indT;
+                            const pres = dirP + indP;
+                            return {
+                              ...prev,
+                              manpower: {
+                                ...prev.manpower,
+                                direct: dirP,
+                                indirect: indP,
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null,
+                                directBreakdown: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirectBreakdown: { total: indT, present: indP, absent: Math.max(0, indT - indP) }
+                              },
+                              siteManpower: {
+                                direct: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirect: { total: indT, present: indP, absent: Math.max(0, indT - indP) },
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null
+                              }
+                            };
+                          });
+                        }}
+                        className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:border-blue-600 outline-hidden"
+                      />
+                      <input
+                        type="number"
+                        placeholder={isFa ? 'کل' : 'Total'}
+                        value={formData.siteManpower?.indirect?.total ?? formData.manpower?.indirectBreakdown?.total ?? 0}
+                        onChange={e => {
+                          const indT = parseInt(e.target.value) || 0;
+                          setFormData((prev: any) => {
+                            const cur = prev.siteManpower || {};
+                            const indP = cur.indirect?.present ?? prev.manpower?.indirectBreakdown?.present ?? prev.manpower?.indirect ?? 38;
+                            const dirP = cur.direct?.present ?? prev.manpower?.directBreakdown?.present ?? prev.manpower?.direct ?? 39;
+                            const dirT = cur.direct?.total ?? prev.manpower?.directBreakdown?.total ?? 47;
+                            const tot = dirT + indT;
+                            const pres = dirP + indP;
+                            return {
+                              ...prev,
+                              manpower: {
+                                ...prev.manpower,
+                                direct: dirP,
+                                indirect: indP,
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null,
+                                directBreakdown: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirectBreakdown: { total: indT, present: indP, absent: Math.max(0, indT - indP) }
+                              },
+                              siteManpower: {
+                                direct: { total: dirT, present: dirP, absent: Math.max(0, dirT - dirP) },
+                                indirect: { total: indT, present: indP, absent: Math.max(0, indT - indP) },
+                                total: tot,
+                                present: pres,
+                                absent: Math.max(0, tot - pres),
+                                attendanceRatio: tot > 0 ? Number(((pres / tot) * 100).toFixed(1)) : null
+                              }
+                            };
+                          });
+                        }}
+                        className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:border-blue-600 outline-hidden"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -211,11 +333,11 @@ export const ManualDataEditorModal: React.FC<ManualDataEditorModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 mb-1 font-semibold">{isFa ? 'ساعت کار ایمن بدون حادثه:' : 'Safe Man-Hours:'}</label>
+                  <label className="block text-slate-700 mb-1 font-semibold">{isFa ? 'کل ماشین‌آلات:' : 'Total Machinery:'}</label>
                   <input
                     type="number"
-                    value={formData.safetyHSE?.safeManHours || 0}
-                    onChange={e => handleNestedChange('safetyHSE', 'safeManHours', parseInt(e.target.value) || 0)}
+                    value={formData.machinery?.total || 0}
+                    onChange={e => handleNestedChange('machinery', 'total', parseInt(e.target.value) || 0)}
                     className="w-full bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-slate-900 font-mono focus:bg-white focus:border-blue-600 outline-hidden"
                   />
                 </div>

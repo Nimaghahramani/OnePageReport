@@ -10,6 +10,8 @@ import {
   FinancialSummary,
   EquipmentProgressItem,
   EquipmentSummary,
+  ManpowerCategoryBreakdown,
+  SiteManpowerKPI,
   EUR_TO_IRR,
   FINANCIAL_CALCULATION_BASE_IRR,
   combinedEquivalentIRR,
@@ -30,9 +32,15 @@ export interface ParsedSheetData {
 }
 
 export interface ManpowerParseResult {
-  direct: number | null;
-  indirect: number | null;
-  total: number | null;
+  direct: number | null; // direct present
+  indirect: number | null; // indirect present
+  total: number | null; // total manpower (Direct Total + Indirect Total)
+  present: number | null; // present manpower (Direct Present + Indirect Present)
+  absent: number | null; // absent manpower (Total - Present)
+  attendanceRatio: number | null; // (Present / Total) * 100
+  directBreakdown?: ManpowerCategoryBreakdown;
+  indirectBreakdown?: ManpowerCategoryBreakdown;
+  siteManpower?: SiteManpowerKPI;
   subcontractor: number | null;
   machineryActive: number | null;
   machineryTotal: number | null;
@@ -113,6 +121,12 @@ export interface DailyReportWorkbookResult {
   directPresent: number | null;
   indirectPresent: number | null;
   totalPresent: number | null;
+  totalManpower?: number | null;
+  absentManpower?: number | null;
+  attendanceRatio?: number | null;
+  directBreakdown?: ManpowerCategoryBreakdown;
+  indirectBreakdown?: ManpowerCategoryBreakdown;
+  siteManpower?: SiteManpowerKPI;
   detectedIssuesCount: number;
   keyIssues: ExtractedIssue[];
   detectedActivitiesCount: number;
@@ -270,14 +284,28 @@ export function findSheetByName(workbook: XLSX.WorkBook, candidateNames: string[
 /**
  * 2. parseManpowerSheet()
  * Parses sheet 'MANPOWER-MACHINARY' (or variations).
- * Reads Direct Present and Indirect Present independently.
+ * Reads Direct Total/Present/Absent and Indirect Total/Present/Absent independently.
  *
  * Source sheet structure:
- * - Indirect manpower: Present column = I, Total row = 39 -> I39 = 39
- * - Direct manpower: Present column = N, Total row = 39 -> N39 = 39
- * - Active Manpower = Direct Present + Indirect Present = 39 + 39 = 78
+ * DIRECT:
+ * - Total: P39 = 47 (Col P, Row 39)
+ * - Present: N39 = 39 (Col N, Row 39)
+ * - Absent / Leave: M39 = 8 (Col M, Row 39)
+ * Validation: 47 = 39 + 8
  *
- * Real-data mode: No fake fallbacks (never 62/16 or 80/20 splits).
+ * INDIRECT:
+ * - Total: J39 = 52 (Col J, Row 39)
+ * - Present: I39 = 38 (Col I, Row 39)
+ * - Absent / Leave: H39 = 14 (Col H, Row 39)
+ * Validation: 52 = 38 + 14
+ *
+ * TOTALS:
+ * - Total Site Manpower = Direct Total (47) + Indirect Total (52) = 99
+ * - Total Present = Direct Present (39) + Indirect Present (38) = 77
+ * - Total Absent / Leave = Direct Absent (8) + Indirect Absent (14) = 22
+ * - Overall Attendance Ratio = (77 / 99) * 100 = 77.78% (Display: 77.8%)
+ * - Direct Attendance = (39 / 47) * 100 = 82.98% (Display: 83.0%)
+ * - Indirect Attendance = (38 / 52) * 100 = 73.08% (Display: 73.1%)
  */
 export function parseManpowerSheet(worksheet: XLSX.WorkSheet): ManpowerParseResult {
   const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
@@ -290,74 +318,193 @@ export function parseManpowerSheet(worksheet: XLSX.WorkSheet): ManpowerParseResu
     return undefined;
   };
 
-  // 1. Direct cell coordinates check on template:
-  // Indirect Present: column I (col index 8), Row 39 (rawRows[38]) -> I39
-  // Direct Present: column N (col index 13), Row 39 (rawRows[38]) -> N39
-  let indirectPresent: number | null = parseNumericCell(getCellVal('I39'));
+  // 1. Direct cell coordinates on Row 39:
+  // DIRECT:
+  // - Total: P39
+  // - Present: N39
+  // - Absent: M39
+  //
+  // INDIRECT:
+  // - Total: J39
+  // - Present: I39
+  // - Absent: H39
+  let directTotal: number | null = parseNumericCell(getCellVal('P39')) ?? parseNumericCell(getCellVal('O39'));
   let directPresent: number | null = parseNumericCell(getCellVal('N39'));
-  const indirectColName = 'I';
-  const directColName = 'N';
+  let directAbsent: number | null = parseNumericCell(getCellVal('M39'));
+
+  let indirectTotal: number | null = parseNumericCell(getCellVal('J39'));
+  let indirectPresent: number | null = parseNumericCell(getCellVal('I39'));
+  let indirectAbsent: number | null = parseNumericCell(getCellVal('H39'));
+
+  // Default 0-indexed column coordinates
+  let indirectAbsentCol = 7;   // Col H (index 7)
+  let indirectPresentCol = 8;  // Col I (index 8)
+  let indirectTotalCol = 9;    // Col J (index 9)
+
+  let directAbsentCol = 12;    // Col M (index 12)
+  let directPresentCol = 13;   // Col N (index 13)
+  let directTotalCol = 15;     // Col P (index 15)
   let totalRowFound = 39;
 
-  // 2. If direct cell coordinates did not yield both numbers, dynamically locate columns & total row
-  if (indirectPresent === null || directPresent === null) {
-    let indirectPresentCol = 8; // Default Col I (index 8)
-    let directPresentCol = 13;  // Default Col N (index 13)
-
-    // Scan headers to locate independent "حاضر" columns for Indirect and Direct
-    for (let r = 0; r < Math.min(rawRows.length, 12); r++) {
-      const row = rawRows[r];
-      if (!row) continue;
-      for (let c = 0; c < row.length; c++) {
-        const cellText = normalizeText(row[c]).toLowerCase();
-        if (/غیر\s*مستقیم|ستادی|indirect/i.test(cellText)) {
-          for (let subC = Math.max(0, c - 2); subC <= Math.min(row.length - 1, c + 8); subC++) {
-            for (let subR = r; subR < Math.min(rawRows.length, r + 4); subR++) {
-              const subText = normalizeText(rawRows[subR]?.[subC]).toLowerCase();
-              if (/حاضر|present/i.test(subText)) {
-                indirectPresentCol = subC;
-                break;
-              }
+  // 2. Dynamic column discovery from header rows
+  for (let r = 0; r < Math.min(rawRows.length, 12); r++) {
+    const row = rawRows[r];
+    if (!row) continue;
+    for (let c = 0; c < row.length; c++) {
+      const cellText = normalizeText(row[c]).toLowerCase();
+      // Indirect group section
+      if (/غیر\s*مستقیم|ستادی|دفتر\s*مرکزی|indirect/i.test(cellText)) {
+        for (let subC = Math.max(0, c - 2); subC <= Math.min(row.length - 1, c + 6); subC++) {
+          for (let subR = r; subR < Math.min(rawRows.length, r + 4); subR++) {
+            const subText = normalizeText(rawRows[subR]?.[subC]).toLowerCase();
+            if (/حاضر|present/i.test(subText)) {
+              indirectPresentCol = subC;
+            } else if (/مرخصی|غایب|غیبت|غیر\s*حاضر|absent|leave/i.test(subText)) {
+              indirectAbsentCol = subC;
+            } else if (/کل|مصوب|ظرفیت|تعداد\s*کل|مجاز|total/i.test(subText) && !/جمع/i.test(subText)) {
+              indirectTotalCol = subC;
             }
           }
         }
-        if (/مستقیم|اجرایی|direct/i.test(cellText) && !/غیر/i.test(cellText)) {
-          for (let subC = Math.max(0, c - 2); subC <= Math.min(row.length - 1, c + 8); subC++) {
-            for (let subR = r; subR < Math.min(rawRows.length, r + 4); subR++) {
-              const subText = normalizeText(rawRows[subR]?.[subC]).toLowerCase();
-              if (/حاضر|present/i.test(subText)) {
-                directPresentCol = subC;
-                break;
-              }
+      }
+      // Direct group section
+      if (/مستقیم|اجرایی|کارگاهی|direct/i.test(cellText) && !/غیر/i.test(cellText)) {
+        for (let subC = Math.max(0, c - 2); subC <= Math.min(row.length - 1, c + 6); subC++) {
+          for (let subR = r; subR < Math.min(rawRows.length, r + 4); subR++) {
+            const subText = normalizeText(rawRows[subR]?.[subC]).toLowerCase();
+            if (/حاضر|present/i.test(subText)) {
+              directPresentCol = subC;
+            } else if (/مرخصی|غایب|غیبت|غیر\s*حاضر|absent|leave/i.test(subText)) {
+              directAbsentCol = subC;
+            } else if (/کل|مصوب|ظرفیت|تعداد\s*کل|مجاز|total/i.test(subText) && !/جمع/i.test(subText)) {
+              directTotalCol = subC;
             }
           }
         }
       }
     }
+  }
 
-    // Locate the row containing "جمع کل" or "مجموع کل"
-    for (let r = 0; r < rawRows.length; r++) {
-      const row = rawRows[r];
-      if (!row) continue;
-      const rowJoined = row.map(normalizeText).join(' ').toLowerCase();
-      if (/جمع\s*کل|مجموع\s*کل|total\s*present|کل\s*حاضرین/i.test(rowJoined)) {
-        totalRowFound = r + 1;
-        const indVal = parseNumericCell(row[indirectPresentCol]);
-        const dirVal = parseNumericCell(row[directPresentCol]);
-        if (indVal !== null) indirectPresent = indVal;
-        if (dirVal !== null) directPresent = dirVal;
-        break;
-      }
+  // 3. Locate summary row containing "جمع کل" or "مجموع کل"
+  let foundSummaryRowIndex = -1;
+  for (let r = 0; r < rawRows.length; r++) {
+    const row = rawRows[r];
+    if (!row) continue;
+    const rowJoined = row.map(normalizeText).join(' ').toLowerCase();
+    if (/جمع\s*کل|مجموع\s*کل|total\s*present|کل\s*حاضرین|مجموع\s*نیروی\s*انسانی/i.test(rowJoined)) {
+      foundSummaryRowIndex = r;
+      totalRowFound = r + 1;
+      break;
     }
   }
 
-  // Active Manpower = Direct Present + Indirect Present
-  let totalPresent: number | null = null;
-  if (directPresent !== null || indirectPresent !== null) {
-    totalPresent = (directPresent || 0) + (indirectPresent || 0);
+  // If found summary row, extract values from detected columns if not already extracted via direct cells
+  if (foundSummaryRowIndex >= 0) {
+    const sRow = rawRows[foundSummaryRowIndex];
+    const indA = parseNumericCell(sRow[indirectAbsentCol]);
+    const indP = parseNumericCell(sRow[indirectPresentCol]);
+    const indT = parseNumericCell(sRow[indirectTotalCol]);
+
+    const dirA = parseNumericCell(sRow[directAbsentCol]);
+    const dirP = parseNumericCell(sRow[directPresentCol]);
+    const dirT = parseNumericCell(sRow[directTotalCol]);
+
+    if (indirectAbsent === null && indA !== null) indirectAbsent = indA;
+    if (indirectPresent === null && indP !== null) indirectPresent = indP;
+    if (indirectTotal === null && indT !== null) indirectTotal = indT;
+
+    if (directAbsent === null && dirA !== null) directAbsent = dirA;
+    if (directPresent === null && dirP !== null) directPresent = dirP;
+    if (directTotal === null && dirT !== null) directTotal = dirT;
   }
 
-  // Search machinery section dynamically (no fabricated fallback values)
+  // 4. Fallback scan on Row 39 (rawRows[38])
+  if (rawRows.length >= 39) {
+    const row39 = rawRows[38];
+    if (row39) {
+      if (indirectAbsent === null) indirectAbsent = parseNumericCell(row39[indirectAbsentCol]) ?? parseNumericCell(row39[7]);
+      if (indirectPresent === null) indirectPresent = parseNumericCell(row39[indirectPresentCol]) ?? parseNumericCell(row39[8]);
+      if (indirectTotal === null) indirectTotal = parseNumericCell(row39[indirectTotalCol]) ?? parseNumericCell(row39[9]);
+
+      if (directAbsent === null) directAbsent = parseNumericCell(row39[directAbsentCol]) ?? parseNumericCell(row39[12]);
+      if (directPresent === null) directPresent = parseNumericCell(row39[directPresentCol]) ?? parseNumericCell(row39[13]);
+      if (directTotal === null) directTotal = parseNumericCell(row39[directTotalCol]) ?? parseNumericCell(row39[15]) ?? parseNumericCell(row39[14]);
+    }
+  }
+
+  // 5. Validation & Mathematical Consistency Rules (Strict adherence: do NOT infer if explicit cells exist)
+  // Direct Manpower Validation: Total == Present + Absent
+  if (directTotal !== null && directPresent !== null && directAbsent !== null) {
+    if (directTotal !== directPresent + directAbsent) {
+      console.warn(`[Manpower Validation Warning] Direct Manpower mismatch: Total (${directTotal}) != Present (${directPresent}) + Absent (${directAbsent})`);
+    }
+  } else if (directTotal !== null && directPresent !== null && directAbsent === null) {
+    directAbsent = directTotal >= directPresent ? directTotal - directPresent : null;
+  } else if (directTotal === null && directPresent !== null && directAbsent !== null) {
+    directTotal = directPresent + directAbsent;
+  }
+
+  // Indirect Manpower Validation: Total == Present + Absent
+  if (indirectTotal !== null && indirectPresent !== null && indirectAbsent !== null) {
+    if (indirectTotal !== indirectPresent + indirectAbsent) {
+      console.warn(`[Manpower Validation Warning] Indirect Manpower mismatch: Total (${indirectTotal}) != Present (${indirectPresent}) + Absent (${indirectAbsent})`);
+    }
+  } else if (indirectTotal !== null && indirectPresent !== null && indirectAbsent === null) {
+    indirectAbsent = indirectTotal >= indirectPresent ? indirectTotal - indirectPresent : null;
+  } else if (indirectTotal === null && indirectPresent !== null && indirectAbsent !== null) {
+    indirectTotal = indirectPresent + indirectAbsent;
+  }
+
+  // 6. Calculate Attendance Ratios
+  const directAttendance = (directTotal !== null && directTotal > 0 && directPresent !== null)
+    ? Number(((directPresent / directTotal) * 100).toFixed(2))
+    : null;
+
+  const indirectAttendance = (indirectTotal !== null && indirectTotal > 0 && indirectPresent !== null)
+    ? Number(((indirectPresent / indirectTotal) * 100).toFixed(2))
+    : null;
+
+  // 7. Aggregate Total Site Manpower
+  const totalPresent = (directPresent !== null || indirectPresent !== null)
+    ? (directPresent || 0) + (indirectPresent || 0)
+    : null;
+
+  const totalManpower = (directTotal !== null || indirectTotal !== null)
+    ? (directTotal || 0) + (indirectTotal || 0)
+    : null;
+
+  const absentManpower = (directAbsent !== null || indirectAbsent !== null)
+    ? (directAbsent || 0) + (indirectAbsent || 0)
+    : ((totalManpower !== null && totalPresent !== null) ? Math.max(0, totalManpower - totalPresent) : null);
+
+  const attendanceRatio = (totalManpower !== null && totalManpower > 0 && totalPresent !== null)
+    ? Number(((totalPresent / totalManpower) * 100).toFixed(2))
+    : null;
+
+  const directBreakdown: ManpowerCategoryBreakdown = {
+    total: directTotal,
+    present: directPresent,
+    absent: directAbsent,
+    attendanceRatio: directAttendance
+  };
+
+  const indirectBreakdown: ManpowerCategoryBreakdown = {
+    total: indirectTotal,
+    present: indirectPresent,
+    absent: indirectAbsent,
+    attendanceRatio: indirectAttendance
+  };
+
+  const siteManpower: SiteManpowerKPI = {
+    direct: directBreakdown,
+    indirect: indirectBreakdown,
+    total: totalManpower,
+    present: totalPresent,
+    absent: absentManpower,
+    attendanceRatio
+  };
+
+  // Search machinery section dynamically
   let machineryActive: number | null = null;
   let machineryTotal: number | null = null;
   for (let r = 0; r < rawRows.length; r++) {
@@ -378,12 +525,18 @@ export function parseManpowerSheet(worksheet: XLSX.WorkSheet): ManpowerParseResu
   return {
     direct: directPresent,
     indirect: indirectPresent,
-    total: totalPresent,
+    total: totalManpower ?? totalPresent,
+    present: totalPresent,
+    absent: absentManpower,
+    attendanceRatio,
+    directBreakdown,
+    indirectBreakdown,
+    siteManpower,
     subcontractor: null,
     machineryActive,
     machineryTotal,
-    indirectPresentColumn: indirectColName,
-    directPresentColumn: directColName,
+    indirectPresentColumn: 'I',
+    directPresentColumn: 'N',
     totalRowIndex: totalRowFound
   };
 }
@@ -1729,6 +1882,9 @@ export async function parseDailyReportWorkbook(
       direct: null,
       indirect: null,
       total: null,
+      present: null,
+      absent: null,
+      attendanceRatio: null,
       subcontractor: null,
       machineryActive: null,
       machineryTotal: null
@@ -1873,7 +2029,13 @@ export async function parseDailyReportWorkbook(
     dashboardVariance: currentVariance, // Actual - Current PMS Plan (e.g. -25.13%)
     directPresent: manpowerData.direct,
     indirectPresent: manpowerData.indirect,
-    totalPresent: manpowerData.total,
+    totalPresent: manpowerData.present ?? manpowerData.total,
+    totalManpower: manpowerData.total,
+    absentManpower: manpowerData.absent,
+    attendanceRatio: manpowerData.attendanceRatio,
+    directBreakdown: manpowerData.directBreakdown,
+    indirectBreakdown: manpowerData.indirectBreakdown,
+    siteManpower: manpowerData.siteManpower,
     detectedIssuesCount: keyIssues.length,
     keyIssues,
     detectedActivitiesCount: importantActivities.length,

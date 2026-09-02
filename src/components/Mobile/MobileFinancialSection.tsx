@@ -1,6 +1,6 @@
 import React from 'react';
 import { IpcRecord, DailyReportRecord, Language } from '../../types';
-import { CreditCard, Users, ShieldCheck, Truck, Coins, ArrowUpRight } from 'lucide-react';
+import { CreditCard, Users, Truck } from 'lucide-react';
 
 interface MobileFinancialSectionProps {
   ipc: IpcRecord;
@@ -41,8 +41,44 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
   const collectionRatio = fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 92.1);
   const outstandingRatio = fin?.outstandingRatio ?? (100 - collectionRatio);
 
-  const manpower = daily.manpowerDaily;
-  const hse = daily.safetyHSE;
+  // Site Manpower calculations from structured DailyReportRecord
+  const mp = daily.siteManpower || (daily.manpower ? {
+    direct: daily.manpower.directBreakdown ?? {
+      total: null,
+      present: daily.manpower.direct,
+      absent: null
+    },
+    indirect: daily.manpower.indirectBreakdown ?? {
+      total: null,
+      present: daily.manpower.indirect,
+      absent: null
+    },
+    total: daily.manpower.total,
+    present: daily.manpower.present ?? ((daily.manpower.direct || 0) + (daily.manpower.indirect || 0) || null),
+    absent: daily.manpower.absent ?? null,
+    attendanceRatio: daily.manpower.attendanceRatio ?? null
+  } : null);
+
+  const totalMp = mp?.total !== null && mp?.total !== undefined ? mp.total : null;
+  const presentMp = mp?.present !== null && mp?.present !== undefined ? mp.present : null;
+  const absentMp = mp?.absent !== null && mp?.absent !== undefined ? mp.absent : (totalMp !== null && presentMp !== null ? Math.max(0, totalMp - presentMp) : null);
+  const attendanceRatio = mp?.attendanceRatio !== null && mp?.attendanceRatio !== undefined
+    ? mp.attendanceRatio
+    : (totalMp !== null && totalMp > 0 && presentMp !== null ? Number(((presentMp / totalMp) * 100).toFixed(1)) : null);
+
+  const dirPresent = mp?.direct?.present ?? daily.manpower?.direct ?? null;
+  const dirTotal = mp?.direct?.total ?? daily.manpower?.directBreakdown?.total ?? null;
+  const indPresent = mp?.indirect?.present ?? daily.manpower?.indirect ?? null;
+  const indTotal = mp?.indirect?.total ?? daily.manpower?.indirectBreakdown?.total ?? null;
+
+  const getAttendanceTheme = (ratio: number | null) => {
+    if (ratio === null) return { bar: 'bg-slate-300', text: 'text-slate-600', badge: 'bg-slate-100 text-slate-700 border-slate-200' };
+    if (ratio >= 85) return { bar: 'bg-emerald-500', text: 'text-emerald-700', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+    if (ratio >= 70) return { bar: 'bg-amber-500', text: 'text-amber-700', badge: 'bg-amber-50 text-amber-800 border-amber-200' };
+    return { bar: 'bg-rose-500', text: 'text-rose-700', badge: 'bg-rose-50 text-rose-800 border-rose-200' };
+  };
+
+  const attTheme = getAttendanceTheme(attendanceRatio);
 
   return (
     <div id="mobile-financial-section" className="mobile-financial-card bg-white border border-slate-200 rounded-xl p-3 shadow-xs mb-2.5">
@@ -138,48 +174,93 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
         </div>
       </div>
 
-      {/* Operational Site Metrics (Manpower, Machinery, HSE) */}
-      {(manpower || hse) && (
-        <div className="mt-2 pt-2 border-t border-slate-100">
-          <div className="grid grid-cols-3 gap-1.5 text-center text-[9px]">
-            {/* Manpower */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-1.5 flex flex-col justify-between">
-              <div className="flex items-center justify-center gap-1 text-slate-600 mb-0.5">
-                <Users className="w-3 h-3 text-slate-500" />
-                <span className="text-[8px] font-semibold">{isFa ? 'نیروی انسانی' : 'Manpower'}</span>
-              </div>
-              <span className="font-bold text-slate-900 font-mono text-[11px]">
-                {manpower?.totalPresent ?? (manpower ? `${(manpower.directLabor || 0) + (manpower.indirectLabor || 0)}` : '—')}
+      {/* Operational Site Metrics: Site Manpower KPI Card & Machinery */}
+      <div className="mt-2 pt-2 border-t border-slate-100 space-y-2">
+        {/* Site Manpower Card */}
+        <div id="mobile-kpi-site-manpower" className="bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+          <div className="flex items-center justify-between gap-1 mb-1.5">
+            <div className="flex items-center gap-1.5 text-slate-800 font-bold">
+              <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span className="text-[9.5px] text-slate-800">
+                {isFa ? 'نیروی انسانی کارگاه' : 'Site Manpower'}
               </span>
-              <span className="text-[7.5px] text-slate-400">{isFa ? 'نفر در کارگاه' : 'Persons on site'}</span>
+            </div>
+            {attendanceRatio !== null ? (
+              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${attTheme.badge}`}>
+                {attendanceRatio}% {isFa ? 'نسبت حضور' : 'Attendance'}
+              </span>
+            ) : (
+              <span className="text-[8px] text-slate-400 font-medium">—</span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-baseline gap-1">
+              <span className="text-slate-500 text-[8px]">{isFa ? 'کل:' : 'Total:'}</span>
+              <span className="font-extrabold text-slate-950 text-[14px] font-mono leading-none">
+                {totalMp !== null ? totalMp : '—'}
+              </span>
+              <span className="text-slate-400 text-[7.5px]">{isFa ? 'نفر' : 'pax'}</span>
             </div>
 
-            {/* Machinery */}
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-1.5 flex flex-col justify-between">
-              <div className="flex items-center justify-center gap-1 text-slate-600 mb-0.5">
-                <Truck className="w-3 h-3 text-slate-500" />
-                <span className="text-[8px] font-semibold">{isFa ? 'ماشین‌آلات' : 'Machinery'}</span>
-              </div>
-              <span className="font-bold text-slate-900 font-mono text-[11px]">
-                {daily.machineryAndEquipment?.totalActiveMachinery ?? (daily.machineryAndEquipment?.items?.length || '—')}
+            <div className="flex items-center gap-2 text-[8px]">
+              <span className="text-emerald-700 font-semibold flex items-center gap-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                {isFa ? 'حاضر:' : 'Pres:'}{' '}
+                <strong className="font-bold text-[9px] text-emerald-900">{presentMp !== null ? presentMp : '—'}</strong>
               </span>
-              <span className="text-[7.5px] text-slate-400">{isFa ? 'دستگاه فعال' : 'Active units'}</span>
-            </div>
-
-            {/* HSE Safe Man-Hours */}
-            <div className="bg-emerald-50/50 border border-emerald-200 rounded-lg p-1.5 flex flex-col justify-between">
-              <div className="flex items-center justify-center gap-1 text-emerald-800 mb-0.5">
-                <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                <span className="text-[8px] font-semibold">{isFa ? 'ساعات ایمن' : 'Safe Hours'}</span>
-              </div>
-              <span className="font-bold text-emerald-950 font-mono text-[11px]">
-                {hse?.safeManHoursCumulative ? formatIrr(hse.safeManHoursCumulative) : (hse?.incidentFreeDays ? `${hse.incidentFreeDays}d` : '—')}
+              <span className="text-rose-700 font-semibold flex items-center gap-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                {isFa ? 'غایب:' : 'Abs:'}{' '}
+                <strong className="font-bold text-[9px] text-rose-900">{absentMp !== null ? absentMp : '—'}</strong>
               </span>
-              <span className="text-[7.5px] text-emerald-700">{isFa ? 'بدون حادثه' : 'LTI Free'}</span>
             </div>
           </div>
+
+          {/* Breakdown chips */}
+          <div className="grid grid-cols-2 gap-1.5 text-[8px] text-slate-600 bg-white border border-slate-200 p-1 rounded mb-1.5">
+            <div className="flex items-center justify-between">
+              <span>{isFa ? 'مستقیم (حاضر/کل):' : 'Direct (Pres/Tot):'}</span>
+              <strong className="text-slate-900 font-bold font-mono">
+                {dirPresent !== null ? (dirTotal !== null ? `${dirPresent} / ${dirTotal}` : dirPresent) : '—'}
+              </strong>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{isFa ? 'غیرمستقیم (حاضر/کل):' : 'Indirect (Pres/Tot):'}</span>
+              <strong className="text-slate-900 font-bold font-mono">
+                {indPresent !== null ? (indTotal !== null ? `${indPresent} / ${indTotal}` : indPresent) : '—'}
+              </strong>
+            </div>
+          </div>
+
+          {/* Attendance progress bar */}
+          <div className="w-full bg-slate-200/80 h-1.5 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${attTheme.bar}`}
+              style={{ width: `${Math.min(100, Math.max(0, attendanceRatio || 0))}%` }}
+            />
+          </div>
         </div>
-      )}
+
+        {/* Machinery Row */}
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center justify-between text-[9px]">
+          <div className="flex items-center gap-1.5 text-slate-700">
+            <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <span className="font-semibold text-slate-800">{isFa ? 'ماشین‌آلات کارگاه' : 'Site Machinery'}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-900 font-mono text-[11px]">
+              {daily.machinery?.active ?? '—'} <span className="text-[8px] font-normal text-slate-500">/ {daily.machinery?.total ?? '—'}</span>
+            </span>
+            {daily.machinery?.active !== undefined && daily.machinery?.total !== undefined && daily.machinery.total > 0 && (
+              <span className="text-[7.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1 rounded">
+                {Math.round((daily.machinery.active / daily.machinery.total) * 100)}%
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
+
