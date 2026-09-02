@@ -184,7 +184,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <aside
       id="app-sidebar"
-      className="app-sidebar no-print transition-all select-none flex flex-col shrink-0"
+      className="app-sidebar hidden md:flex no-print transition-all select-none flex-col shrink-0"
       aria-label={isFa ? 'ناوبری سامانه گزارش مدیریتی' : 'Executive Navigation Sidebar'}
     >
       {/* 1. LOICO Logo Section (84px height) */}

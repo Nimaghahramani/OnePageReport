@@ -9,7 +9,20 @@ interface ExecutiveSummaryCardProps {
 
 export const ExecutiveSummaryCard: React.FC<ExecutiveSummaryCardProps> = ({ kpis, lang }) => {
   const isFa = lang === 'fa';
-  const lines = isFa ? kpis.executiveSummaryLinesFa : kpis.executiveSummaryLinesEn;
+  const rawLines = isFa ? (kpis.executiveSummaryLinesFa || []) : (kpis.executiveSummaryLinesEn || []);
+  const lines = rawLines.filter(
+    (line) =>
+      typeof line === 'string' &&
+      line.trim().length > 0 &&
+      !line.includes('undefined') &&
+      !line.includes('NaN') &&
+      !line.includes('null') &&
+      !line.includes('N/A%')
+  );
+
+  if (lines.length === 0) {
+    return null;
+  }
 
   return (
     <div id="executive-summary-section" className="executive-summary-card border border-blue-200 bg-blue-50/50 rounded p-2 shadow-2xs mb-2">

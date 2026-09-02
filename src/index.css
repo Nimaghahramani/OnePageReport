@@ -1268,3 +1268,106 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   background: rgba(125, 211, 252, 0.5);
 }
 
+/* ======================================================== */
+/* 5. MOBILE ADAPTIVE EXECUTIVE DASHBOARD (< 768px)         */
+/* ======================================================== */
+.mobile-executive-view {
+  font-family: var(--font-persian);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.mobile-executive-view * {
+  box-sizing: border-box;
+}
+
+/* LOICO Blue theme for mobile dashboard components */
+[data-theme="loico-blue"] .mobile-report-header,
+[data-theme="loico-blue"] .mobile-summary-card,
+[data-theme="loico-blue"] .mobile-progress-card,
+[data-theme="loico-blue"] .mobile-pms-card,
+[data-theme="loico-blue"] .mobile-equipment-card,
+[data-theme="loico-blue"] .mobile-financial-card,
+[data-theme="loico-blue"] .mobile-issues-card,
+[data-theme="loico-blue"] .mobile-activities-card {
+  background: rgba(10, 35, 78, 0.90) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="loico-blue"] .mobile-kpi-card {
+  background: rgba(10, 35, 78, 0.85) !important;
+  border-color: rgba(125, 211, 252, 0.28) !important;
+}
+
+[data-theme="loico-blue"] .mobile-bottom-navigation {
+  background: rgba(6, 26, 58, 0.95) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+}
+
+[data-theme="loico-blue"] .mobile-bottom-navigation button {
+  color: #94a3b8 !important;
+}
+
+[data-theme="loico-blue"] .mobile-bottom-navigation button.text-blue-900 {
+  color: #38bdf8 !important;
+}
+
+[data-theme="loico-blue"] .mobile-bottom-navigation .bg-blue-100\/80 {
+  background: rgba(14, 165, 233, 0.25) !important;
+  color: #38bdf8 !important;
+}
+
+[data-theme="loico-blue"] .mobile-executive-view h1,
+[data-theme="loico-blue"] .mobile-executive-view h2,
+[data-theme="loico-blue"] .mobile-executive-view h3 {
+  color: #ffffff !important;
+}
+
+[data-theme="loico-blue"] .mobile-executive-view .text-slate-900,
+[data-theme="loico-blue"] .mobile-executive-view .text-slate-800 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="loico-blue"] .mobile-executive-view .text-slate-700,
+[data-theme="loico-blue"] .mobile-executive-view .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="loico-blue"] .mobile-executive-view .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+[data-theme="loico-blue"] .mobile-executive-view .bg-slate-50,
+[data-theme="loico-blue"] .mobile-executive-view .bg-slate-50\/80,
+[data-theme="loico-blue"] .mobile-executive-view .bg-slate-50\/70,
+[data-theme="loico-blue"] .mobile-executive-view .bg-slate-50\/60,
+[data-theme="loico-blue"] .mobile-executive-view .bg-slate-50\/50,
+[data-theme="loico-blue"] .mobile-executive-view .bg-slate-100 {
+  background: rgba(6, 24, 56, 0.70) !important;
+  border-color: rgba(125, 211, 252, 0.18) !important;
+}
+
+[data-theme="loico-blue"] .mobile-executive-view .bg-white {
+  background: rgba(8, 28, 64, 0.90) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
+}
+
+/* Prevent horizontal overflow on mobile viewports */
+@media (max-width: 767px) {
+  body {
+    overflow-x: hidden !important;
+  }
+  .executive-app-shell {
+    overflow-x: hidden !important;
+  }
+  .executive-main-content {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 5.5rem !important; /* Space for fixed bottom navigation */
+  }
+}
+
+

@@ -7,10 +7,14 @@ import { DataUpdateView } from './components/DataUpdate/DataUpdateView';
 import { ProjectMasterDataView } from './components/MasterData/ProjectMasterDataView';
 import { VersionHistoryView } from './components/VersionHistory/VersionHistoryView';
 import { DataValidationPanel } from './components/Validation/DataValidationPanel';
+import { MobileExecutiveView } from './components/Mobile/MobileExecutiveView';
+import { MobileBottomNavigation } from './components/Mobile/MobileBottomNavigation';
+import { MobileMoreSheet } from './components/Mobile/MobileMoreSheet';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('report');
   const [activeMenuItem, setActiveMenuItem] = useState<SidebarMenuItemId>('dashboard');
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [lang, setLang] = useState<Language>('fa');
   const [theme, setTheme] = useState<Theme>(() => {
     try {
@@ -191,16 +195,35 @@ export default function App() {
       <main className="executive-main-content flex-1 min-w-0 p-2 sm:p-3 md:p-3.5 flex justify-center items-start overflow-y-auto">
         <div className="executive-report-stage w-full max-w-[1500px] p-1.5 sm:p-2 bg-[#dfe6ef] rounded-xl shadow-xs">
           {activeTab === 'report' && (
-            <ExecutiveReportView
-              master={master}
-              pms={pms}
-              daily={daily}
-              ipc={ipc}
-              equipment={equipment}
-              kpis={kpis}
-              masterSCurve={masterSCurve}
-              lang={lang}
-            />
+            <>
+              {/* Desktop & Tablet Report View (>= 768px) */}
+              <div className="hidden md:block w-full">
+                <ExecutiveReportView
+                  master={master}
+                  pms={pms}
+                  daily={daily}
+                  ipc={ipc}
+                  equipment={equipment}
+                  kpis={kpis}
+                  masterSCurve={masterSCurve}
+                  lang={lang}
+                />
+              </div>
+
+              {/* Mobile Adaptive Executive View (< 768px) */}
+              <div className="block md:hidden w-full">
+                <MobileExecutiveView
+                  master={master}
+                  pms={pms}
+                  daily={daily}
+                  ipc={ipc}
+                  equipment={equipment}
+                  kpis={kpis}
+                  masterSCurve={masterSCurve}
+                  lang={lang}
+                />
+              </div>
+            </>
           )}
 
           {activeTab === 'update' && (
@@ -238,7 +261,7 @@ export default function App() {
         </div>
       </main>
 
-      {/* Right-Side Executive LOICO Sidebar */}
+      {/* Right-Side Executive LOICO Sidebar (>= 768px) */}
       <AppSidebar
         activeItem={activeMenuItem}
         activeTab={activeTab}
@@ -251,6 +274,29 @@ export default function App() {
         onResetData={handleResetData}
         issues={issues}
       />
+
+      {/* Mobile Bottom Navigation (< 768px) */}
+      <div className="block md:hidden">
+        <MobileBottomNavigation
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          onOpenMore={() => setIsMoreSheetOpen(true)}
+          lang={lang}
+        />
+        <MobileMoreSheet
+          isOpen={isMoreSheetOpen}
+          onClose={() => setIsMoreSheetOpen(false)}
+          activeTab={activeTab}
+          onSelectTab={setActiveTab}
+          lang={lang}
+          onToggleLang={handleToggleLang}
+          theme={theme}
+          onSelectTheme={setTheme}
+          onDirectPrint={handleDirectPrint}
+          onResetData={handleResetData}
+          issues={issues}
+        />
+      </div>
 
       {/* Dedicated Print-Only Root Container (Part 9 & 23 of user instructions) */}
       <div id="print-report-root" className="print-only-report" data-theme="light" dir={lang === 'fa' ? 'rtl' : 'ltr'}>

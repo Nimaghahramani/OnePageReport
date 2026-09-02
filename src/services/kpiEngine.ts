@@ -15,6 +15,38 @@ import {
   formatToJalali
 } from '../utils/jalaliDate';
 
+/**
+ * Validates whether a value is a valid finite numeric value.
+ * Treats undefined, null, NaN, '', 'N/A', 'undefined', 'null' as missing.
+ */
+export function isValidNumericValue(value: unknown): boolean {
+  if (
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    value === 'N/A' ||
+    value === 'undefined' ||
+    value === 'null'
+  ) {
+    return false;
+  }
+
+  const n = Number(value);
+  return Number.isFinite(n);
+}
+
+/**
+ * Normalizes percentage values without arbitrary multiplication.
+ * E.g., 0.0625 -> 6.25, 6.25 -> 6.25, -0.94 -> -94, -94 -> -94.
+ */
+export function normalizePercent(value: number): number | null {
+  if (!Number.isFinite(value)) return null;
+
+  return Math.abs(value) <= 1 && Math.abs(value) > 0
+    ? Number((value * 100).toFixed(2))
+    : value;
+}
+
 export function calculateExecutiveKPIs(
   master: ProjectMasterData | null,
   pms: PmsRecord | null,
@@ -187,66 +219,147 @@ export function calculateExecutiveKPIs(
   const summaryEn: string[] = [];
 
   // Line 1: Progress & Variance
-  if (actualProgress !== null && plannedProgress !== null && progressVariance !== null) {
-    const varTextFa = progressVariance >= 0 ? `+${progressVariance}% جلوتر از برنامه` : `${Math.abs(progressVariance)}% انحراف منفی`;
-    const varTextEn = progressVariance >= 0 ? `+${progressVariance}% ahead of plan` : `${Math.abs(progressVariance)}% negative variance`;
+  if (isValidNumericValue(actualProgress) && isValidNumericValue(plannedProgress) && isValidNumericValue(progressVariance)) {
+    const numActual = Number(actualProgress);
+    const numPlanned = Number(plannedProgress);
+    const numVar = Number(progressVariance);
+    const varTextFa = numVar >= 0 ? `+${numVar}% جلوتر از برنامه` : `${Math.abs(numVar)}% انحراف منفی`;
+    const varTextEn = numVar >= 0 ? `+${numVar}% ahead of plan` : `${Math.abs(numVar)}% negative variance`;
     summaryFa.push(
-      `پیشرفت تجمعی واقعی پروژه به ${actualProgress}% رسید در حالی که برنامه زمان‌بندی مصوب ${plannedProgress}% بوده است (${varTextFa}).`
+      `پیشرفت تجمعی واقعی پروژه به ${numActual}% رسید در حالی که برنامه زمان‌بندی مصوب ${numPlanned}% بوده است (${varTextFa}).`
     );
     summaryEn.push(
-      `Cumulative actual progress reached ${actualProgress}% versus planned target of ${plannedProgress}% (${varTextEn}).`
+      `Cumulative actual progress reached ${numActual}% versus planned target of ${numPlanned}% (${varTextEn}).`
     );
   } else {
     summaryFa.push('اطلاعات کافی جهت تحلیل مقایسه‌ای پیشرفت برنامه‌ای و واقعی ثبت نشده است.');
     summaryEn.push('Insufficient data to evaluate planned vs actual progress variance.');
   }
 
-  // Line 2: Critical discipline / Lag
-  if (pms && pms.disciplineProgress.length > 0) {
-    const worstDiscipline = [...pms.disciplineProgress].sort((a, b) => a.variance - b.variance)[0];
-    if (worstDiscipline && worstDiscipline.variance < 0) {
-      summaryFa.push(
-        `بیشترین انحراف پیشرفت مربوط به دیسیپلین ${worstDiscipline.nameFa} با انحراف ${worstDiscipline.variance}% و وزن ${worstDiscipline.weight}% از کل کار است.`
-      );
-      summaryEn.push(
-        `Major progress delay is focused in ${worstDiscipline.nameEn} with ${worstDiscipline.variance}% variance (Weight: ${worstDiscipline.weight}%).`
-      );
+  // Line 2: Critical discipline / Lag (Source-Safe, No Fabricated Weight, No undefined%)
+  if (pms && Array.isArray(pms.disciplineProgress) && pms.disciplineProgress.length > 0) {
+    const validDisciplines = pms.disciplineProgress.filter((d) => {
+      const v = d.variance !== undefined ? d.variance : (isValidNumericValue(d.actual) && isValidNumericValue(d.planned) ? Number(d.actual) - Number(d.planned) : null);
+      return isValidNumericValue(v);
+    });
+
+    if (validDisciplines.length > 0) {
+      const worstDiscipline = [...validDisciplines].sort((a, b) => {
+        const varA = isValidNumericValue(a.variance) ? Number(a.variance) : (Number(a.actual || 0) - Number(a.planned || 0));
+        const varB = isValidNumericValue(b.variance) ? Number(b.variance) : (Number(b.actual || 0) - Number(b.planned || 0));
+        return varA - varB;
+      })[0];
+
+      const disciplineName = worstDiscipline?.nameFa || worstDiscipline?.name || null;
+      const disciplineNameEn = worstDiscipline?.nameEn || worstDiscipline?.name || disciplineName;
+
+      const rawVariance = worstDiscipline?.variance !== undefined
+        ? worstDiscipline.variance
+        : (isValidNumericValue(worstDiscipline?.actual) && isValidNumericValue(worstDiscipline?.planned)
+            ? Number(worstDiscipline.actual) - Number(worstDiscipline.planned)
+            : undefined);
+
+      const rawWeight = worstDiscipline?.weight;
+
+      const hasValidVariance = isValidNumericValue(rawVariance);
+      const hasValidWeight = isValidNumericValue(rawWeight);
+
+      if (disciplineName && hasValidVariance) {
+        const numVar = Number(rawVariance);
+        const normVar = normalizePercent(numVar);
+        
+        if (normVar !== null && normVar < 0) {
+          const formattedVariance = normVar % 1 === 0 ? normVar.toString() : normVar.toFixed(1);
+          const varianceTextFa = `${formattedVariance} واحد درصد`;
+          const varianceTextEn = `${formattedVariance} percentage points`;
+
+          if (hasValidWeight) {
+            const numWeight = Number(rawWeight);
+            const normWeight = normalizePercent(numWeight);
+            const weightFormatted = normWeight !== null ? (normWeight % 1 === 0 ? normWeight.toString() : normWeight.toFixed(2)) : '';
+            
+            summaryFa.push(
+              `بیشترین انحراف پیشرفت مربوط به دیسیپلین ${disciplineName} با انحراف ${varianceTextFa} و وزن ${weightFormatted}% از کل پروژه است.`
+            );
+            summaryEn.push(
+              `Major progress delay is focused in ${disciplineNameEn} with ${varianceTextEn} variance and weight of ${weightFormatted}% of total project.`
+            );
+          } else {
+            summaryFa.push(
+              `بیشترین انحراف پیشرفت مربوط به دیسیپلین ${disciplineName} با انحراف ${varianceTextFa} است.`
+            );
+            summaryEn.push(
+              `Major progress delay is focused in ${disciplineNameEn} with ${varianceTextEn} variance.`
+            );
+          }
+        }
+      }
     }
   }
 
   // Line 3: Equipment & Installation
-  if (equipment && equipmentTotal !== null && equipmentInstalled !== null) {
-    const acceptedPart = equipment.accepted !== undefined ? ` و ${equipment.accepted} آیتم تایید نهایی شده است` : '';
-    const acceptedPartEn = equipment.accepted !== undefined ? `, with ${equipment.accepted} accepted` : '';
+  if (equipment && isValidNumericValue(equipmentTotal) && isValidNumericValue(equipmentInstalled)) {
+    const numTotal = Number(equipmentTotal);
+    const numInstalled = Number(equipmentInstalled);
+    const numPerc = isValidNumericValue(equipment.installationPercentage)
+      ? Number(equipment.installationPercentage)
+      : (numTotal > 0 ? Number(((numInstalled / numTotal) * 100).toFixed(1)) : null);
+    const percText = numPerc !== null ? ` (${numPerc}%)` : '';
+    const acceptedPart = isValidNumericValue(equipment.accepted) ? ` و ${equipment.accepted} آیتم تایید نهایی شده است` : '';
+    const acceptedPartEn = isValidNumericValue(equipment.accepted) ? `, with ${equipment.accepted} accepted` : '';
     summaryFa.push(
-      `در بخش نصب تجهیزات، از مجموع ${equipmentTotal} آیتم، تعداد ${equipmentInstalled} آیتم (${equipment.installationPercentage}%)${acceptedPart} نصب شده است.`
+      `در بخش نصب تجهیزات، از مجموع ${numTotal} آیتم، تعداد ${numInstalled} آیتم${percText}${acceptedPart} نصب شده است.`
     );
     summaryEn.push(
-      `In equipment installation, ${equipmentInstalled} out of ${equipmentTotal} units (${equipment.installationPercentage}%)${acceptedPartEn} are installed.`
+      `In equipment installation, ${numInstalled} out of ${numTotal} units${percText}${acceptedPartEn} are installed.`
     );
   }
 
   // Line 4: Dual-Currency Financial Status
-  if (finSummary) {
-    const finProg = finSummary.financialProgress !== null ? `${finSummary.financialProgress}%` : '-';
-    const colRatio = finSummary.collectionRatio !== null ? `${finSummary.collectionRatio}%` : '-';
+  if (finSummary && (isValidNumericValue(finSummary.financialProgress) || isValidNumericValue(finSummary.collectionRatio))) {
+    const finProg = isValidNumericValue(finSummary.financialProgress) ? `${finSummary.financialProgress}%` : null;
+    const colRatio = isValidNumericValue(finSummary.collectionRatio) ? `${finSummary.collectionRatio}%` : null;
+    const ipcLabelFa = finSummary.latestInvoiceNumber ? `IPC-${finSummary.latestInvoiceNumber}` : (ipc?.latestIpcNo || 'جاری');
+    const ipcLabelEn = finSummary.latestInvoiceNumber ? `IPC #${finSummary.latestInvoiceNumber}` : (ipc?.latestIpcNo || 'latest IPC');
+
+    if (finProg && colRatio) {
+      summaryFa.push(
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، پیشرفت مالی تجمعی به ${finProg} و نسبت وصول مطالبات به ${colRatio} رسیده است.`
+      );
+      summaryEn.push(
+        `Financial status: Cumulative financial progress is ${finProg} with a collection ratio of ${colRatio} for ${ipcLabelEn}.`
+      );
+    } else if (finProg) {
+      summaryFa.push(
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، پیشرفت مالی تجمعی به ${finProg} رسیده است.`
+      );
+      summaryEn.push(
+        `Financial status: Cumulative financial progress is ${finProg} for ${ipcLabelEn}.`
+      );
+    } else if (colRatio) {
+      summaryFa.push(
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، نسبت وصول مطالبات به ${colRatio} رسیده است.`
+      );
+      summaryEn.push(
+        `Financial status: Collection ratio reached ${colRatio} for ${ipcLabelEn}.`
+      );
+    }
+  } else if (ipc && isValidNumericValue(ipcApproved) && isValidNumericValue(ipcPaid)) {
+    const numPaid = Number(ipcPaid);
+    const numApproved = Number(ipcApproved);
+    const numOutstanding = isValidNumericValue(ipcOutstanding) ? Number(ipcOutstanding) : Math.max(0, numApproved - numPaid);
+    const ratio = isValidNumericValue(ipcCachedRatio) ? `${ipcCachedRatio}%` : `${((numPaid / numApproved) * 100).toFixed(1)}%`;
+    const curr = ipc.currency || 'ریال';
     summaryFa.push(
-      `وضعیت مالی: در آخرین صورت‌وضعیت (${finSummary.latestInvoiceNumber ? `IPC-${finSummary.latestInvoiceNumber}` : ipc?.latestIpcNo || 'جاری'})، پیشرفت مالی تجمعی به ${finProg} و نسبت وصول مطالبات به ${colRatio} رسیده است.`
+      `وضعیت مالی: در آخرین صورت‌وضعیت (${ipc.latestIpcNo || 'جاری'})، مبلغ ${numPaid.toLocaleString()} ${curr} معادل ${ratio} از مبلغ تاییدشده پرداخت و ${numOutstanding.toLocaleString()} ${curr} مطالبات باز مانده است.`
     );
     summaryEn.push(
-      `Financial status: Cumulative financial progress is ${finProg} with a collection ratio of ${colRatio} for ${finSummary.latestInvoiceNumber ? `IPC #${finSummary.latestInvoiceNumber}` : ipc?.latestIpcNo || 'latest IPC'}.`
-    );
-  } else if (ipc && ipcApproved !== null && ipcPaid !== null && ipcOutstanding !== null) {
-    summaryFa.push(
-      `وضعیت مالی: در آخرین صورت‌وضعیت (${ipc.latestIpcNo})، مبلغ ${ipcPaid.toLocaleString()} ${ipc.currency} معادل ${ipcCachedRatio}% از مبلغ تاییدشده پرداخت و ${ipcOutstanding.toLocaleString()} ${ipc.currency} مطالبات باز مانده است.`
-    );
-    summaryEn.push(
-      `Financial status: For ${ipc.latestIpcNo}, ${ipcPaid.toLocaleString()} ${ipc.currency} (${ipcCachedRatio}% of approved) is disbursed with ${ipcOutstanding.toLocaleString()} ${ipc.currency} outstanding.`
+      `Financial status: For ${ipc.latestIpcNo || 'latest IPC'}, ${numPaid.toLocaleString()} ${curr} (${ratio} of approved) is disbursed with ${numOutstanding.toLocaleString()} ${curr} outstanding.`
     );
   }
 
   // Line 5: Key Issues Summary
-  if (daily && daily.keyIssues && daily.keyIssues.length > 0) {
+  if (daily && Array.isArray(daily.keyIssues) && daily.keyIssues.length > 0) {
     summaryFa.push(
       `در گزارش روزانه ${daily.keyIssues.length} مانع/مشکل ثبت شده است.`
     );
