@@ -12,15 +12,13 @@ import {
   Users,
   TriangleAlert,
   ClipboardCheck,
-  UploadCloud,
-  Building2,
-  History,
-  ShieldCheck,
   Download,
   Printer,
   Sun,
   Palette,
-  RotateCcw
+  RotateCcw,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 
 export type SidebarMenuItemId =
@@ -33,10 +31,7 @@ export type SidebarMenuItemId =
   | 'manpower'
   | 'issues'
   | 'activities'
-  | 'settings'
-  | 'master'
-  | 'history'
-  | 'validation';
+  | 'admin';
 
 interface AppSidebarProps {
   activeItem: SidebarMenuItemId;
@@ -48,11 +43,13 @@ interface AppSidebarProps {
   onSelectTheme: (theme: Theme) => void;
   onDirectPrint: () => void;
   onResetData: () => void;
-  issues: ValidationIssue[];
+  onOpenAdminLogin: () => void;
+  isAdminLoggedIn?: boolean;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
   activeItem,
+  activeTab,
   onSelectMenu,
   lang,
   onToggleLang,
@@ -60,12 +57,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onSelectTheme,
   onDirectPrint,
   onResetData,
-  issues
+  onOpenAdminLogin,
+  isAdminLoggedIn = false
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const isFa = lang === 'fa';
-
-  const warningCount = issues.filter(i => i.type === 'error' || i.type === 'warning').length;
 
   const handleExportPdf = async () => {
     if (isExportingPdf) return;
@@ -146,41 +142,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     }
   ];
 
-  // 2. System Management Tools (Direct in the same sidebar)
-  const systemToolItems: {
-    id: SidebarMenuItemId;
-    titleFa: string;
-    titleEn: string;
-    icon: React.ComponentType<{ className?: string }>;
-    badge?: number;
-  }[] = [
-    {
-      id: 'settings',
-      titleFa: 'ورود اطلاعات اکسل',
-      titleEn: 'Excel Data Import',
-      icon: UploadCloud
-    },
-    {
-      id: 'master',
-      titleFa: 'داده‌های پایه پروژه',
-      titleEn: 'Master Data Setup',
-      icon: Building2
-    },
-    {
-      id: 'history',
-      titleFa: 'سوابق و تاریخچه تغییرات',
-      titleEn: 'Audit & Version History',
-      icon: History
-    },
-    {
-      id: 'validation',
-      titleFa: 'اعتبارسنجی و خطایابی داده‌ها',
-      titleEn: 'Data Validation Diagnostics',
-      icon: ShieldCheck,
-      badge: warningCount
-    }
-  ];
-
   return (
     <aside
       id="app-sidebar"
@@ -201,7 +162,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               LOICO
             </span>
             <span className="text-[7.5px] text-[#B9CFF1] font-mono block mt-0.5 opacity-85">
-              CCPP 500MW
+              P1 MAHSHAHR
             </span>
           </div>
         </button>
@@ -238,52 +199,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </div>
           );
         })}
-
-        {/* Subtle Separator */}
-        <div className="my-1.5 mx-3 border-t border-white/8" />
-
-        {/* System Management Tools */}
-        {systemToolItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeItem === item.id;
-          const tooltip = isFa ? item.titleFa : item.titleEn;
-
-          return (
-            <div key={item.id} className="relative group flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => onSelectMenu(item.id)}
-                className={`sidebar-item flex items-center justify-center transition-all cursor-pointer relative focus:outline-hidden ${
-                  isActive ? 'active' : ''
-                }`}
-                title={tooltip}
-                aria-label={tooltip}
-              >
-                <div className="sidebar-icon-wrap flex items-center justify-center shrink-0">
-                  <Icon className="w-[19px] h-[19px]" />
-                </div>
-
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`absolute top-1.5 right-2 px-1 rounded-full text-[7.5px] font-bold ${
-                    isActive ? 'bg-rose-500 text-white' : 'bg-rose-900 text-rose-200 border border-rose-600/60'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-
-              {/* Floating Tooltip to the Left of the Right Sidebar */}
-              <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                {tooltip}
-              </div>
-            </div>
-          );
-        })}
       </nav>
 
-      {/* 3. Bottom Actions: Direct PDF & Direct Print */}
+      {/* 3. Bottom Actions: Direct PDF & Direct Print & Admin Access */}
       <div className="sidebar-bottom p-2 border-t border-white/8 space-y-1.5 shrink-0">
-        {/* PDF Export Button (Direct single-click A4 Landscape download) */}
+        {/* PDF Export Button */}
         <div className="relative group">
           <button
             type="button"
@@ -298,14 +218,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             aria-label="Export PDF"
           >
             <Download className={`w-4 h-4 shrink-0 ${isExportingPdf ? 'animate-bounce' : ''}`} />
-            <span className="font-sans font-bold">{isExportingPdf ? (isFa ? '...' : '...') : 'PDF'}</span>
+            <span className="font-sans font-bold">{isExportingPdf ? '...' : 'PDF'}</span>
           </button>
           <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
             {isFa ? 'خروجی مستقیم فایل PDF استاندارد A4 Landscape' : 'Direct Export A4 Landscape PDF'}
           </div>
         </div>
 
-        {/* Print Button (Direct single-click native browser print) */}
+        {/* Print Button */}
         <div className="relative group">
           <button
             type="button"
@@ -322,7 +242,33 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
         </div>
 
-        {/* Utility Controls Row: Theme, Language, Reset */}
+        {/* Admin Access Button */}
+        <div className="relative group">
+          <button
+            type="button"
+            onClick={onOpenAdminLogin}
+            className="w-full h-[30px] flex items-center justify-center gap-1 rounded-md bg-slate-900/60 hover:bg-blue-900/40 text-[#9BB5D6] hover:text-white border border-blue-500/20 font-medium text-[9.5px] transition cursor-pointer"
+            title={isFa ? 'ورود به پنل مدیریت و انتشار گزارش' : 'Admin Workspace'}
+            aria-label="Admin Access"
+          >
+            {isAdminLoggedIn ? (
+              <>
+                <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                <span>{isFa ? 'میز کار مدیر' : 'Admin'}</span>
+              </>
+            ) : (
+              <>
+                <Lock className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>{isFa ? 'ورود مدیر' : 'Admin'}</span>
+              </>
+            )}
+          </button>
+          <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+            {isFa ? 'ورود به میز کار مدیریت و بارگذاری/انتشار فایل‌ها' : 'Administrator Publishing Workspace'}
+          </div>
+        </div>
+
+        {/* Utility Controls Row: Theme, Language */}
         <div className="flex items-center justify-around pt-1 border-t border-white/5">
           {/* Theme Switcher Button */}
           <button
@@ -343,22 +289,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <button
             type="button"
             onClick={onToggleLang}
-            className="px-1 py-0.5 rounded hover:bg-white/8 text-[#B9CFF1] hover:text-white text-[10px] font-mono font-bold transition cursor-pointer"
+            className="px-1.5 py-0.5 rounded hover:bg-white/8 text-[#B9CFF1] hover:text-white text-[10px] font-mono font-bold transition cursor-pointer"
             title={isFa ? 'Switch to English' : 'تغییر به فارسی'}
             aria-label="Toggle Language"
           >
             {isFa ? 'EN' : 'فا'}
-          </button>
-
-          {/* Reset Demo Data */}
-          <button
-            type="button"
-            onClick={onResetData}
-            className="p-1 rounded hover:bg-white/8 text-[#B9CFF1] hover:text-rose-300 transition cursor-pointer"
-            title={isFa ? 'بازنشانی داده‌ها' : 'Reset Demo Data'}
-            aria-label="Reset Data"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

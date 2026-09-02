@@ -12,7 +12,8 @@ import {
   ValidationIssue,
   FinancialSettings,
   FINANCIAL_CALCULATION_BASE_IRR,
-  EUR_TO_IRR
+  EUR_TO_IRR,
+  PublishedReport
 } from '../types';
 import {
   initialProjectMasterData,
@@ -28,6 +29,7 @@ import { calculateExecutiveKPIs } from './kpiEngine';
 import { getPlannedAtDate, calculateScheduleDelayFromPlannedCurve } from './scurveEngine';
 import { DailyReportWorkbookResult, ProjectMasterImportResult } from './excelParser';
 import { formatToJalali } from '../utils/jalaliDate';
+import { buildPublishedReportSnapshot } from './publishService';
 
 const defaultFinancialSettings: FinancialSettings = {
   calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 4,230,000,000,000 IRR
@@ -973,6 +975,50 @@ export class ProjectDataStore {
     this.saveToStorage(STORAGE_KEYS.EQUIPMENT_HISTORY, this.equipmentHistory);
 
     this.notify();
+  }
+
+  /**
+   * Hydrates this store with a published official snapshot from server.
+   * Completely preserves identical calculations and models.
+   */
+  public hydrateFromPublishedReport(report: PublishedReport): void {
+    if (!report) return;
+
+    if (report.project) this.masterData = report.project;
+    if (report.scurve) this.masterSCurve = report.scurve;
+    if (report.pms) this.currentPms = report.pms;
+    if (report.daily) this.currentDaily = report.daily;
+    if (report.financial) this.currentIpc = report.financial;
+    if (report.equipment) this.currentEquipment = report.equipment;
+
+    // Persist to local cache for instant reload
+    this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
+    this.saveToStorage(STORAGE_KEYS.MASTER_SCURVE, this.masterSCurve);
+    this.saveToStorage(STORAGE_KEYS.PMS, this.currentPms);
+    this.saveToStorage(STORAGE_KEYS.DAILY, this.currentDaily);
+    this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
+    this.saveToStorage(STORAGE_KEYS.EQUIPMENT, this.currentEquipment);
+
+    this.notify();
+  }
+
+  /**
+   * Generates a normalized PublishedReport object from current store state.
+   */
+  public exportPublishedSnapshot(publishedBy?: string, notes?: string, version = 1): PublishedReport {
+    return buildPublishedReportSnapshot({
+      projectId: this.masterData?.id || 'P1-MAHSHAHR',
+      version,
+      reportDate: this.currentDaily?.reportDate || '1405/06/08',
+      publishedBy: publishedBy || 'مدیر برنامه‌ریزی و کنترل پروژه',
+      master: this.masterData,
+      masterSCurve: this.masterSCurve,
+      pms: this.currentPms,
+      daily: this.currentDaily,
+      ipc: this.currentIpc,
+      equipment: this.currentEquipment,
+      notes
+    });
   }
 }
 

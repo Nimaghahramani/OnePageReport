@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { EquipmentRecord, EquipmentProgressItem, Language } from '../../types';
-import { initialEquipmentItems } from '../../data/sampleData';
 import { Wrench, ChevronDown, ChevronUp, Info, CheckCircle2 } from 'lucide-react';
 
 interface MobileEquipmentSectionProps {
@@ -13,13 +12,13 @@ export const MobileEquipmentSection: React.FC<MobileEquipmentSectionProps> = ({ 
   const [showDetails, setShowDetails] = useState(false);
   const [activeRemark, setActiveRemark] = useState<{ name: string; text: string } | null>(null);
 
-  // Derive items strictly from current equipment record
+  // Derive items strictly from current equipment record (no sample fallback)
   const items: EquipmentProgressItem[] =
     equipment.items && equipment.items.length > 0
       ? equipment.items
       : equipment.equipmentSummary?.items && equipment.equipmentSummary.items.length > 0
       ? equipment.equipmentSummary.items
-      : (equipment.totalEquipment ? [] : initialEquipmentItems);
+      : [];
 
   // Calculate totals
   const totalCount =
