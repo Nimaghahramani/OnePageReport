@@ -46,7 +46,10 @@ export function validatePublishedReportPayload(report: any): ValidationResult {
   if (!report.kpis || typeof report.kpis !== 'object') {
     blockingErrors.push('بخش شاخص‌های کلیدی عملکرد (KPIs) در گزارش وجود ندارد.');
   } else {
-    const { plannedProgress, actualProgress, variance, timeElapsedPercentage } = report.kpis;
+    const { plannedProgress, actualProgress, variance, progressVariance, timeElapsedPercentage } = report.kpis;
+    const effectiveVariance = (typeof variance === 'number' && !isNaN(variance) && isFinite(variance))
+      ? variance
+      : (typeof progressVariance === 'number' && !isNaN(progressVariance) && isFinite(progressVariance) ? progressVariance : null);
 
     if (typeof plannedProgress !== 'number' || isNaN(plannedProgress) || !isFinite(plannedProgress)) {
       blockingErrors.push('مقدار درصد پیشرفت برنامه‌ای (Planned Progress) نامعتبر یا NaN است.');
@@ -60,8 +63,17 @@ export function validatePublishedReportPayload(report: any): ValidationResult {
       warnings.push(`درصد پیشرفت واقعی (${actualProgress}%) خارج از بازه متعارف ۰ تا ۱۰۰ است.`);
     }
 
-    if (typeof variance !== 'number' || isNaN(variance) || !isFinite(variance)) {
-      blockingErrors.push('مقدار انحراف پیشرفت (Variance) نامعتبر یا NaN است.');
+    if (effectiveVariance === null) {
+      // If both planned and actual are valid numbers, compute variance
+      if (typeof actualProgress === 'number' && typeof plannedProgress === 'number') {
+        report.kpis.variance = Number((actualProgress - plannedProgress).toFixed(2));
+        report.kpis.progressVariance = report.kpis.variance;
+      } else {
+        blockingErrors.push('مقدار انحراف پیشرفت (Variance) نامعتبر یا NaN است.');
+      }
+    } else {
+      report.kpis.variance = effectiveVariance;
+      report.kpis.progressVariance = effectiveVariance;
     }
 
     if (typeof timeElapsedPercentage !== 'number' || isNaN(timeElapsedPercentage) || !isFinite(timeElapsedPercentage)) {
@@ -74,12 +86,31 @@ export function validatePublishedReportPayload(report: any): ValidationResult {
     blockingErrors.push('داده‌های ساختار شکست پیشرفت (PMS) ارسال نشده است.');
   } else {
     const pms = report.pms;
-    const top = pms.topLevelProgress;
-    if (top) {
-      if (typeof top.plan !== 'number' || isNaN(top.plan) || !isFinite(top.plan)) {
+    // Check root progress in pms (plannedProgress / actualProgress)
+    if (pms.plannedProgress !== undefined && pms.plannedProgress !== null && (typeof pms.plannedProgress !== 'number' || isNaN(pms.plannedProgress) || !isFinite(pms.plannedProgress))) {
+      blockingErrors.push('پیشرفت برنامه‌ای در ساختار PMS نامعتبر است.');
+    }
+    if (pms.actualProgress !== undefined && pms.actualProgress !== null && (typeof pms.actualProgress !== 'number' || isNaN(pms.actualProgress) || !isFinite(pms.actualProgress))) {
+      blockingErrors.push('پیشرفت واقعی در ساختار PMS نامعتبر است.');
+    }
+
+    // Check topLevelProgress if provided as array or single item
+    if (Array.isArray(pms.topLevelProgress)) {
+      pms.topLevelProgress.forEach((item: any, idx: number) => {
+        if (item && item.planned !== undefined && item.planned !== null && (typeof item.planned !== 'number' || isNaN(item.planned) || !isFinite(item.planned))) {
+          warnings.push(`پیشرفت برنامه‌ای در سطح اصلی WBS [${item.wbsName || idx}] نامعتبر است.`);
+        }
+        if (item && item.actual !== undefined && item.actual !== null && (typeof item.actual !== 'number' || isNaN(item.actual) || !isFinite(item.actual))) {
+          warnings.push(`پیشرفت واقعی در سطح اصلی WBS [${item.wbsName || idx}] نامعتبر است.`);
+        }
+      });
+    } else if (pms.topLevelProgress && typeof pms.topLevelProgress === 'object') {
+      const top = pms.topLevelProgress;
+      if (top.planned !== undefined && top.plan === undefined) top.plan = top.planned;
+      if (top.plan !== undefined && (typeof top.plan !== 'number' || isNaN(top.plan) || !isFinite(top.plan))) {
         blockingErrors.push('پیشرفت برنامه‌ای در ساختار PMS نامعتبر است.');
       }
-      if (typeof top.actual !== 'number' || isNaN(top.actual) || !isFinite(top.actual)) {
+      if (top.actual !== undefined && (typeof top.actual !== 'number' || isNaN(top.actual) || !isFinite(top.actual))) {
         blockingErrors.push('پیشرفت واقعی در ساختار PMS نامعتبر است.');
       }
     }
