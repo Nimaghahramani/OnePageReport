@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ActiveTab, Language } from '../../types';
-import { LayoutDashboard, FileText, Download, Menu, Layers, CalendarRange, LineChart, Wrench, CreditCard, AlertOctagon } from 'lucide-react';
-import { exportExecutiveReportToPdf } from '../../services/pdfExportService';
+import { LayoutDashboard, FileText, UploadCloud, Menu, Layers, CalendarRange, LineChart, Wrench, CreditCard, AlertOctagon } from 'lucide-react';
 
 interface MobileBottomNavigationProps {
   activeTab: ActiveTab;
@@ -18,7 +17,6 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
 }) => {
   const isFa = lang === 'fa';
   const [showSectionJump, setShowSectionJump] = useState(false);
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const handleHomeClick = () => {
     if (activeTab !== 'report') {
@@ -26,18 +24,6 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setShowSectionJump(false);
-  };
-
-  const handleExportPdf = async () => {
-    if (isExportingPdf) return;
-    setIsExportingPdf(true);
-    try {
-      await exportExecutiveReportToPdf('print-report-sheet', 'Executive_Daily_Report.pdf');
-    } catch (err) {
-      console.error('Mobile PDF export error:', err);
-    } finally {
-      setIsExportingPdf(false);
-    }
   };
 
   const handleJumpToSection = (sectionId: string) => {
@@ -138,17 +124,23 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
           <span className="text-[10px] leading-none tracking-tight">{isFa ? 'بخش‌ها' : 'Sections'}</span>
         </button>
 
-        {/* 3. PDF Export Direct */}
+        {/* 3. Data / Import */}
         <button
           type="button"
-          onClick={handleExportPdf}
-          disabled={isExportingPdf}
-          className="flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-blue-900 transition-colors cursor-pointer disabled:opacity-50"
+          onClick={() => {
+            setShowSectionJump(false);
+            onSelectTab('update');
+          }}
+          className={`flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
+            activeTab === 'update'
+              ? 'text-blue-900 font-bold'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
         >
-          <div className="p-1 rounded-lg">
-            <Download className={`w-5 h-5 ${isExportingPdf ? 'animate-bounce text-blue-600' : ''}`} />
+          <div className={`p-1 rounded-lg transition-all ${activeTab === 'update' ? 'bg-blue-100/80 text-blue-900' : ''}`}>
+            <UploadCloud className="w-5 h-5" />
           </div>
-          <span className="text-[10px] leading-none tracking-tight">{isFa ? 'خروجی PDF' : 'PDF'}</span>
+          <span className="text-[10px] leading-none tracking-tight">{isFa ? 'داده‌ها' : 'Data'}</span>
         </button>
 
         {/* 4. More Menu Sheet */}

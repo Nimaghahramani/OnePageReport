@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ActiveTab, Language, Theme, ValidationIssue } from '../../types';
 import { exportExecutiveReportToPdf } from '../../services/pdfExportService';
 import {
+  UploadCloud,
   Building2,
   History,
   ShieldCheck,
@@ -13,7 +14,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Lock
+  FileSpreadsheet,
+  Layers
 } from 'lucide-react';
 
 interface MobileMoreSheetProps {
@@ -27,8 +29,7 @@ interface MobileMoreSheetProps {
   onSelectTheme: (theme: Theme) => void;
   onDirectPrint: () => void;
   onResetData: () => void;
-  onOpenAdminLogin: () => void;
-  isAdminLoggedIn?: boolean;
+  issues: ValidationIssue[];
 }
 
 export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
@@ -42,11 +43,11 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   onSelectTheme,
   onDirectPrint,
   onResetData,
-  onOpenAdminLogin,
-  isAdminLoggedIn = false
+  issues
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const isFa = lang === 'fa';
+  const warningCount = issues.filter(i => i.type === 'error' || i.type === 'warning').length;
 
   if (!isOpen) return null;
 
@@ -69,20 +70,39 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
 
   const navItems = [
     {
+      id: 'update' as ActiveTab,
+      titleFa: 'ورود و بارگذاری اطلاعات اکسل',
+      titleEn: 'Excel Data Import',
+      descFa: 'بارگذاری فایل‌های اکسل روزانه، PMS، تجهیزات و صورت‌وضعیت',
+      descEn: 'Upload Daily Report, PMS, Equipment and IPC spreadsheets',
+      icon: UploadCloud,
+      color: 'text-blue-600 bg-blue-50 border-blue-200'
+    },
+    {
       id: 'master' as ActiveTab,
-      titleFa: 'مشخصات پایه پروژه (Master Data)',
-      titleEn: 'Project Master Specs',
+      titleFa: 'داده‌های پایه پروژه (Master Data)',
+      titleEn: 'Project Master Data',
       descFa: 'مشخصات قرارداد، ارکان پروژه، تاریخ‌ها و احجام کلان',
       descEn: 'Contract specs, stakeholders, baseline dates & scope',
       icon: Building2,
       color: 'text-indigo-600 bg-indigo-50 border-indigo-200'
     },
     {
+      id: 'validation' as ActiveTab,
+      titleFa: 'اعتبارسنجی و خطایابی داده‌ها',
+      titleEn: 'Data Validation Diagnostics',
+      descFa: 'بررسی عدم انطباق‌ها، کنترل محاسبات و لاگ‌های خطا',
+      descEn: 'Audit discrepancies, calculation checks and error logs',
+      icon: ShieldCheck,
+      color: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+      badge: warningCount
+    },
+    {
       id: 'history' as ActiveTab,
-      titleFa: 'سوابق و تاریخچه انتشارات رسمی',
-      titleEn: 'Official Publication History',
-      descFa: 'ثبت و ردیابی ویرایش‌ها و نسخه‌های منتشرشده',
-      descEn: 'Track official revisions and published snapshots',
+      titleFa: 'سوابق و تاریخچه تغییرات',
+      titleEn: 'Audit & Version History',
+      descFa: 'ثبت و ردیابی ویرایش‌ها و نسخه‌های بارگذاری‌شده',
+      descEn: 'Track updates and revision snapshots',
       icon: History,
       color: 'text-slate-600 bg-slate-50 border-slate-200'
     }
@@ -102,10 +122,10 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
         <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
           <div>
             <h3 className="text-sm font-bold text-slate-900 leading-tight">
-              {isFa ? 'منوی امکانات و ابزارها' : 'Features & Tools Menu'}
+              {isFa ? 'منوی مدیریت سامانه و ابزارها' : 'Management & Tools Menu'}
             </h3>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              {isFa ? 'گزارش مدیریتی پروژه اسکله P1 ماهشهر' : 'LOICO Executive Daily Portal'}
+              {isFa ? 'گزارش مدیریتی پروژه نیروگاه ۵۰۰ مگاوات LOICO' : 'LOICO 500MW CCPP Executive Portal'}
             </p>
           </div>
           <button
@@ -146,6 +166,11 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
                       <span className="text-[11px] font-bold text-slate-900 truncate">
                         {isFa ? item.titleFa : item.titleEn}
                       </span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[8.5px] font-bold font-mono">
+                          {item.badge}
+                        </span>
+                      )}
                     </div>
                     <p className="text-[9px] text-slate-500 truncate mt-0.5">
                       {isFa ? item.descFa : item.descEn}
@@ -160,40 +185,9 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
               </button>
             );
           })}
-
-          {/* Admin Access Entry */}
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              onOpenAdminLogin();
-            }}
-            className="w-full flex items-center justify-between p-2.5 rounded-xl border bg-slate-900 text-white hover:bg-slate-800 border-slate-800 transition-all cursor-pointer text-right rtl:text-right ltr:text-left min-h-[48px]"
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className="w-8 h-8 rounded-lg bg-blue-600/30 border border-blue-400/30 flex items-center justify-center shrink-0 text-blue-300">
-                {isAdminLoggedIn ? <ShieldCheck className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold text-white truncate">
-                    {isAdminLoggedIn ? (isFa ? 'میز کار مدیریت (Admin Workspace)' : 'Admin Workspace') : (isFa ? 'ورود به پنل مدیریت و انتشار' : 'Admin Login')}
-                  </span>
-                </div>
-                <p className="text-[9px] text-slate-300 truncate mt-0.5">
-                  {isFa ? 'بارگذاری فایل‌های اکسل و انتشار رسمی گزارش' : 'Upload sources & publish official snapshots'}
-                </p>
-              </div>
-            </div>
-            {isFa ? (
-              <ChevronLeft className="w-4 h-4 text-slate-400 shrink-0" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-            )}
-          </button>
         </div>
 
-        {/* Quick Action Grid (PDF, Print, Theme, Lang) */}
+        {/* Quick Action Grid (PDF, Print, Theme, Lang, Reset) */}
         <div className="pt-2.5 border-t border-slate-200">
           <span className="text-[10px] font-bold text-slate-700 block mb-2">
             {isFa ? 'اقدامات سریع و خروجی‌ها' : 'Quick Actions & Outputs'}
@@ -241,6 +235,21 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             >
               <Languages className="w-4 h-4 text-blue-600 shrink-0" />
               <span>{isFa ? 'تغییر به English' : 'Switch to فارسی'}</span>
+            </button>
+          </div>
+
+          {/* Reset Demo Data */}
+          <div className="mt-2 flex justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onResetData();
+              }}
+              className="flex items-center gap-1.5 text-[9.5px] text-slate-500 hover:text-rose-700 transition-colors py-1 px-2 cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3 text-slate-400" />
+              <span>{isFa ? 'بازنشانی داده‌ها به حالت اولیه' : 'Reset to sample data'}</span>
             </button>
           </div>
         </div>

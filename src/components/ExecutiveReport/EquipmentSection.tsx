@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { EquipmentRecord, EquipmentProgressItem, Language } from '../../types';
+import { initialEquipmentItems } from '../../data/sampleData';
 import { Wrench, Info } from 'lucide-react';
 
 interface EquipmentSectionProps {
@@ -11,13 +12,13 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
   const isFa = lang === 'fa';
   const [activeRemark, setActiveRemark] = useState<{ name: string; text: string } | null>(null);
 
-  // Derive items strictly from current equipment record (no sample fallback)
+  // Derive items strictly from current equipment record
   const items: EquipmentProgressItem[] =
     equipment.items && equipment.items.length > 0
       ? equipment.items
       : equipment.equipmentSummary?.items && equipment.equipmentSummary.items.length > 0
       ? equipment.equipmentSummary.items
-      : [];
+      : (equipment.totalEquipment ? [] : initialEquipmentItems);
 
   // Calculate totals
   const totalCount =
