@@ -1,4 +1,4 @@
-import { PublishedReport } from '../src/types';
+import type { PublishedReport } from '../src/types/index.js';
 
 export interface ValidationResult {
   isValid: boolean;

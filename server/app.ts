@@ -4,7 +4,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { apiRouter } from './apiRouter';
+import { apiRouter } from './apiRouter.js';
 
 export function createApp() {
   const app = express();
@@ -25,3 +25,4 @@ export function createApp() {
 }
 
 export const app = createApp();
+export default app;

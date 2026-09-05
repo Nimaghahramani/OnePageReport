@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { put, list } from '@vercel/blob';
-import { PublishedReport, PublicationHistoryItem, ReportVersionSummary } from '../src/types';
+import type { PublishedReport, PublicationHistoryItem, ReportVersionSummary } from '../src/types/index.js';
 
 // In-memory cache as an optimization (not authoritative persistence)
 let cachedLatestReport: PublishedReport | null = null;

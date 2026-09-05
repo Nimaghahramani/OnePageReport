@@ -9,7 +9,7 @@ import {
   extractTokenFromRequest,
   verifyAdminSessionToken,
   requireAdminAuth,
-} from './auth';
+} from './auth.js';
 import {
   isVercelBlobConfigured,
   isProduction,
@@ -18,9 +18,9 @@ import {
   savePublishedReport,
   getPublicationHistory,
   rollbackToVersion,
-} from './storage';
-import { validateReportForPublication } from './validator';
-import { PublishedReport } from '../src/types';
+} from './storage.js';
+import { validateReportForPublication } from './validator.js';
+import type { PublishedReport } from '../src/types/index.js';
 
 export const apiRouter = Router();
 
