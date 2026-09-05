@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
 import { ActiveTab, Language } from '../../types';
-import { LayoutDashboard, FileText, UploadCloud, Menu, Layers, CalendarRange, LineChart, Wrench, CreditCard, AlertOctagon } from 'lucide-react';
+import { LayoutDashboard, FileText, UploadCloud, Menu, Layers, CalendarRange, LineChart, Wrench, CreditCard, AlertOctagon, Download } from 'lucide-react';
 
 interface MobileBottomNavigationProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   onOpenMore: () => void;
   lang: Language;
+  isAdminMode?: boolean;
+  onExportPdf?: () => void;
 }
 
 export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   activeTab,
   onSelectTab,
   onOpenMore,
-  lang
+  lang,
+  isAdminMode = false,
+  onExportPdf,
 }) => {
   const isFa = lang === 'fa';
   const [showSectionJump, setShowSectionJump] = useState(false);
@@ -56,7 +60,7 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
       {showSectionJump && (
         <div className="fixed inset-0 z-45 flex items-end justify-center bg-black/50 backdrop-blur-2xs">
           <div className="absolute inset-0" onClick={() => setShowSectionJump(false)} />
-          <div className="relative w-full max-w-sm bg-white rounded-t-2xl p-4 shadow-2xl border-t border-slate-200 z-50 mb-[62px] max-h-80 overflow-y-auto">
+          <div className="relative w-full max-w-[440px] bg-white rounded-t-2xl p-4 shadow-2xl border-t border-slate-200 z-50 mb-[62px] max-h-80 overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
               <span className="text-xs font-bold text-slate-900">{isFa ? 'پرش به بخش‌های گزارش' : 'Jump to Section'}</span>
               <button
@@ -87,10 +91,10 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
         </div>
       )}
 
-      {/* Fixed Bottom Navigation Bar */}
+      {/* Fixed Bottom Navigation Bar - Aligned to Centered Shell */}
       <nav
         id="mobile-bottom-nav"
-        className="mobile-bottom-navigation fixed bottom-0 left-0 right-0 h-[62px] bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg z-40 flex items-center justify-around px-2 select-none no-print"
+        className="mobile-bottom-navigation public-mobile-bottom-nav fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] h-[62px] bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg z-40 flex items-center justify-around px-2 select-none no-print sm:rounded-t-xl"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-label={isFa ? 'ناوبری موبایل' : 'Mobile Bottom Navigation'}
       >
@@ -124,24 +128,40 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
           <span className="text-[10px] leading-none tracking-tight">{isFa ? 'بخش‌ها' : 'Sections'}</span>
         </button>
 
-        {/* 3. Data / Import */}
-        <button
-          type="button"
-          onClick={() => {
-            setShowSectionJump(false);
-            onSelectTab('update');
-          }}
-          className={`flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
-            activeTab === 'update'
-              ? 'text-blue-900 font-bold'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <div className={`p-1 rounded-lg transition-all ${activeTab === 'update' ? 'bg-blue-100/80 text-blue-900' : ''}`}>
-            <UploadCloud className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] leading-none tracking-tight">{isFa ? 'داده‌ها' : 'Data'}</span>
-        </button>
+        {/* 3. Data / Import (Admin) or PDF Export (Public) */}
+        {isAdminMode ? (
+          <button
+            type="button"
+            onClick={() => {
+              setShowSectionJump(false);
+              onSelectTab('update');
+            }}
+            className={`flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
+              activeTab === 'update'
+                ? 'text-blue-900 font-bold'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <div className={`p-1 rounded-lg transition-all ${activeTab === 'update' ? 'bg-blue-100/80 text-blue-900' : ''}`}>
+              <UploadCloud className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] leading-none tracking-tight">{isFa ? 'داده‌ها' : 'Data'}</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setShowSectionJump(false);
+              if (onExportPdf) onExportPdf();
+            }}
+            className="flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-blue-900 transition-colors cursor-pointer"
+          >
+            <div className="p-1 rounded-lg">
+              <Download className="w-5 h-5 text-blue-600" />
+            </div>
+            <span className="text-[10px] leading-none tracking-tight">{isFa ? 'خروجی PDF' : 'PDF'}</span>
+          </button>
+        )}
 
         {/* 4. More Menu Sheet */}
         <button

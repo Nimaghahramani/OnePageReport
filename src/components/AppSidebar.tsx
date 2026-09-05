@@ -20,7 +20,8 @@ import {
   Printer,
   Sun,
   Palette,
-  RotateCcw
+  RotateCcw,
+  Shield
 } from 'lucide-react';
 
 export type SidebarMenuItemId =
@@ -49,6 +50,7 @@ interface AppSidebarProps {
   onDirectPrint: () => void;
   onResetData: () => void;
   issues: ValidationIssue[];
+  isAdminMode?: boolean;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -60,7 +62,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onSelectTheme,
   onDirectPrint,
   onResetData,
-  issues
+  issues,
+  isAdminMode = false,
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const isFa = lang === 'fa';
@@ -184,7 +187,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   return (
     <aside
       id="app-sidebar"
-      className="app-sidebar hidden md:flex no-print transition-all select-none flex-col shrink-0"
+      className="app-sidebar flex no-print transition-all select-none flex-col shrink-0"
       aria-label={isFa ? 'ناوبری سامانه گزارش مدیریتی' : 'Executive Navigation Sidebar'}
     >
       {/* 1. LOICO Logo Section (84px height) */}
@@ -239,46 +242,48 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           );
         })}
 
-        {/* Subtle Separator */}
-        <div className="my-1.5 mx-3 border-t border-white/8" />
+        {/* System Management Tools (Admin only) */}
+        {isAdminMode && (
+          <>
+            <div className="my-1.5 mx-3 border-t border-white/8" />
+            {systemToolItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeItem === item.id;
+              const tooltip = isFa ? item.titleFa : item.titleEn;
 
-        {/* System Management Tools */}
-        {systemToolItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeItem === item.id;
-          const tooltip = isFa ? item.titleFa : item.titleEn;
+              return (
+                <div key={item.id} className="relative group flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => onSelectMenu(item.id)}
+                    className={`sidebar-item flex items-center justify-center transition-all cursor-pointer relative focus:outline-hidden ${
+                      isActive ? 'active' : ''
+                    }`}
+                    title={tooltip}
+                    aria-label={tooltip}
+                  >
+                    <div className="sidebar-icon-wrap flex items-center justify-center shrink-0">
+                      <Icon className="w-[19px] h-[19px]" />
+                    </div>
 
-          return (
-            <div key={item.id} className="relative group flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => onSelectMenu(item.id)}
-                className={`sidebar-item flex items-center justify-center transition-all cursor-pointer relative focus:outline-hidden ${
-                  isActive ? 'active' : ''
-                }`}
-                title={tooltip}
-                aria-label={tooltip}
-              >
-                <div className="sidebar-icon-wrap flex items-center justify-center shrink-0">
-                  <Icon className="w-[19px] h-[19px]" />
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <span className={`absolute top-1.5 right-2 px-1 rounded-full text-[7.5px] font-bold ${
+                        isActive ? 'bg-rose-500 text-white' : 'bg-rose-900 text-rose-200 border border-rose-600/60'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Floating Tooltip to the Left of the Right Sidebar */}
+                  <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+                    {tooltip}
+                  </div>
                 </div>
-
-                {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`absolute top-1.5 right-2 px-1 rounded-full text-[7.5px] font-bold ${
-                    isActive ? 'bg-rose-500 text-white' : 'bg-rose-900 text-rose-200 border border-rose-600/60'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-
-              {/* Floating Tooltip to the Left of the Right Sidebar */}
-              <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
-                {tooltip}
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </>
+        )}
       </nav>
 
       {/* 3. Bottom Actions: Direct PDF & Direct Print */}
@@ -350,16 +355,30 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             {isFa ? 'EN' : 'فا'}
           </button>
 
-          {/* Reset Demo Data */}
-          <button
-            type="button"
-            onClick={onResetData}
-            className="p-1 rounded hover:bg-white/8 text-[#B9CFF1] hover:text-rose-300 transition cursor-pointer"
-            title={isFa ? 'بازنشانی داده‌ها' : 'Reset Demo Data'}
-            aria-label="Reset Data"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
+          {/* Reset Demo Data (Admin Only) or Admin Link (Public) */}
+          {isAdminMode ? (
+            <button
+              type="button"
+              onClick={onResetData}
+              className="p-1 rounded hover:bg-white/8 text-[#B9CFF1] hover:text-rose-300 transition cursor-pointer"
+              title={isFa ? 'بازنشانی داده‌های نمونه' : 'Reset Demo Data'}
+              aria-label="Reset Data"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.pathname = '/admin';
+              }}
+              className="p-1 rounded hover:bg-white/8 text-[#B9CFF1]/60 hover:text-cyan-300 transition cursor-pointer"
+              title={isFa ? 'ورود به پنل مدیریت' : 'Admin Portal'}
+              aria-label="Admin Portal"
+            >
+              <Shield className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </aside>

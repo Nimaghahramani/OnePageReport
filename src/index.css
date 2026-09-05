@@ -1370,4 +1370,28 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   }
 }
 
+/* Public Mode Centered Mobile Presentation on Desktop/Tablet */
+.public-mobile-app {
+  width: 100%;
+  min-height: 100dvh;
+}
+
+.public-mobile-shell {
+  width: min(100%, 440px);
+  margin-inline: auto;
+  min-width: 0;
+}
+
+@media (min-width: 600px) {
+  .public-mobile-shell {
+    box-shadow: 0 10px 35px rgba(15, 23, 42, 0.10);
+  }
+}
+
+.public-mobile-bottom-nav {
+  width: min(100%, 440px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
 

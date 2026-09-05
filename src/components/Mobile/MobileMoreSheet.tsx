@@ -14,8 +14,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  FileSpreadsheet,
-  Layers
+  Shield
 } from 'lucide-react';
 
 interface MobileMoreSheetProps {
@@ -30,6 +29,7 @@ interface MobileMoreSheetProps {
   onDirectPrint: () => void;
   onResetData: () => void;
   issues: ValidationIssue[];
+  isAdminMode?: boolean;
 }
 
 export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
@@ -43,7 +43,8 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   onSelectTheme,
   onDirectPrint,
   onResetData,
-  issues
+  issues,
+  isAdminMode = false,
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const isFa = lang === 'fa';
@@ -114,7 +115,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Slide-Up Bottom Sheet Panel */}
-      <div className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-2xl border-t border-slate-200 p-4 max-h-[85vh] overflow-y-auto z-10 flex flex-col">
+      <div className="relative w-full max-w-[440px] bg-white rounded-t-2xl shadow-2xl border-t border-slate-200 p-4 max-h-[85vh] overflow-y-auto z-10 flex flex-col">
         {/* Handle indicator */}
         <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3" />
 
@@ -138,59 +139,61 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
           </button>
         </div>
 
-        {/* Main Navigation Views */}
-        <div className="space-y-1.5 mb-3">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onSelectTab(item.id);
-                  onClose();
-                }}
-                className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer text-right rtl:text-right ltr:text-left min-h-[48px] ${
-                  isActive
-                    ? 'bg-blue-50/90 border-blue-400 shadow-xs'
-                    : 'bg-white hover:bg-slate-50 border-slate-200'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${item.color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-bold text-slate-900 truncate">
-                        {isFa ? item.titleFa : item.titleEn}
-                      </span>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span className="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[8.5px] font-bold font-mono">
-                          {item.badge}
-                        </span>
-                      )}
+        {/* Main Navigation Views (Admin Only) */}
+        {isAdminMode && (
+          <div className="space-y-1.5 mb-3">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectTab(item.id);
+                    onClose();
+                  }}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer text-right rtl:text-right ltr:text-left min-h-[48px] ${
+                    isActive
+                      ? 'bg-blue-50/90 border-blue-400 shadow-xs'
+                      : 'bg-white hover:bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${item.color}`}>
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-[9px] text-slate-500 truncate mt-0.5">
-                      {isFa ? item.descFa : item.descEn}
-                    </p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-slate-900 truncate">
+                          {isFa ? item.titleFa : item.titleEn}
+                        </span>
+                        {item.badge !== undefined && item.badge > 0 && (
+                          <span className="px-1.5 py-0.2 bg-amber-500 text-white rounded-full text-[8.5px] font-bold font-mono">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-slate-500 truncate mt-0.5">
+                        {isFa ? item.descFa : item.descEn}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                {isFa ? (
-                  <ChevronLeft className="w-4 h-4 text-slate-400 shrink-0" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+                  {isFa ? (
+                    <ChevronLeft className="w-4 h-4 text-slate-400 shrink-0" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-        {/* Quick Action Grid (PDF, Print, Theme, Lang, Reset) */}
+        {/* Quick Action Grid (PDF, Print, Theme, Lang, Reset/Admin) */}
         <div className="pt-2.5 border-t border-slate-200">
           <span className="text-[10px] font-bold text-slate-700 block mb-2">
-            {isFa ? 'اقدامات سریع و خروجی‌ها' : 'Quick Actions & Outputs'}
+            {isFa ? 'اقدامات و خروجی‌ها' : 'Actions & Outputs'}
           </span>
           <div className="grid grid-cols-2 gap-2 text-[10px]">
             {/* 1. PDF Export */}
@@ -238,19 +241,33 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
             </button>
           </div>
 
-          {/* Reset Demo Data */}
-          <div className="mt-2 flex justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onResetData();
-              }}
-              className="flex items-center gap-1.5 text-[9.5px] text-slate-500 hover:text-rose-700 transition-colors py-1 px-2 cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3 text-slate-400" />
-              <span>{isFa ? 'بازنشانی داده‌ها به حالت اولیه' : 'Reset to sample data'}</span>
-            </button>
+          {/* Reset Demo Data (Admin Only) or Admin Link (Public) */}
+          <div className="mt-2.5 flex justify-center">
+            {isAdminMode ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onResetData();
+                }}
+                className="flex items-center gap-1.5 text-[9.5px] text-slate-500 hover:text-rose-700 transition-colors py-1 px-2 cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3 text-slate-400" />
+                <span>{isFa ? 'بازنشانی داده‌های نمونه' : 'Reset to sample data'}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  window.location.pathname = '/admin';
+                }}
+                className="flex items-center gap-1.5 text-[9.5px] text-slate-400 hover:text-blue-700 transition-colors py-1 px-2 cursor-pointer"
+              >
+                <Shield className="w-3 h-3 text-slate-400" />
+                <span>{isFa ? 'ورود به پنل مدیریت سامانه' : 'Admin Management Portal'}</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

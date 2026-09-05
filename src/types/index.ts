@@ -574,3 +574,66 @@ export interface ColumnMappingConfig {
   datasetType: 'pms' | 'daily' | 'ipc' | 'equipment';
   mapping: Record<string, string>; // systemField -> fileColumnHeader
 }
+
+export interface PublishedReportMetadata {
+  schemaVersion: string;
+  validationStatus: string;
+  directPresent?: number | null;
+  directTotal?: number | null;
+  indirectPresent?: number | null;
+  indirectTotal?: number | null;
+  notes?: string;
+  publishedByIp?: string;
+}
+
+export interface PublishedReport {
+  id: string;
+  projectId: string;
+  reportDate: string;
+  version: number;
+  publishedAt: string;
+  publishedBy: string;
+  project: ProjectMasterData;
+  pms: PmsRecord;
+  daily: DailyReportRecord;
+  ipc: IpcRecord;
+  equipment: EquipmentRecord;
+  masterSCurve: MasterSCurveRecord;
+  financialSettings?: FinancialSettings;
+  kpis: CalculatedReportKPIs;
+  metadata: PublishedReportMetadata;
+}
+
+export interface ReportVersionSummary {
+  success: boolean;
+  hasReport: boolean;
+  id?: string;
+  reportDate?: string;
+  version?: number;
+  publishedAt?: string;
+  publishedBy?: string;
+}
+
+export interface PublicationHistoryItem {
+  id: string;
+  projectId: string;
+  reportDate: string;
+  version: number;
+  publishedAt: string;
+  publishedBy: string;
+  plannedProgress: number | null;
+  actualProgress: number | null;
+  variance: number | null;
+  totalManpower: number | null;
+  presentManpower: number | null;
+  absentManpower: number | null;
+  attendanceRatio: number | null;
+  equipmentInstalled: number | null;
+  equipmentTotal: number | null;
+  equipmentPercentage: number | null;
+  financialProgress: number | null;
+  criticalIssuesCount: number;
+  keyActivitiesCount: number;
+  status: 'active' | 'archived';
+  storageKey?: string;
+}

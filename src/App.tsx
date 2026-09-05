@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ActiveTab, Language, Theme } from './types';
+import { ActiveTab, Language, Theme, PublishedReportMetadata } from './types';
 import { projectDataStore } from './services/dataStore';
+import { apiClient } from './services/apiClient';
 import { AppSidebar, SidebarMenuItemId } from './components/AppSidebar';
 import { ExecutiveReportView } from './components/ExecutiveReport/ExecutiveReportView';
 import { DataUpdateView } from './components/DataUpdate/DataUpdateView';
@@ -10,8 +11,28 @@ import { DataValidationPanel } from './components/Validation/DataValidationPanel
 import { MobileExecutiveView } from './components/Mobile/MobileExecutiveView';
 import { MobileBottomNavigation } from './components/Mobile/MobileBottomNavigation';
 import { MobileMoreSheet } from './components/Mobile/MobileMoreSheet';
+import { AdminHeaderBar } from './components/Admin/AdminHeaderBar';
+import { AdminLoginModal } from './components/Admin/AdminLoginModal';
+import { PublishModal } from './components/Admin/PublishModal';
+import { exportExecutiveReportToPdf } from './services/pdfExportService';
 
 export default function App() {
+  // Routing & Admin State
+  const [isAdminRoute, setIsAdminRoute] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.location.pathname.startsWith('/admin') ||
+      window.location.hash.startsWith('#/admin')
+    );
+  });
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [publishedMeta, setPublishedMeta] = useState<PublishedReportMetadata | null>(null);
+  const [, setIsInitialReportLoading] = useState(true);
+
+  // Tab & UI State
   const [activeTab, setActiveTab] = useState<ActiveTab>('report');
   const [activeMenuItem, setActiveMenuItem] = useState<SidebarMenuItemId>('dashboard');
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
@@ -19,17 +40,141 @@ export default function App() {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem('loico-ui-theme');
-      return (saved === 'loico-blue' || saved === 'light') ? saved : 'light';
+      return saved === 'loico-blue' || saved === 'light' ? saved : 'light';
     } catch {
       return 'light';
     }
   });
   const [, setRenderTrigger] = useState(0);
 
+  // Role-based state separation:
+  // 1. isAuthenticatedAdmin: Controls whether Desktop Admin application is rendered vs Public Mobile
+  const isAuthenticatedAdmin = isAdminRoute && isAdminAuthenticated;
+  // 2. isAdminEditingMode: Controls whether editing controls/tabs (Excel, Master, Validation) are active
+  const isAdminEditingMode = isAuthenticatedAdmin && !isPreviewMode;
+
+  // Listen for route changes (e.g. popstate or hashchange)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const onAdmin =
+        window.location.pathname.startsWith('/admin') ||
+        window.location.hash.startsWith('#/admin');
+      setIsAdminRoute(onAdmin);
+      if (!onAdmin) {
+        setIsPreviewMode(false);
+        setActiveTab('report');
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
+  // Fetch published report from server and initialize data
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadLatestReport() {
+      try {
+        const report = await apiClient.getLatestReport();
+        if (report && isMounted) {
+          projectDataStore.hydratePublishedReport(report);
+          setPublishedMeta({
+            id: report.id,
+            version: report.version,
+            reportDate: report.reportDate,
+            publishedAt: report.publishedAt,
+            publishedBy: report.publishedBy,
+          });
+        }
+      } catch (err) {
+        console.warn('Could not load latest published report from server, using local fallback:', err);
+      } finally {
+        if (isMounted) {
+          setIsInitialReportLoading(false);
+        }
+      }
+    }
+
+    loadLatestReport();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Check Admin authentication status if on /admin
+  useEffect(() => {
+    let isMounted = true;
+
+    async function verifyAuth() {
+      if (isAdminRoute) {
+        setIsCheckingAuth(true);
+        try {
+          const isAuthed = await apiClient.checkAdminAuth();
+          if (isMounted) {
+            setIsAdminAuthenticated(isAuthed);
+          }
+        } catch {
+          if (isMounted) {
+            setIsAdminAuthenticated(false);
+          }
+        } finally {
+          if (isMounted) {
+            setIsCheckingAuth(false);
+          }
+        }
+      } else {
+        setIsCheckingAuth(false);
+      }
+    }
+
+    verifyAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAdminRoute]);
+
+  // Periodic lightweight check for newer published versions (every 5 minutes for public viewers)
+  useEffect(() => {
+    if (isAdminRoute) return; // Admins edit drafts, don't auto-refresh while editing
+
+    const interval = setInterval(async () => {
+      try {
+        const versionInfo = await apiClient.getReportVersion();
+        if (versionInfo.hasReport && versionInfo.version) {
+          const currentMeta = projectDataStore.getPublishedMetadata();
+          if (!currentMeta || versionInfo.version > currentMeta.version) {
+            const newReport = await apiClient.getLatestReport();
+            if (newReport) {
+              projectDataStore.hydratePublishedReport(newReport);
+              setPublishedMeta({
+                id: newReport.id,
+                version: newReport.version,
+                reportDate: newReport.reportDate,
+                publishedAt: newReport.publishedAt,
+                publishedBy: newReport.publishedBy,
+              });
+            }
+          }
+        }
+      } catch (e) {
+        // Silent periodic background check
+      }
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [isAdminRoute]);
+
   // Subscribe to Project Data Store
   useEffect(() => {
     const unsubscribe = projectDataStore.subscribe(() => {
-      setRenderTrigger(t => t + 1);
+      setRenderTrigger((t) => t + 1);
     });
     return () => unsubscribe();
   }, []);
@@ -61,7 +206,7 @@ export default function App() {
   const auditList = projectDataStore.getAuditHistory();
 
   const handleToggleLang = () => {
-    setLang(l => l === 'fa' ? 'en' : 'fa');
+    setLang((l) => (l === 'fa' ? 'en' : 'fa'));
   };
 
   const handleDirectPrint = async () => {
@@ -77,47 +222,73 @@ export default function App() {
     window.print();
   };
 
+  const handleExportPdf = async () => {
+    try {
+      await exportExecutiveReportToPdf('print-report-sheet', 'Executive_Daily_Report.pdf');
+    } catch (err) {
+      console.error('Direct PDF export error:', err);
+    }
+  };
+
   const handleResetData = () => {
-    if (window.confirm(lang === 'fa' ? 'آیا از بازنشانی داده‌ها به نمونه اولیه اطمینان دارید؟' : 'Reset all datasets to initial demo values?')) {
+    if (
+      window.confirm(
+        lang === 'fa'
+          ? 'آیا از بازنشانی داده‌ها به نمونه اولیه اطمینان دارید؟'
+          : 'Reset all datasets to initial demo values?'
+      )
+    ) {
       projectDataStore.resetToSampleData();
     }
   };
 
-  // Smooth scroll and menu handler
-  const handleSelectMenu = useCallback((itemId: SidebarMenuItemId) => {
-    setActiveMenuItem(itemId);
-
-    if (itemId === 'validation') {
-      setActiveTab('validation');
-      return;
+  const handleLogout = async () => {
+    try {
+      await apiClient.logout();
+    } catch {
+      // ignore
     }
+    setIsAdminAuthenticated(false);
+    window.location.pathname = '/';
+  };
 
-    if (itemId === 'settings') {
-      setActiveTab('update');
-      return;
-    }
+  // Smooth scroll and menu handler for Admin Desktop
+  const handleSelectMenu = useCallback(
+    (itemId: SidebarMenuItemId) => {
+      setActiveMenuItem(itemId);
 
-    if (itemId === 'master') {
-      setActiveTab('master');
-      return;
-    }
+      if (itemId === 'validation') {
+        if (isAdminEditingMode) setActiveTab('validation');
+        return;
+      }
 
-    if (itemId === 'history') {
-      setActiveTab('history');
-      return;
-    }
+      if (itemId === 'settings') {
+        if (isAdminEditingMode) setActiveTab('update');
+        return;
+      }
 
-    // Report section navigation
-    if (activeTab !== 'report') {
-      setActiveTab('report');
-      // Wait for DOM update before scrolling
-      setTimeout(() => {
+      if (itemId === 'master') {
+        if (isAdminEditingMode) setActiveTab('master');
+        return;
+      }
+
+      if (itemId === 'history') {
+        if (isAdminEditingMode) setActiveTab('history');
+        return;
+      }
+
+      // Report section navigation
+      if (activeTab !== 'report') {
+        setActiveTab('report');
+        setTimeout(() => {
+          scrollToSection(itemId);
+        }, 100);
+      } else {
         scrollToSection(itemId);
-      }, 100);
-    } else {
-      scrollToSection(itemId);
-    }
-  }, [activeTab]);
+      }
+    },
+    [activeTab, isAdminEditingMode]
+  );
 
   const scrollToSection = (itemId: SidebarMenuItemId) => {
     const sectionMap: Record<string, string> = {
@@ -129,7 +300,7 @@ export default function App() {
       financial: 'financial-section',
       manpower: 'manpower-section',
       issues: 'issues-section',
-      activities: 'activities-section'
+      activities: 'activities-section',
     };
 
     const targetId = sectionMap[itemId] || 'executive-report';
@@ -137,14 +308,14 @@ export default function App() {
     if (element) {
       element.scrollIntoView({
         behavior: 'smooth',
-        block: 'start'
+        block: 'start',
       });
     }
   };
 
-  // IntersectionObserver to auto-update active menu item when scrolling report
+  // IntersectionObserver to auto-update active menu item when scrolling report in Desktop Admin
   useEffect(() => {
-    if (activeTab !== 'report') return;
+    if (!isAuthenticatedAdmin || activeTab !== 'report') return;
 
     const sections = [
       { id: 'executive-report', menu: 'dashboard' as SidebarMenuItemId },
@@ -155,15 +326,13 @@ export default function App() {
       { id: 'financial-section', menu: 'financial' as SidebarMenuItemId },
       { id: 'manpower-section', menu: 'manpower' as SidebarMenuItemId },
       { id: 'issues-section', menu: 'issues' as SidebarMenuItemId },
-      { id: 'activities-section', menu: 'activities' as SidebarMenuItemId }
+      { id: 'activities-section', menu: 'activities' as SidebarMenuItemId },
     ];
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Find visible entry with highest ratio or first intersecting
         const visibleEntries = entries.filter((e) => e.isIntersecting);
         if (visibleEntries.length > 0) {
-          // Sort by intersection ratio or proximity
           const topEntry = visibleEntries.reduce((prev, curr) =>
             curr.intersectionRatio > prev.intersectionRatio ? curr : prev
           );
@@ -175,7 +344,7 @@ export default function App() {
       },
       {
         threshold: 0.35,
-        rootMargin: '-5% 0px -40% 0px'
+        rootMargin: '-5% 0px -40% 0px',
       }
     );
 
@@ -187,119 +356,204 @@ export default function App() {
     return () => {
       observer.disconnect();
     };
-  }, [activeTab]);
+  }, [isAuthenticatedAdmin, activeTab]);
 
+  // =========================================================================
+  // ADMIN UN-AUTHENTICATED STATE: Clean dedicated login screen without background leak
+  // =========================================================================
+  if (isAdminRoute && !isAdminAuthenticated) {
+    return (
+      <div
+        className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-blue-600 selection:text-white"
+        dir={lang === 'fa' ? 'rtl' : 'ltr'}
+      >
+        {isCheckingAuth ? (
+          <div className="flex flex-col items-center gap-3 text-slate-400">
+            <div className="w-9 h-9 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-medium font-fa text-slate-300">
+              {lang === 'fa' ? 'در حال بررسی نشست کاربری مدیریت...' : 'Verifying Admin Session...'}
+            </span>
+          </div>
+        ) : (
+          <AdminLoginModal
+            isOpen={true}
+            onSuccess={() => {
+              setIsAdminAuthenticated(true);
+            }}
+            onCancel={() => {
+              window.location.pathname = '/';
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // MAIN APPLICATION SHELL: Strictly Role-Based Presentation
+  // =========================================================================
   return (
-    <div className={`executive-app-shell min-h-screen bg-[#eef2f7] text-slate-800 flex`} dir={lang === 'fa' ? 'rtl' : 'ltr'}>
-      {/* Main Content Area */}
-      <main className="executive-main-content flex-1 min-w-0 p-2 sm:p-3 md:p-3.5 flex justify-center items-start overflow-y-auto">
-        <div className="executive-report-stage w-full max-w-[1500px] p-1.5 sm:p-2 bg-[#dfe6ef] rounded-xl shadow-xs">
-          {activeTab === 'report' && (
-            <>
-              {/* Desktop & Tablet Report View (>= 768px) */}
-              <div className="hidden md:block w-full">
-                <ExecutiveReportView
-                  master={master}
-                  pms={pms}
-                  daily={daily}
-                  ipc={ipc}
-                  equipment={equipment}
-                  kpis={kpis}
-                  masterSCurve={masterSCurve}
-                  lang={lang}
-                />
-              </div>
+    <div
+      className="executive-app-shell min-h-screen bg-[#eef2f7] text-slate-800 flex flex-col"
+      dir={lang === 'fa' ? 'rtl' : 'ltr'}
+    >
+      {isAuthenticatedAdmin ? (
+        /* ========================================================================= */
+        /* 1. AUTHENTICATED ADMIN WORKSPACE (ALWAYS DESKTOP / LAPTOP PRESENTATION)    */
+        /* ========================================================================= */
+        <div className="admin-desktop-application flex flex-col flex-1 min-h-screen">
+          {/* Admin Header Bar */}
+          <AdminHeaderBar
+            publishedMeta={publishedMeta}
+            isPreviewMode={isPreviewMode}
+            onTogglePreview={() => {
+              if (!isPreviewMode) {
+                setActiveTab('report');
+                setActiveMenuItem('dashboard');
+              }
+              setIsPreviewMode(!isPreviewMode);
+            }}
+            onOpenPublishModal={() => setIsPublishModalOpen(true)}
+            onLogout={handleLogout}
+            lang={lang}
+          />
 
-              {/* Mobile Adaptive Executive View (< 768px) */}
-              <div className="block md:hidden w-full">
-                <MobileExecutiveView
-                  master={master}
-                  pms={pms}
-                  daily={daily}
-                  ipc={ipc}
-                  equipment={equipment}
-                  kpis={kpis}
-                  masterSCurve={masterSCurve}
-                  lang={lang}
-                />
-              </div>
-            </>
-          )}
+          {/* Non-blocking Warning Banner if Admin opens on narrow phone/tablet display */}
+          <div className="admin-viewport-warning xl:hidden bg-amber-500/15 border-b border-amber-500/30 text-amber-900 px-4 py-2 text-xs font-medium text-center flex items-center justify-center gap-2 no-print shrink-0">
+            <span>⚠️</span>
+            <span>
+              {lang === 'fa'
+                ? 'برای مدیریت کامل، بررسی داده‌ها و انتشار گزارش، استفاده از لپ‌تاپ یا نمایشگر بزرگ توصیه می‌شود.'
+                : 'For full management controls, a desktop or laptop display is recommended.'}
+            </span>
+          </div>
 
-          {activeTab === 'update' && (
-            <DataUpdateView
+          {/* Admin Workspace Layout */}
+          <div className="flex-1 flex overflow-x-auto overflow-y-hidden min-h-0">
+            {/* Main Stage with min-width 1100px to safeguard Desktop layout on small devices */}
+            <main className="executive-main-content flex-1 min-w-[1100px] p-2 sm:p-3 md:p-3.5 flex justify-center items-start overflow-y-auto">
+              <div className="executive-report-stage w-full max-w-[1500px] p-1.5 sm:p-2 bg-[#dfe6ef] rounded-xl shadow-xs">
+                {activeTab === 'report' && (
+                  <ExecutiveReportView
+                    master={master}
+                    pms={pms}
+                    daily={daily}
+                    ipc={ipc}
+                    equipment={equipment}
+                    kpis={kpis}
+                    masterSCurve={masterSCurve}
+                    lang={lang}
+                  />
+                )}
+
+                {activeTab === 'update' && isAdminEditingMode && (
+                  <DataUpdateView
+                    pms={pms}
+                    daily={daily}
+                    ipc={ipc}
+                    equipment={equipment}
+                    issues={issues}
+                    lang={lang}
+                    onNavigateToReport={() => {
+                      setActiveTab('report');
+                      setActiveMenuItem('dashboard');
+                    }}
+                  />
+                )}
+
+                {activeTab === 'master' && isAdminEditingMode && (
+                  <ProjectMasterDataView master={master} lang={lang} />
+                )}
+
+                {activeTab === 'history' && isAdminEditingMode && (
+                  <VersionHistoryView auditList={auditList} lang={lang} />
+                )}
+
+                {activeTab === 'validation' && isAdminEditingMode && (
+                  <DataValidationPanel
+                    issues={issues}
+                    kpis={kpis}
+                    lang={lang}
+                    masterSCurve={masterSCurve}
+                    pms={pms}
+                  />
+                )}
+              </div>
+            </main>
+
+            {/* Right-Side Executive LOICO Sidebar (Always rendered for Admin) */}
+            <AppSidebar
+              activeItem={activeMenuItem}
+              activeTab={activeTab}
+              onSelectMenu={handleSelectMenu}
+              lang={lang}
+              onToggleLang={handleToggleLang}
+              theme={theme}
+              onSelectTheme={setTheme}
+              onDirectPrint={handleDirectPrint}
+              onResetData={handleResetData}
+              issues={issues}
+              isAdminMode={isAdminEditingMode}
+            />
+          </div>
+        </div>
+      ) : (
+        /* ========================================================================= */
+        /* 2. PUBLIC DASHBOARD (ALWAYS MOBILE EXECUTIVE PRESENTATION)                 */
+        /* ========================================================================= */
+        <div className="public-mobile-app min-h-screen bg-[#eef2f7] text-slate-800 flex flex-col pb-20">
+          {/* Centered Mobile Shell (Phone: 100%, Tablet/Desktop: max-width 440px) */}
+          <div className="public-mobile-shell w-full max-w-[440px] mx-auto min-w-0 bg-[#f8fafc] sm:rounded-2xl sm:shadow-xl sm:my-3 overflow-hidden border-slate-200/80 sm:border">
+            <MobileExecutiveView
+              master={master}
               pms={pms}
               daily={daily}
               ipc={ipc}
               equipment={equipment}
-              issues={issues}
-              lang={lang}
-              onNavigateToReport={() => {
-                setActiveTab('report');
-                setActiveMenuItem('dashboard');
-              }}
-            />
-          )}
-
-          {activeTab === 'master' && (
-            <ProjectMasterDataView master={master} lang={lang} />
-          )}
-
-          {activeTab === 'history' && (
-            <VersionHistoryView auditList={auditList} lang={lang} />
-          )}
-
-          {activeTab === 'validation' && (
-            <DataValidationPanel
-              issues={issues}
               kpis={kpis}
-              lang={lang}
               masterSCurve={masterSCurve}
-              pms={pms}
+              lang={lang}
             />
-          )}
+          </div>
+
+          {/* Public Mobile Bottom Navigation (Aligned to centered 440px shell) */}
+          <MobileBottomNavigation
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            onOpenMore={() => setIsMoreSheetOpen(true)}
+            lang={lang}
+            isAdminMode={false}
+            onExportPdf={handleExportPdf}
+          />
+
+          {/* Public Mobile More Sheet (Safe public actions only) */}
+          <MobileMoreSheet
+            isOpen={isMoreSheetOpen}
+            onClose={() => setIsMoreSheetOpen(false)}
+            activeTab={activeTab}
+            onSelectTab={setActiveTab}
+            lang={lang}
+            onToggleLang={handleToggleLang}
+            theme={theme}
+            onSelectTheme={setTheme}
+            onDirectPrint={handleDirectPrint}
+            onResetData={handleResetData}
+            issues={issues}
+            isAdminMode={false}
+          />
         </div>
-      </main>
+      )}
 
-      {/* Right-Side Executive LOICO Sidebar (>= 768px) */}
-      <AppSidebar
-        activeItem={activeMenuItem}
-        activeTab={activeTab}
-        onSelectMenu={handleSelectMenu}
-        lang={lang}
-        onToggleLang={handleToggleLang}
-        theme={theme}
-        onSelectTheme={setTheme}
-        onDirectPrint={handleDirectPrint}
-        onResetData={handleResetData}
-        issues={issues}
-      />
-
-      {/* Mobile Bottom Navigation (< 768px) */}
-      <div className="block md:hidden">
-        <MobileBottomNavigation
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          onOpenMore={() => setIsMoreSheetOpen(true)}
-          lang={lang}
-        />
-        <MobileMoreSheet
-          isOpen={isMoreSheetOpen}
-          onClose={() => setIsMoreSheetOpen(false)}
-          activeTab={activeTab}
-          onSelectTab={setActiveTab}
-          lang={lang}
-          onToggleLang={handleToggleLang}
-          theme={theme}
-          onSelectTheme={setTheme}
-          onDirectPrint={handleDirectPrint}
-          onResetData={handleResetData}
-          issues={issues}
-        />
-      </div>
-
-      {/* Dedicated Print-Only Root Container (Part 9 & 23 of user instructions) */}
-      <div id="print-report-root" className="print-only-report" data-theme="light" dir={lang === 'fa' ? 'rtl' : 'ltr'}>
+      {/* ========================================================================= */}
+      {/* 3. DEDICATED PRINT-ONLY ROOT CONTAINER (A4 LANDSCAPE EXECUTIVE DESKTOP)   */}
+      {/* Preserved for both Public and Admin PDF export and direct browser print   */}
+      {/* ========================================================================= */}
+      <div
+        id="print-report-root"
+        className="print-only-report"
+        data-theme="light"
+        dir={lang === 'fa' ? 'rtl' : 'ltr'}
+      >
         <ExecutiveReportView
           sheetId="print-report-sheet"
           master={master}
@@ -312,6 +566,23 @@ export default function App() {
           lang={lang}
         />
       </div>
+
+      {/* Publish Official Report Modal (Admin only) */}
+      {isAuthenticatedAdmin && isPublishModalOpen && (
+        <PublishModal
+          isOpen={isPublishModalOpen}
+          onClose={() => setIsPublishModalOpen(false)}
+          onPublished={(rep) => {
+            setPublishedMeta({
+              id: rep.id,
+              version: rep.version,
+              reportDate: rep.reportDate,
+              publishedAt: rep.publishedAt,
+              publishedBy: rep.publishedBy,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

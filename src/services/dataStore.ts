@@ -12,7 +12,8 @@ import {
   ValidationIssue,
   FinancialSettings,
   FINANCIAL_CALCULATION_BASE_IRR,
-  EUR_TO_IRR
+  EUR_TO_IRR,
+  PublishedReport
 } from '../types';
 import {
   initialProjectMasterData,
@@ -64,6 +65,15 @@ export class ProjectDataStore {
   private dailyHistory: DailyReportRecord[];
   private ipcHistory: IpcRecord[];
   private equipmentHistory: EquipmentRecord[];
+
+  private publishedReportMetadata: {
+    id: string;
+    version: number;
+    reportDate: string;
+    publishedAt: string;
+    publishedBy?: string;
+  } | null = null;
+  private isLoadedFromPublishedServer = false;
 
   private listeners: (() => void)[] = [];
 
@@ -258,6 +268,71 @@ export class ProjectDataStore {
 
   public getAuditHistory(): DatasetVersionAudit[] {
     return this.versionAudit;
+  }
+
+  /**
+   * Hydrate in-memory state directly from the server PublishedReport
+   */
+  public hydratePublishedReport(report: PublishedReport) {
+    if (!report) return;
+    if (report.project) this.masterData = report.project;
+    if (report.masterSCurve) this.masterSCurve = report.masterSCurve;
+    if (report.pms) this.currentPms = report.pms;
+    if (report.daily) this.currentDaily = report.daily;
+    if (report.ipc) this.currentIpc = report.ipc;
+    if (report.equipment) this.currentEquipment = report.equipment;
+    if (report.financialSettings) this.financialSettings = report.financialSettings;
+
+    this.publishedReportMetadata = {
+      id: report.id,
+      version: report.version,
+      reportDate: report.reportDate,
+      publishedAt: report.publishedAt,
+      publishedBy: report.publishedBy,
+    };
+    this.isLoadedFromPublishedServer = true;
+    this.notify();
+  }
+
+  public getPublishedMetadata() {
+    return this.publishedReportMetadata;
+  }
+
+  public isPublishedLoaded(): boolean {
+    return this.isLoadedFromPublishedServer;
+  }
+
+  /**
+   * Export the current draft state as a complete PublishedReport payload ready for validation and publishing
+   */
+  public exportDraftAsPublishedPayload(): PublishedReport {
+    const kpis = this.getCalculatedKPIs();
+    const date = this.currentDaily?.reportDate || this.currentPms?.dataDate || '1405/06/14';
+    return {
+      id: this.publishedReportMetadata?.id || `rep-${date.replace(/[\/\\]/g, '-')}-draft`,
+      projectId: this.masterData?.id || 'LOICO-500MW',
+      reportDate: date,
+      version: (this.publishedReportMetadata?.version || 0) + 1,
+      publishedAt: new Date().toISOString(),
+      publishedBy: 'مدیر ارشد پروژه',
+      project: this.masterData,
+      pms: this.currentPms,
+      daily: this.currentDaily,
+      ipc: this.currentIpc,
+      equipment: this.currentEquipment,
+      masterSCurve: this.masterSCurve,
+      financialSettings: this.financialSettings,
+      kpis,
+      metadata: {
+        schemaVersion: '2.0.0',
+        validationStatus: 'verified',
+        directPresent: kpis.siteManpower?.direct?.present,
+        directTotal: kpis.siteManpower?.direct?.total,
+        indirectPresent: kpis.siteManpower?.indirect?.present,
+        indirectTotal: kpis.siteManpower?.indirect?.total,
+        notes: 'نسخه تایید شده گزارش مدیریتی',
+      },
+    };
   }
 
   public getPmsHistory(): PmsRecord[] {
