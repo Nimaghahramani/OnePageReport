@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';

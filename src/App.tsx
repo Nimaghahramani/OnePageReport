@@ -15,6 +15,7 @@ import { AdminHeaderBar } from './components/Admin/AdminHeaderBar';
 import { AdminLoginModal } from './components/Admin/AdminLoginModal';
 import { PublishModal } from './components/Admin/PublishModal';
 import { exportExecutiveReportToPdf } from './services/pdfExportService';
+import { FileText } from 'lucide-react';
 
 export default function App() {
   // Routing & Admin State
@@ -30,7 +31,8 @@ export default function App() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [publishedMeta, setPublishedMeta] = useState<PublishedReportMetadata | null>(null);
-  const [, setIsInitialReportLoading] = useState(true);
+  const [isInitialReportLoading, setIsInitialReportLoading] = useState(true);
+  const [hasPublishedReport, setHasPublishedReport] = useState<boolean | null>(null);
 
   // Tab & UI State
   const [activeTab, setActiveTab] = useState<ActiveTab>('report');
@@ -82,6 +84,7 @@ export default function App() {
       try {
         const report = await apiClient.getLatestReport();
         if (report && isMounted) {
+          setHasPublishedReport(true);
           projectDataStore.hydratePublishedReport(report);
           setPublishedMeta({
             id: report.id,
@@ -90,9 +93,15 @@ export default function App() {
             publishedAt: report.publishedAt,
             publishedBy: report.publishedBy,
           });
+        } else if (isMounted) {
+          // No published report available on server yet (HTTP 200 NO_PUBLISHED_REPORT)
+          setHasPublishedReport(false);
         }
       } catch (err) {
         console.warn('Could not load latest published report from server, using local fallback:', err);
+        if (isMounted) {
+          setHasPublishedReport(false);
+        }
       } finally {
         if (isMounted) {
           setIsInitialReportLoading(false);
@@ -152,6 +161,7 @@ export default function App() {
           if (!currentMeta || versionInfo.version > currentMeta.version) {
             const newReport = await apiClient.getLatestReport();
             if (newReport) {
+              setHasPublishedReport(true);
               projectDataStore.hydratePublishedReport(newReport);
               setPublishedMeta({
                 id: newReport.id,
@@ -504,16 +514,39 @@ export default function App() {
         <div className="public-mobile-app min-h-screen bg-[#eef2f7] text-slate-800 flex flex-col pb-20">
           {/* Centered Mobile Shell (Phone: 100%, Tablet/Desktop: max-width 440px) */}
           <div className="public-mobile-shell w-full max-w-[440px] mx-auto min-w-0 bg-[#f8fafc] sm:rounded-2xl sm:shadow-xl sm:my-3 overflow-hidden border-slate-200/80 sm:border">
-            <MobileExecutiveView
-              master={master}
-              pms={pms}
-              daily={daily}
-              ipc={ipc}
-              equipment={equipment}
-              kpis={kpis}
-              masterSCurve={masterSCurve}
-              lang={lang}
-            />
+            {isInitialReportLoading ? (
+              <div className="p-8 flex flex-col items-center justify-center text-center min-h-[440px] bg-white">
+                <div className="w-9 h-9 border-3 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <span className="text-xs font-medium font-fa text-slate-500">
+                  {lang === 'fa' ? 'در حال بارگذاری اطلاعات گزارش...' : 'Loading report data...'}
+                </span>
+              </div>
+            ) : hasPublishedReport === false ? (
+              <div className="p-8 flex flex-col items-center justify-center text-center min-h-[440px] bg-white m-2 rounded-xl border border-slate-200/80">
+                <div className="w-16 h-16 mb-4 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+                  <FileText className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-base font-bold text-slate-800 mb-2 font-fa">
+                  {lang === 'fa' ? 'گزارش منتشرشده‌ای در دسترس نیست.' : 'No published report available.'}
+                </h3>
+                <p className="text-xs text-slate-500 max-w-xs leading-relaxed font-fa">
+                  {lang === 'fa'
+                    ? 'تاکنون هیچ نسخه رسمی از گزارش روزانه توسط مدیریت پروژه منتشر نشده است. به محض انتشار در این صفحه نمایش داده خواهد شد.'
+                    : 'No official report has been published yet. Once published by the project admin, it will appear here automatically.'}
+                </p>
+              </div>
+            ) : (
+              <MobileExecutiveView
+                master={master}
+                pms={pms}
+                daily={daily}
+                ipc={ipc}
+                equipment={equipment}
+                kpis={kpis}
+                masterSCurve={masterSCurve}
+                lang={lang}
+              />
+            )}
           </div>
 
           {/* Public Mobile Bottom Navigation (Aligned to centered 440px shell) */}

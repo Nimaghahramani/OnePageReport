@@ -268,19 +268,19 @@ export const DataUpdateView: React.FC<DataUpdateViewProps> = ({
             <div className="space-y-1.5 text-xs text-slate-700 mb-3 bg-slate-50 p-2.5 rounded border border-slate-200 font-mono">
               <div className="flex justify-between">
                 <span className="text-slate-500 font-sans">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
-                <span className="font-bold text-slate-900">{daily.reportDate}</span>
+                <span className="font-bold text-slate-900">{daily?.reportDate ?? '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500 font-sans">{isFa ? 'نیروی انسانی کل:' : 'Total Manpower:'}</span>
-                <span className="font-bold text-emerald-800">{daily.manpower.total} نفر ({daily.manpower.direct} مستقیم)</span>
+                <span className="font-bold text-emerald-800">{daily?.manpower?.total ?? '—'} نفر ({daily?.manpower?.direct ?? '—'} مستقیم)</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500 font-sans">{isFa ? 'ماشین‌آلات فعال:' : 'Active Machinery:'}</span>
-                <span className="font-bold text-slate-900">{daily.machinery.active} / {daily.machinery.total}</span>
+                <span className="font-bold text-slate-900">{daily?.machinery?.active ?? '—'} / {daily?.machinery?.total ?? '—'}</span>
               </div>
               <div className="flex justify-between text-[11px]">
                 <span className="text-slate-500 font-sans">{isFa ? 'تعداد موانع فعال:' : 'Key Constraints:'}</span>
-                <span className="text-rose-700 font-bold">{daily.keyIssues.length} مورد</span>
+                <span className="text-rose-700 font-bold">{daily?.keyIssues?.length ?? 0} مورد</span>
               </div>
             </div>
           </div>

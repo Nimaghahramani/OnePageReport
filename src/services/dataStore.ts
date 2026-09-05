@@ -22,6 +22,7 @@ import {
   initialDailyReportRecord,
   initialIpcRecord,
   initialEquipmentRecord,
+  initialEquipmentItems,
   initialVersionAuditList
 } from '../data/sampleData';
 import { validateAllDatasets, checkDateSuperseded } from './validationService';
@@ -203,8 +204,62 @@ export class ProjectDataStore {
         };
         needsDailySave = true;
       }
+      if (!this.currentDaily.machinery) {
+        this.currentDaily = {
+          ...this.currentDaily,
+          machinery: { ...initialDailyReportRecord.machinery }
+        };
+        needsDailySave = true;
+      }
+      if (!this.currentDaily.manpower) {
+        this.currentDaily = {
+          ...this.currentDaily,
+          manpower: { ...initialDailyReportRecord.manpower }
+        };
+        needsDailySave = true;
+      }
       if (needsDailySave) {
         this.saveToStorage(STORAGE_KEYS.DAILY, this.currentDaily);
+      }
+    }
+
+    // Ensure masterData has valid arrays for disciplines, milestones, and majorEquipmentList
+    if (this.masterData) {
+      let needsMasterSave = false;
+      if (!this.masterData.disciplines || !Array.isArray(this.masterData.disciplines) || this.masterData.disciplines.length === 0) {
+        this.masterData = {
+          ...this.masterData,
+          disciplines: initialProjectMasterData.disciplines
+        };
+        needsMasterSave = true;
+      }
+      if (!this.masterData.milestones || !Array.isArray(this.masterData.milestones) || this.masterData.milestones.length === 0) {
+        this.masterData = {
+          ...this.masterData,
+          milestones: initialProjectMasterData.milestones
+        };
+        needsMasterSave = true;
+      }
+      if (!this.masterData.majorEquipmentList || !Array.isArray(this.masterData.majorEquipmentList) || this.masterData.majorEquipmentList.length === 0) {
+        this.masterData = {
+          ...this.masterData,
+          majorEquipmentList: initialProjectMasterData.majorEquipmentList
+        };
+        needsMasterSave = true;
+      }
+      if (needsMasterSave) {
+        this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
+      }
+    }
+
+    // Ensure currentEquipment has valid items array
+    if (this.currentEquipment) {
+      if (!this.currentEquipment.items || !Array.isArray(this.currentEquipment.items)) {
+        this.currentEquipment = {
+          ...this.currentEquipment,
+          items: initialEquipmentRecord.items || initialEquipmentItems
+        };
+        this.saveToStorage(STORAGE_KEYS.EQUIPMENT, this.currentEquipment);
       }
     }
   }
@@ -275,12 +330,60 @@ export class ProjectDataStore {
    */
   public hydratePublishedReport(report: PublishedReport) {
     if (!report) return;
-    if (report.project) this.masterData = report.project;
+    if (report.project) {
+      this.masterData = {
+        ...initialProjectMasterData,
+        ...report.project,
+        disciplines: (report.project.disciplines && Array.isArray(report.project.disciplines) && report.project.disciplines.length > 0)
+          ? report.project.disciplines
+          : (this.masterData?.disciplines || initialProjectMasterData.disciplines),
+        milestones: (report.project.milestones && Array.isArray(report.project.milestones) && report.project.milestones.length > 0)
+          ? report.project.milestones
+          : (this.masterData?.milestones || initialProjectMasterData.milestones),
+        majorEquipmentList: (report.project.majorEquipmentList && Array.isArray(report.project.majorEquipmentList) && report.project.majorEquipmentList.length > 0)
+          ? report.project.majorEquipmentList
+          : (this.masterData?.majorEquipmentList || initialProjectMasterData.majorEquipmentList)
+      };
+    }
     if (report.masterSCurve) this.masterSCurve = report.masterSCurve;
-    if (report.pms) this.currentPms = report.pms;
-    if (report.daily) this.currentDaily = report.daily;
-    if (report.ipc) this.currentIpc = report.ipc;
-    if (report.equipment) this.currentEquipment = report.equipment;
+    if (report.pms) this.currentPms = { ...initialPmsRecord, ...report.pms };
+    if (report.daily) {
+      this.currentDaily = {
+        ...initialDailyReportRecord,
+        ...report.daily,
+        manpower: {
+          ...initialDailyReportRecord.manpower,
+          ...(report.daily.manpower || {})
+        },
+        siteManpower: report.daily.siteManpower || (report.daily.manpower ? {
+          ...initialDailyReportRecord.siteManpower,
+          ...(report.daily.siteManpower || {})
+        } : (this.currentDaily?.siteManpower || initialDailyReportRecord.siteManpower)),
+        machinery: {
+          ...initialDailyReportRecord.machinery,
+          ...(report.daily.machinery || {})
+        },
+        safetyHSE: {
+          ...initialDailyReportRecord.safetyHSE,
+          ...(report.daily.safetyHSE || {})
+        },
+        importantActivities: report.daily.importantActivities || initialDailyReportRecord.importantActivities || [],
+        keyIssues: report.daily.keyIssues || initialDailyReportRecord.keyIssues || [],
+        workPerformedToday: report.daily.workPerformedToday || [],
+        workOngoing: report.daily.workOngoing || [],
+        workPlannedTomorrow: report.daily.workPlannedTomorrow || []
+      };
+    }
+    if (report.ipc) this.currentIpc = { ...initialIpcRecord, ...report.ipc };
+    if (report.equipment) {
+      this.currentEquipment = {
+        ...initialEquipmentRecord,
+        ...report.equipment,
+        items: (report.equipment.items && Array.isArray(report.equipment.items) && report.equipment.items.length > 0)
+          ? report.equipment.items
+          : (this.currentEquipment?.items || initialEquipmentRecord.items || initialEquipmentItems)
+      };
+    }
     if (report.financialSettings) this.financialSettings = report.financialSettings;
 
     this.publishedReportMetadata = {
@@ -639,7 +742,7 @@ export class ProjectDataStore {
       source: dailyFull.source || 'Site Supervision',
       user,
       status: warning ? 'warning' : 'active',
-      recordSummary: `Site Manpower: Total ${dailyFull.manpower.total ?? '—'} (Present: ${dailyFull.manpower.present ?? dailyFull.manpower.total ?? '—'}, Direct: ${dailyFull.manpower.direct ?? '—'}, Indirect: ${dailyFull.manpower.indirect ?? '—'}) | Active Machinery: ${dailyFull.machinery.active}`
+      recordSummary: `Site Manpower: Total ${dailyFull.manpower.total ?? '—'} (Present: ${dailyFull.manpower.present ?? dailyFull.manpower.total ?? '—'}, Direct: ${dailyFull.manpower.direct ?? '—'}, Indirect: ${dailyFull.manpower.indirect ?? '—'}) | Active Machinery: ${dailyFull.machinery?.active ?? '—'}`
     });
 
     this.notify();
@@ -693,9 +796,9 @@ export class ProjectDataStore {
         attendanceRatio: result.attendanceRatio ?? null
       } : undefined),
       machinery: {
-        ...this.currentDaily.machinery,
-        active: result.machineryActive || this.currentDaily.machinery.active,
-        total: result.machineryTotal || this.currentDaily.machinery.total
+        ...(this.currentDaily?.machinery || initialDailyReportRecord.machinery),
+        active: result.machineryActive ?? this.currentDaily?.machinery?.active ?? 0,
+        total: result.machineryTotal ?? this.currentDaily?.machinery?.total ?? 0
       },
       keyIssues: result.keyIssues || []
     };

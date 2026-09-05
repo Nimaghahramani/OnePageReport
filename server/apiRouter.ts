@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import {
+  isAdminPasswordConfigured,
+  isSessionSecretConfigured,
   verifyAdminPassword,
   createAdminSessionToken,
   setAdminSessionCookie,
@@ -9,6 +11,8 @@ import {
   requireAdminAuth,
 } from './auth';
 import {
+  isVercelBlobConfigured,
+  isProduction,
   getLatestPublishedReport,
   getLatestReportVersionInfo,
   savePublishedReport,
@@ -32,33 +36,46 @@ const setNoCacheHeaders = (res: Response) => {
 // ==========================================
 
 /**
- * Health check endpoint
+ * GET /api/health
+ * Lightweight health check: always returns success without accessing Blob or Admin secrets.
  */
 apiRouter.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({
+    success: true,
+    service: 'loico-report-api',
+  });
 });
 
 /**
  * GET /api/report/latest
- * Public access: returns the latest officially published report
+ * Public access: returns the latest officially published report from Vercel Blob.
+ * If no report has ever been published: returns HTTP 200 with { success: true, data: null, message: "NO_PUBLISHED_REPORT" }.
  */
 apiRouter.get('/report/latest', async (_req: Request, res: Response) => {
   setNoCacheHeaders(res);
   try {
     const report = await getLatestPublishedReport();
     if (!report) {
-      res.json({
+      res.status(200).json({
         success: true,
         data: null,
         message: 'NO_PUBLISHED_REPORT',
       });
       return;
     }
-    res.json({
+    res.status(200).json({
       success: true,
       data: report,
     });
   } catch (err: any) {
+    if (err?.code === 'STORAGE_CONFIG_MISSING' || err?.message === 'STORAGE_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        error: 'STORAGE_CONFIG_MISSING',
+        message: 'تنظیمات فضای ذخیره‌سازی ابری (BLOB_READ_WRITE_TOKEN) در متغیرهای سرور یافت نشد.',
+      });
+      return;
+    }
     console.error('[API] /report/latest error:', err);
     res.status(500).json({
       success: false,
@@ -69,23 +86,31 @@ apiRouter.get('/report/latest', async (_req: Request, res: Response) => {
 });
 
 // Alias for plural /reports/latest
-apiRouter.get('/reports/latest', async (req: Request, res: Response) => {
+apiRouter.get('/reports/latest', async (_req: Request, res: Response) => {
   setNoCacheHeaders(res);
   try {
     const report = await getLatestPublishedReport();
     if (!report) {
-      res.json({
+      res.status(200).json({
         success: true,
         data: null,
         message: 'NO_PUBLISHED_REPORT',
       });
       return;
     }
-    res.json({
+    res.status(200).json({
       success: true,
       data: report,
     });
   } catch (err: any) {
+    if (err?.code === 'STORAGE_CONFIG_MISSING' || err?.message === 'STORAGE_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        error: 'STORAGE_CONFIG_MISSING',
+        message: 'تنظیمات فضای ذخیره‌سازی ابری (BLOB_READ_WRITE_TOKEN) در متغیرهای سرور یافت نشد.',
+      });
+      return;
+    }
     console.error('[API] /reports/latest error:', err);
     res.status(500).json({
       success: false,
@@ -97,14 +122,22 @@ apiRouter.get('/reports/latest', async (req: Request, res: Response) => {
 
 /**
  * GET /api/report/version
- * Public access: lightweight version check for client auto-updating every 5 minutes
+ * Public access: lightweight version check for client auto-polling every 5 minutes
  */
 apiRouter.get('/report/version', async (_req: Request, res: Response) => {
   setNoCacheHeaders(res);
   try {
     const versionInfo = await getLatestReportVersionInfo();
-    res.json(versionInfo);
+    res.status(200).json(versionInfo);
   } catch (err: any) {
+    if (err?.code === 'STORAGE_CONFIG_MISSING' || err?.message === 'STORAGE_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        hasReport: false,
+        error: 'STORAGE_CONFIG_MISSING',
+      });
+      return;
+    }
     console.error('[API] /report/version error:', err);
     res.status(500).json({
       success: false,
@@ -120,43 +153,87 @@ apiRouter.get('/report/version', async (_req: Request, res: Response) => {
 
 /**
  * POST /api/admin/login
- * Verify password against server-side ADMIN_PASSWORD and set HttpOnly session cookie
+ * Distinguishes:
+ * - wrong password -> 401 INVALID_CREDENTIALS
+ * - missing ADMIN_PASSWORD -> 500 ADMIN_CONFIG_MISSING
+ * - missing ADMIN_SESSION_SECRET (in production) -> 500 ADMIN_CONFIG_MISSING
+ * - server error -> controlled SERVER_ERROR
  */
 apiRouter.post('/admin/login', (req: Request, res: Response) => {
-  const { password } = req.body || {};
-  if (!password || typeof password !== 'string') {
-    res.status(400).json({
-      success: false,
-      error: 'MISSING_PASSWORD',
-      message: 'لطفاً رمز عبور را وارد نمایید.',
-    });
-    return;
-  }
+  try {
+    const { password } = req.body || {};
 
-  const isValid = verifyAdminPassword(password);
-  if (!isValid) {
-    // Add artificial delay to prevent brute-force timing
-    setTimeout(() => {
-      res.status(401).json({
+    // 1. Missing password in payload
+    if (!password || typeof password !== 'string') {
+      res.status(400).json({
         success: false,
-        error: 'INVALID_CREDENTIALS',
-        message: 'رمز عبور مدیریت نادرست است.',
+        error: 'MISSING_PASSWORD',
+        message: 'لطفاً رمز عبور را وارد نمایید.',
       });
-    }, 400);
-    return;
+      return;
+    }
+
+    // 2. Check if ADMIN_PASSWORD is configured
+    if (!isAdminPasswordConfigured()) {
+      res.status(500).json({
+        success: false,
+        error: 'ADMIN_CONFIG_MISSING',
+        message: 'پیکربندی رمز عبور مدیر (ADMIN_PASSWORD) در محیط سرور تنظیم نشده است.',
+      });
+      return;
+    }
+
+    // 3. Check if ADMIN_SESSION_SECRET is configured
+    if (!isSessionSecretConfigured()) {
+      res.status(500).json({
+        success: false,
+        error: 'ADMIN_CONFIG_MISSING',
+        message: 'پیکربندی کلید امنیتی نشست (ADMIN_SESSION_SECRET) در محیط سرور تنظیم نشده است.',
+      });
+      return;
+    }
+
+    // 4. Verify password
+    const isValid = verifyAdminPassword(password);
+    if (!isValid) {
+      setTimeout(() => {
+        res.status(401).json({
+          success: false,
+          error: 'INVALID_CREDENTIALS',
+          message: 'رمز عبور مدیریت نادرست است.',
+        });
+      }, 300);
+      return;
+    }
+
+    // 5. Create and set session token
+    const token = createAdminSessionToken();
+    setAdminSessionCookie(res, token);
+
+    res.status(200).json({
+      success: true,
+      message: 'ورود به پنل مدیریت با موفقیت انجام شد.',
+      user: {
+        role: 'admin',
+        name: 'مدیر ارشد پروژه',
+      },
+    });
+  } catch (err: any) {
+    console.error('[API] /admin/login error:', err);
+    if (err?.message === 'ADMIN_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        error: 'ADMIN_CONFIG_MISSING',
+        message: 'پیکربندی امنیتی مدیر در محیط سرور یافت نشد.',
+      });
+      return;
+    }
+    res.status(500).json({
+      success: false,
+      error: 'SERVER_ERROR',
+      message: 'خطای سرور در پردازش درخواست ورود.',
+    });
   }
-
-  const token = createAdminSessionToken();
-  setAdminSessionCookie(res, token);
-
-  res.json({
-    success: true,
-    message: 'ورود به پنل مدیریت با موفقیت انجام شد.',
-    user: {
-      role: 'admin',
-      name: 'مدیر ارشد پروژه',
-    },
-  });
 });
 
 /**
@@ -165,7 +242,7 @@ apiRouter.post('/admin/login', (req: Request, res: Response) => {
  */
 apiRouter.post('/admin/logout', (_req: Request, res: Response) => {
   clearAdminSessionCookie(res);
-  res.json({
+  res.status(200).json({
     success: true,
     message: 'خروج از پنل مدیریت انجام شد.',
   });
@@ -178,14 +255,14 @@ apiRouter.post('/admin/logout', (_req: Request, res: Response) => {
 apiRouter.get('/admin/me', (req: Request, res: Response) => {
   const token = extractTokenFromRequest(req);
   if (!token || !verifyAdminSessionToken(token)) {
-    res.json({
+    res.status(200).json({
       success: true,
       authenticated: false,
     });
     return;
   }
 
-  res.json({
+  res.status(200).json({
     success: true,
     authenticated: true,
     user: {
@@ -215,7 +292,7 @@ apiRouter.post('/admin/validate', requireAdminAuth, (req: Request, res: Response
   }
 
   const result = validateReportForPublication(draftReport);
-  res.json({
+  res.status(200).json({
     success: true,
     ...result,
   });
@@ -224,12 +301,11 @@ apiRouter.post('/admin/validate', requireAdminAuth, (req: Request, res: Response
 /**
  * POST /api/admin/publish
  * Server-side publication workflow:
- * 1. Verify admin session (handled by middleware)
+ * 1. Verify admin session (handled by requireAdminAuth middleware)
  * 2. Validate normalized draft report
  * 3. Assign next version
- * 4. Save immutable snapshot in central storage
+ * 4. Save immutable snapshot in central storage (Vercel Blob in prod)
  * 5. Update latest-report pointer and history
- * 6. Return success
  */
 apiRouter.post('/admin/publish', requireAdminAuth, async (req: Request, res: Response) => {
   const draftReport: Partial<PublishedReport> = req.body;
@@ -261,9 +337,9 @@ apiRouter.post('/admin/publish', requireAdminAuth, async (req: Request, res: Res
 
     const saveResult = await savePublishedReport(reportToPublish);
 
-    res.json({
+    res.status(200).json({
       success: true,
-      message: `گزارش نسخه ${saveResult.version} با موفقیت منتشر گردید.`,
+      message: `گزارش نسخه ${saveResult.version} با موفقیت در مخزن ابری منتشر گردید.`,
       version: saveResult.version,
       id: saveResult.report.id,
       publishedAt: saveResult.report.publishedAt,
@@ -271,10 +347,18 @@ apiRouter.post('/admin/publish', requireAdminAuth, async (req: Request, res: Res
     });
   } catch (err: any) {
     console.error('[API] /admin/publish error:', err);
+    if (err?.code === 'STORAGE_CONFIG_MISSING' || err?.message === 'STORAGE_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        error: 'STORAGE_CONFIG_MISSING',
+        message: 'تنظیمات فضای ذخیره‌سازی ابری (BLOB_READ_WRITE_TOKEN) در متغیرهای سرور یافت نشد.',
+      });
+      return;
+    }
     res.status(500).json({
       success: false,
       error: 'PUBLISH_STORAGE_ERROR',
-      message: 'خطا در ذخیره‌سازی نسخه نهایی گزارش در سرور.',
+      message: 'خطا در ذخیره‌سازی نسخه نهایی گزارش در فضای ابری.',
     });
   }
 });
@@ -286,12 +370,20 @@ apiRouter.post('/admin/publish', requireAdminAuth, async (req: Request, res: Res
 apiRouter.get('/admin/history', requireAdminAuth, async (_req: Request, res: Response) => {
   try {
     const history = await getPublicationHistory();
-    res.json({
+    res.status(200).json({
       success: true,
       history,
     });
   } catch (err: any) {
     console.error('[API] /admin/history error:', err);
+    if (err?.code === 'STORAGE_CONFIG_MISSING' || err?.message === 'STORAGE_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        error: 'STORAGE_CONFIG_MISSING',
+        message: 'تنظیمات فضای ذخیره‌سازی ابری (BLOB_READ_WRITE_TOKEN) در متغیرهای سرور یافت نشد.',
+      });
+      return;
+    }
     res.status(500).json({
       success: false,
       error: 'STORAGE_ERROR',
@@ -326,13 +418,21 @@ apiRouter.post('/admin/rollback', requireAdminAuth, async (req: Request, res: Re
       return;
     }
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: `گزارش با موفقیت به نسخه ${version} بازگردانی شد.`,
       report: restored,
     });
   } catch (err: any) {
     console.error('[API] /admin/rollback error:', err);
+    if (err?.code === 'STORAGE_CONFIG_MISSING' || err?.message === 'STORAGE_CONFIG_MISSING') {
+      res.status(500).json({
+        success: false,
+        error: 'STORAGE_CONFIG_MISSING',
+        message: 'تنظیمات فضای ذخیره‌سازی ابری (BLOB_READ_WRITE_TOKEN) در متغیرهای سرور یافت نشد.',
+      });
+      return;
+    }
     res.status(500).json({
       success: false,
       error: 'ROLLBACK_ERROR',

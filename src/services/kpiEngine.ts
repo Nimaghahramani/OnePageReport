@@ -213,7 +213,7 @@ export function calculateExecutiveKPIs(
 
   // 5. Site Resources & Manpower
   const activeManpower = daily ? (daily.siteManpower?.total ?? daily.manpower?.total ?? null) : null;
-  const activeMachinery = daily ? daily.machinery.active : null;
+  const activeMachinery = daily?.machinery?.active ?? null;
 
   let siteManpower: SiteManpowerKPI | null = null;
   if (daily) {

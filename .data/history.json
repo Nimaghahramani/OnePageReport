@@ -1,0 +1,24 @@
+[
+  {
+    "id": "rep-1404-06-15-v1",
+    "projectId": "LOICO-500MW",
+    "reportDate": "1404/06/15",
+    "version": 1,
+    "publishedAt": "2026-09-05T09:02:05.643Z",
+    "publishedBy": "مدیر ارشد پروژه",
+    "plannedProgress": 55.4,
+    "actualProgress": 52.1,
+    "variance": -3.3,
+    "totalManpower": 420,
+    "presentManpower": 395,
+    "absentManpower": 25,
+    "attendanceRatio": 94,
+    "equipmentInstalled": 1240,
+    "equipmentTotal": 2500,
+    "equipmentPercentage": 49.6,
+    "financialProgress": 48,
+    "criticalIssuesCount": 1,
+    "keyActivitiesCount": 2,
+    "status": "active"
+  }
+]

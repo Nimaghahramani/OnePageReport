@@ -67,7 +67,7 @@ export const ProjectMasterDataView: React.FC<ProjectMasterDataViewProps> = ({ ma
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
-  const totalWeight = formData.disciplines.reduce((sum, d) => sum + (Number(d.weight) || 0), 0);
+  const totalWeight = (formData?.disciplines || []).reduce((sum, d) => sum + (Number(d.weight) || 0), 0);
 
   return (
     <div className="max-w-6xl mx-auto p-4 space-y-4">
@@ -300,7 +300,7 @@ export const ProjectMasterDataView: React.FC<ProjectMasterDataViewProps> = ({ ma
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
-            {formData.disciplines.map((d, idx) => (
+            {(formData?.disciplines || []).map((d, idx) => (
               <div key={d.id} className="bg-slate-50 p-2.5 rounded border border-slate-200 flex items-center justify-between">
                 <div>
                   <span className="font-bold text-slate-800 block">{isFa ? d.nameFa : d.nameEn}</span>
@@ -339,7 +339,7 @@ export const ProjectMasterDataView: React.FC<ProjectMasterDataViewProps> = ({ ma
           </div>
 
           <div className="space-y-2 text-xs">
-            {formData.milestones.map((m, idx) => (
+            {(formData?.milestones || []).map((m, idx) => (
               <div key={m.id} className="grid grid-cols-12 gap-2 bg-slate-50 p-2 rounded border border-slate-200 items-center">
                 <div className="col-span-5">
                   <input

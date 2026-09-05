@@ -53,17 +53,19 @@ export function validateAllDatasets(
         source: 'Project Setup'
       });
     }
-    const disciplineWeightSum = master.disciplines.reduce((acc, d) => acc + d.weight, 0);
-    if (Math.abs(disciplineWeightSum - 100) > 0.5) {
-      issues.push({
-        id: 'v-m-4',
-        type: 'warning',
-        dataset: 'master',
-        field: 'disciplines',
-        messageFa: `مجموع اوزان دیسیپلین‌ها (${disciplineWeightSum}%) با ۱۰۰٪ تطابق ندارد.`,
-        messageEn: `Sum of discipline weights (${disciplineWeightSum}%) does not equal 100%.`,
-        source: 'Project Setup'
-      });
+    if (master.disciplines && Array.isArray(master.disciplines) && master.disciplines.length > 0) {
+      const disciplineWeightSum = master.disciplines.reduce((acc, d) => acc + (Number(d.weight) || 0), 0);
+      if (Math.abs(disciplineWeightSum - 100) > 0.5) {
+        issues.push({
+          id: 'v-m-4',
+          type: 'warning',
+          dataset: 'master',
+          field: 'disciplines',
+          messageFa: `مجموع اوزان دیسیپلین‌ها (${disciplineWeightSum}%) با ۱۰۰٪ تطابق ندارد.`,
+          messageEn: `Sum of discipline weights (${disciplineWeightSum}%) does not equal 100%.`,
+          source: 'Project Setup'
+        });
+      }
     }
   }
 
@@ -217,7 +219,7 @@ export function validateAllDatasets(
 
   // Daily Report Validation
   if (daily) {
-    if (daily.manpower.total <= 0) {
+    if (daily.manpower && (daily.manpower.total ?? 0) <= 0) {
       issues.push({
         id: 'v-d-1',
         type: 'warning',

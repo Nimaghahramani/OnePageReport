@@ -1,0 +1,43 @@
+{
+  "projectId": "LOICO-500MW",
+  "reportDate": "1404/06/15",
+  "project": {
+    "id": "LOICO-500MW",
+    "name": "پروژه نیروگاه خورشیدی ۵۰۰ مگاوات لویکو",
+    "capacity": "500 MW",
+    "employer": "شرکت سرمایه‌گذاری لویکو",
+    "contractor": "شرکت مهندسی و ساخت",
+    "consultant": "مهندسین مشاور انرژی"
+  },
+  "kpis": {
+    "plannedProgress": 55.4,
+    "actualProgress": 52.1,
+    "progressVariance": -3.3,
+    "financialProgress": 48,
+    "equipmentInstalled": 1240,
+    "equipmentTotal": 2500,
+    "equipmentInstallationPercentage": 49.6,
+    "siteManpower": {
+      "total": 420,
+      "present": 395,
+      "absent": 25,
+      "attendanceRatio": 94
+    }
+  },
+  "daily": {
+    "importantActivities": [
+      "نصب ترانسفورماتور اصلی فاز یک",
+      "تکمیل کابل‌کشی استرینگ‌های بلوک C"
+    ],
+    "keyIssues": [
+      "تأخیر در ترخیص اینورترهای ۳۳۰ کیلووات"
+    ],
+    "tomorrowPriorities": [
+      "تست عایقی خط اتصال ۲۰ کیلوولت"
+    ]
+  },
+  "publishedBy": "مدیر ارشد پروژه",
+  "id": "rep-1404-06-15-v1",
+  "version": 1,
+  "publishedAt": "2026-09-05T09:02:05.643Z"
+}

@@ -15,25 +15,25 @@ export const MobileEquipmentSection: React.FC<MobileEquipmentSectionProps> = ({ 
 
   // Derive items strictly from current equipment record
   const items: EquipmentProgressItem[] =
-    equipment.items && equipment.items.length > 0
+    equipment?.items && equipment.items.length > 0
       ? equipment.items
-      : equipment.equipmentSummary?.items && equipment.equipmentSummary.items.length > 0
+      : equipment?.equipmentSummary?.items && equipment.equipmentSummary.items.length > 0
       ? equipment.equipmentSummary.items
-      : (equipment.totalEquipment ? [] : initialEquipmentItems);
+      : (equipment?.totalEquipment ? [] : initialEquipmentItems);
 
   // Calculate totals
   const totalCount =
-    equipment.equipmentSummary?.total ??
-    (items.length > 0 ? items.reduce((s, it) => s + (it.total || 0), 0) : (equipment.totalEquipment ?? 0));
+    equipment?.equipmentSummary?.total ??
+    ((items || []).length > 0 ? (items || []).reduce((s, it) => s + (it.total || 0), 0) : (equipment?.totalEquipment ?? 0));
 
   const completedCount =
-    equipment.equipmentSummary?.completed ??
-    (items.length > 0 ? items.reduce((s, it) => s + (it.completed || 0), 0) : (equipment.installed ?? 0));
+    equipment?.equipmentSummary?.completed ??
+    ((items || []).length > 0 ? (items || []).reduce((s, it) => s + (it.completed || 0), 0) : (equipment?.installed ?? 0));
 
   const remainingCount = Math.max(0, totalCount - completedCount);
   const weightedProgress =
-    equipment.equipmentSummary?.weightedProgress ??
-    (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment.installationPercentage ?? 0));
+    equipment?.equipmentSummary?.weightedProgress ??
+    (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment?.installationPercentage ?? 0));
 
   return (
     <div id="mobile-equipment-section" className="mobile-equipment-card bg-white border border-slate-200 rounded-xl p-3 shadow-xs mb-2.5 relative">
