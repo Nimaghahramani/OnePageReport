@@ -558,7 +558,8 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 }
 
 /* Project Information Row & Stakeholders Grid */
-[data-theme="loico-blue"] .report-stakeholders-grid {
+[data-theme="loico-blue"] .report-stakeholders-grid,
+[data-theme="loico-blue"] .report-contract-values-grid {
   border-top: 1px solid rgba(147, 197, 253, 0.16) !important;
 }
 [data-theme="loico-blue"] .report-info-label {
@@ -572,6 +573,14 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 [data-theme="loico-blue"] .report-info-icon,
 [data-theme="loico-blue"] .report-stakeholder-item svg {
   color: #38BDF8 !important;
+}
+[data-theme="loico-blue"] .report-contract-badge-irr {
+  background: rgba(6, 78, 59, 0.35) !important;
+  border-color: rgba(52, 211, 153, 0.3) !important;
+}
+[data-theme="loico-blue"] .report-contract-badge-eur {
+  background: rgba(30, 58, 138, 0.35) !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
 }
 
 /* Status Badge: Semantic light badge with crisp dark text */
@@ -1180,6 +1189,17 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   .report-header .report-info-icon,
   .report-header .report-stakeholder-item svg {
     color: #475569 !important;
+  }
+  .report-header .report-contract-badge-irr {
+    background: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+  }
+  .report-header .report-contract-badge-eur {
+    background: #eff6ff !important;
+    border-color: #bfdbfe !important;
+  }
+  .report-header .report-contract-values-grid {
+    border-color: #e2e8f0 !important;
   }
 
   #executive-report-sheet .text-slate-950,

@@ -21,6 +21,9 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
   const isFa = lang === 'fa';
   const [showProjectDetails, setShowProjectDetails] = useState(false);
 
+  const contractValIRR = master.contractValueIRR || master.contractAmountIRR || master.contractValue || 4653170392630;
+  const contractValEUR = master.contractValueEUR || master.contractAmountEUR || 673167;
+
   const getStatusBadge = () => {
     switch (kpis.overallStatus) {
       case 'critical':
@@ -127,6 +130,18 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'شماره گزارش:' : 'Report No:'}</span>
               <span className="font-bold text-blue-900 font-mono">{daily.reportNumber || 526}</span>
+            </div>
+            <div className="flex items-center justify-between bg-emerald-50/60 -mx-1 px-1 py-0.5 rounded border border-emerald-200/60">
+              <span className="text-emerald-800 font-semibold">{isFa ? 'مبلغ ریالی قرارداد:' : 'Contract Value (IRR):'}</span>
+              <span className="font-extrabold text-emerald-950 font-mono text-[9.5px]">
+                {Number(contractValIRR).toLocaleString()} {isFa ? 'ریال' : 'IRR'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between bg-blue-50/60 -mx-1 px-1 py-0.5 rounded border border-blue-200/60">
+              <span className="text-blue-800 font-semibold">{isFa ? 'مبلغ ارزی قرارداد:' : 'Contract Value (EUR):'}</span>
+              <span className="font-extrabold text-blue-950 font-mono text-[9.5px]">
+                {Number(contractValEUR).toLocaleString()} {isFa ? 'یورو' : 'EUR'}
+              </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'کارفرما:' : 'Client:'}</span>

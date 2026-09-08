@@ -81,14 +81,31 @@ export class ProjectDataStore {
 
   constructor() {
     this.masterData = this.loadFromStorage(STORAGE_KEYS.MASTER, initialProjectMasterData);
-    // Project Master Data migration: ensure contract number and subject match header
-    if (this.masterData && (!this.masterData.contractNumber || this.masterData.contractNumber === 'N/A')) {
-      this.masterData = {
-        ...this.masterData,
-        contractNumber: '125/ 1234 / 3 - 1 ص پ',
-        scopeDescriptionFa: this.masterData.scopeDescriptionFa || 'تکمیل و تجهیز اسکله P1 بندر پتروشیمی ماهشهر'
-      };
-      this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
+    // Project Master Data migration: ensure contract number, subject, and contract values match
+    if (this.masterData) {
+      let masterUpdated = false;
+      const updatedMaster = { ...this.masterData };
+      if (!updatedMaster.contractNumber || updatedMaster.contractNumber === 'N/A') {
+        updatedMaster.contractNumber = '125 / 1234 / 3 - 1 ص پ';
+        masterUpdated = true;
+      }
+      if (!updatedMaster.scopeDescriptionFa || updatedMaster.scopeDescriptionFa === 'N/A') {
+        updatedMaster.scopeDescriptionFa = 'تکمیل و تجهیز اسکله P1 بندر پتروشیمی ماهشهر';
+        masterUpdated = true;
+      }
+      if (!updatedMaster.contractValueIRR || updatedMaster.contractValueIRR <= 0) {
+        updatedMaster.contractValueIRR = 4653170392630;
+        updatedMaster.contractValue = 4653170392630;
+        masterUpdated = true;
+      }
+      if (!updatedMaster.contractValueEUR || updatedMaster.contractValueEUR <= 0) {
+        updatedMaster.contractValueEUR = 673167;
+        masterUpdated = true;
+      }
+      if (masterUpdated) {
+        this.masterData = updatedMaster;
+        this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
+      }
     }
     this.masterSCurve = this.loadFromStorage(STORAGE_KEYS.MASTER_SCURVE, initialMasterSCurveRecord);
     this.currentPms = this.loadFromStorage(STORAGE_KEYS.PMS, initialPmsRecord);
