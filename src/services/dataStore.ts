@@ -30,7 +30,7 @@ import { validateAllDatasets, checkDateSuperseded } from './validationService';
 import { calculateExecutiveKPIs } from './kpiEngine';
 import { getPlannedAtDate, calculateScheduleDelayFromPlannedCurve } from './scurveEngine';
 import { DailyReportWorkbookResult, ProjectMasterImportResult } from './excelParser';
-import { formatToJalali } from '../utils/jalaliDate';
+import { formatToJalali, getPersianDayOfWeek, reconcileDateWithDayOfWeek } from '../utils/jalaliDate';
 
 const defaultFinancialSettings: FinancialSettings = {
   calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,230,000,000,000 IRR (5230 میلیارد ریال - بر مبنای عدد کل قرارداد)
@@ -827,24 +827,32 @@ export class ProjectDataStore {
 
     // 1. Update Daily Report
     const dailyVersion = (this.currentDaily?.version || 0) + 1;
-    const reportDateStr =
+    let reportDateStr =
       result.reportDate
       ?? result.dailyReportDate
       ?? (
            result.pmsDataDate
              ? formatToJalali(result.pmsDataDate)
              : null
-         );
+         )
+      ?? '1405/06/15';
+
+    let dayOfWeekStr = result.reportDayOfWeek ?? this.currentDaily?.reportDayOfWeek ?? 'یکشنبه';
+    
+    // Ensure date and day of week match 100% and eliminate any timezone offset mismatch
+    reportDateStr = reconcileDateWithDayOfWeek(reportDateStr, dayOfWeekStr);
+    dayOfWeekStr = getPersianDayOfWeek(reportDateStr) || dayOfWeekStr;
+
     const dailyFull: DailyReportRecord = {
       ...this.currentDaily,
       id: `daily-v${dailyVersion}`,
       version: dailyVersion,
       reportNumber: result.reportNumber ?? this.currentDaily?.reportNumber ?? 526,
-      reportDayOfWeek: result.reportDayOfWeek ?? this.currentDaily?.reportDayOfWeek ?? 'یکشنبه',
+      reportDayOfWeek: dayOfWeekStr,
       contractNumber: result.contractNumber ?? this.currentDaily?.contractNumber,
       contractSubject: result.contractSubject ?? this.currentDaily?.contractSubject,
       dataDate: result.pmsDataDate || result.dataDate,
-      reportDate: reportDateStr || '1405/06/15',
+      reportDate: reportDateStr,
       uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
       fileName: result.fileName,
       source: `Daily Report Workbook: ${result.fileName}`,

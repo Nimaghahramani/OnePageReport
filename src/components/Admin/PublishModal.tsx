@@ -52,7 +52,7 @@ export const PublishModal: React.FC<PublishModalProps> = ({
   const indirectTotal = kpis.siteManpower?.indirect?.total || 0;
   const isIndirectBalanced = indirectTotal === indirectPresent + indirectAbsent;
 
-  const reportDate = currentDaily?.reportDate || currentPms?.dataDate || '1405/06/14';
+  const reportDate = currentDaily?.reportDate || currentPms?.dataDate || '1405/06/15';
 
   const handlePublish = async () => {
     setErrorMsg(null);

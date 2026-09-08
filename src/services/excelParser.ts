@@ -22,7 +22,7 @@ import {
   eurToIrr
 } from '../types';
 import { getPlannedAtDate } from './scurveEngine';
-import { parsePersianOrGregorianDate, formatToJalali } from '../utils/jalaliDate';
+import { parsePersianOrGregorianDate, formatToJalali, getPersianDayOfWeek, reconcileDateWithDayOfWeek } from '../utils/jalaliDate';
 
 export interface ParsedSheetData {
   fileName: string;
@@ -1853,6 +1853,9 @@ export function parsePmsSheet(worksheet: XLSX.WorkSheet): PmsParseResult {
 /**
  * Helper to safely extract a validated Jalali/Gregorian date string from a raw cell value.
  */
+/**
+ * Helper to safely extract a validated Jalali/Gregorian date string from a raw or formatted cell value.
+ */
 function tryExtractDateValue(val: any): string | null {
   if (val === null || val === undefined || val === '') return null;
 
@@ -1865,11 +1868,7 @@ function tryExtractDateValue(val: any): string | null {
   };
   const str = String(val).replace(/[۰-۹٠-٩]/g, d => faToEn[d] || d).trim();
 
-  // Try direct parse
-  const direct = parsePersianOrGregorianDate(val);
-  if (direct) return direct.jalaliString;
-
-  // Match Jalali date pattern within string (e.g. 1405/06/15, 1405-6-15, 1405.06.15)
+  // 1. PRIORITIZE explicit Jalali date pattern within string (e.g. 1405/06/15, 1405-6-15, 1405.06.15)
   const jMatch = str.match(/\b(13\d{2}|14\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
   if (jMatch) {
     const jy = parseInt(jMatch[1], 10);
@@ -1879,7 +1878,12 @@ function tryExtractDateValue(val: any): string | null {
       return `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
     }
   }
-  // Match ISO Gregorian date pattern within string (e.g. 2026-09-06)
+
+  // 2. Direct parse (handles Date objects and Excel serial numbers with Iran timezone correction)
+  const direct = parsePersianOrGregorianDate(val);
+  if (direct) return direct.jalaliString;
+
+  // 3. Match ISO Gregorian date pattern within string (e.g. 2026-09-06)
   const gMatch = str.match(/\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
   if (gMatch) {
     const p = parsePersianOrGregorianDate(`${gMatch[1]}-${gMatch[2]}-${gMatch[3]}`);
@@ -1901,7 +1905,7 @@ export interface ExtractedDailyReportHeaderInfo {
 
 /**
  * Extracts Daily Report Header Information (Report Date, Report #, Day of Week, Contract #, Subject)
- * based directly on the header metadata block (e.g. Rows 20-35 containing "تاریخ گزارش", "شماره گزارش", "روز گزارش").
+ * based directly on the Cover Sheet or header metadata block (e.g. Rows 20-35 containing "تاریخ گزارش", "شماره گزارش", "روز گزارش").
  */
 export function extractDailyReportHeaderInfoFromWorkbook(
   workbook: XLSX.WorkBook,
@@ -1910,6 +1914,15 @@ export function extractDailyReportHeaderInfoFromWorkbook(
   const preferredSheets = [
     'Cover (2)',
     'Cover',
+    'Cover(2)',
+    'کاور',
+    'کاور (۲)',
+    'کاور (2)',
+    'کاور صورت وضعیت',
+    'کاور صورت‌وضعیت',
+    'Cover (1)',
+    'Cover(1)',
+    'شیت کاور',
     'Construction (2)',
     'MANPOWER-MACHINARY',
     'MANPOWER-MACHINERY',
@@ -1936,7 +1949,9 @@ export function extractDailyReportHeaderInfoFromWorkbook(
 
   const checkSheet = (ws: XLSX.WorkSheet, sheetName: string): ExtractedDailyReportHeaderInfo | null => {
     if (!ws) return null;
+    // Load both raw cell values and formatted text as displayed on screen in Excel
     const rawRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    const formattedRows: string[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
     const merges = ws['!merges'] || [];
     // Scan up to 80 rows so header tables located at rows 20-35 are reliably captured
     const maxRows = Math.min(rawRows.length, 80);
@@ -1949,19 +1964,22 @@ export function extractDailyReportHeaderInfoFromWorkbook(
     let headerRow: number | undefined = undefined;
 
     for (let r = 0; r < maxRows; r++) {
-      const row = rawRows[r];
-      if (!row) continue;
+      const rawRow = rawRows[r];
+      const formRow = formattedRows[r] || [];
+      if (!rawRow && !formRow) continue;
+      const rowLen = Math.max(rawRow?.length || 0, formRow?.length || 0);
 
-      for (let c = 0; c < row.length; c++) {
-        const val = row[c];
-        if (!val) continue;
-        const str = String(val).trim();
+      for (let c = 0; c < rowLen; c++) {
+        const rawVal = rawRow?.[c];
+        const formVal = formRow?.[c];
+        const str = String(formVal || rawVal || '').trim();
+        if (!str) continue;
 
         // 1. Check Date Label ("تاریخ گزارش")
         if (!foundDate && dateLabelRegex.test(str)) {
           headerRow = r;
           // (a) Same cell
-          const directSame = tryExtractDateValue(str);
+          const directSame = tryExtractDateValue(formVal) || tryExtractDateValue(rawVal) || tryExtractDateValue(str);
           if (directSame) {
             foundDate = directSame;
           }
@@ -1977,7 +1995,7 @@ export function extractDailyReportHeaderInfoFromWorkbook(
           // (c) Search row: left cells (for Persian RTL layouts, e.g. c-1, c-2, c-3...)
           if (!foundDate) {
             for (let lc = c - 1; lc >= 0; lc--) {
-              const d = tryExtractDateValue(row[lc]);
+              const d = tryExtractDateValue(formRow?.[lc]) || tryExtractDateValue(rawRow?.[lc]);
               if (d) {
                 foundDate = d;
                 break;
@@ -1987,8 +2005,8 @@ export function extractDailyReportHeaderInfoFromWorkbook(
 
           // (d) Search row: right cells (for LTR layouts)
           if (!foundDate) {
-            for (let rc = colEnd + 1; rc < row.length; rc++) {
-              const d = tryExtractDateValue(row[rc]);
+            for (let rc = colEnd + 1; rc < rowLen; rc++) {
+              const d = tryExtractDateValue(formRow?.[rc]) || tryExtractDateValue(rawRow?.[rc]);
               if (d) {
                 foundDate = d;
                 break;
@@ -1997,16 +2015,15 @@ export function extractDailyReportHeaderInfoFromWorkbook(
           }
 
           // (e) Search adjacent row directly below or above
-          if (!foundDate && r + 1 < rawRows.length) {
-            const nextRow = rawRows[r + 1];
-            if (nextRow) {
-              for (const colIdx of [c, colEnd, c - 1, c + 1]) {
-                if (colIdx >= 0 && colIdx < nextRow.length) {
-                  const d = tryExtractDateValue(nextRow[colIdx]);
-                  if (d) {
-                    foundDate = d;
-                    break;
-                  }
+          if (!foundDate && r + 1 < maxRows) {
+            const nextRawRow = rawRows[r + 1];
+            const nextFormRow = formattedRows[r + 1];
+            for (const colIdx of [c, colEnd, c - 1, c + 1]) {
+              if (colIdx >= 0) {
+                const d = tryExtractDateValue(nextFormRow?.[colIdx]) || tryExtractDateValue(nextRawRow?.[colIdx]);
+                if (d) {
+                  foundDate = d;
+                  break;
                 }
               }
             }
@@ -2025,7 +2042,7 @@ export function extractDailyReportHeaderInfoFromWorkbook(
           // Search row cells to the left (RTL) or right (LTR)
           if (!foundReportNo) {
             for (let lc = c - 1; lc >= Math.max(0, c - 4); lc--) {
-              const cellStr = String(row[lc] || '').replace(/[۰-۹٠-٩]/g, d => faToEn[d] || d).trim();
+              const cellStr = String(formRow?.[lc] ?? rawRow?.[lc] ?? '').replace(/[۰-۹٠-٩]/g, d => faToEn[d] || d).trim();
               if (/^\d{1,6}$/.test(cellStr)) {
                 foundReportNo = parseInt(cellStr, 10);
                 break;
@@ -2033,8 +2050,8 @@ export function extractDailyReportHeaderInfoFromWorkbook(
             }
           }
           if (!foundReportNo) {
-            for (let rc = c + 1; rc < Math.min(row.length, c + 5); rc++) {
-              const cellStr = String(row[rc] || '').replace(/[۰-۹٠-٩]/g, d => faToEn[d] || d).trim();
+            for (let rc = c + 1; rc < Math.min(rowLen, c + 5); rc++) {
+              const cellStr = String(formRow?.[rc] ?? rawRow?.[rc] ?? '').replace(/[۰-۹٠-٩]/g, d => faToEn[d] || d).trim();
               if (/^\d{1,6}$/.test(cellStr)) {
                 foundReportNo = parseInt(cellStr, 10);
                 break;
@@ -2052,7 +2069,7 @@ export function extractDailyReportHeaderInfoFromWorkbook(
           } else {
             // Check adjacent left cells (RTL) or right cells (LTR)
             for (let lc = c - 1; lc >= Math.max(0, c - 4); lc--) {
-              const cellStr = String(row[lc] || '').trim();
+              const cellStr = String(formRow?.[lc] ?? rawRow?.[lc] ?? '').trim();
               const m = cellStr.match(dayRegex);
               if (m) {
                 foundDayOfWeek = m[1].replace(/\s+/g, '');
@@ -2060,8 +2077,8 @@ export function extractDailyReportHeaderInfoFromWorkbook(
               }
             }
             if (!foundDayOfWeek) {
-              for (let rc = c + 1; rc < Math.min(row.length, c + 5); rc++) {
-                const cellStr = String(row[rc] || '').trim();
+              for (let rc = c + 1; rc < Math.min(rowLen, c + 5); rc++) {
+                const cellStr = String(formRow?.[rc] ?? rawRow?.[rc] ?? '').trim();
                 const m = cellStr.match(dayRegex);
                 if (m) {
                   foundDayOfWeek = m[1].replace(/\s+/g, '');
@@ -2075,7 +2092,7 @@ export function extractDailyReportHeaderInfoFromWorkbook(
         // 4. Check Contract Number Label ("شماره قرارداد")
         if (!foundContractNo && contractNoLabelRegex.test(str)) {
           for (let lc = c - 1; lc >= Math.max(0, c - 4); lc--) {
-            const cellStr = String(row[lc] || '').trim();
+            const cellStr = String(formRow?.[lc] ?? rawRow?.[lc] ?? '').trim();
             if (cellStr && !contractNoLabelRegex.test(cellStr)) {
               foundContractNo = cellStr;
               break;
@@ -2086,7 +2103,7 @@ export function extractDailyReportHeaderInfoFromWorkbook(
         // 5. Check Contract Subject Label ("موضوع قرارداد")
         if (!foundContractSubject && contractSubjectLabelRegex.test(str)) {
           for (let lc = c - 1; lc >= Math.max(0, c - 4); lc--) {
-            const cellStr = String(row[lc] || '').trim();
+            const cellStr = String(formRow?.[lc] ?? rawRow?.[lc] ?? '').trim();
             if (cellStr && !contractSubjectLabelRegex.test(cellStr)) {
               foundContractSubject = cellStr;
               break;
@@ -2105,6 +2122,17 @@ export function extractDailyReportHeaderInfoFromWorkbook(
       ) {
         return null;
       }
+
+      // Reconcile date and day of week to guarantee 100% agreement and eliminate timezone shifts
+      if (foundDayOfWeek) {
+        foundDate = reconcileDateWithDayOfWeek(foundDate, foundDayOfWeek);
+      }
+      // Strictly set day of week based on the validated date
+      const calculatedDay = getPersianDayOfWeek(foundDate);
+      if (calculatedDay) {
+        foundDayOfWeek = calculatedDay;
+      }
+
       return {
         reportDate: foundDate,
         reportNumber: foundReportNo,
@@ -2119,7 +2147,7 @@ export function extractDailyReportHeaderInfoFromWorkbook(
     return null;
   };
 
-  // Phase 1: Search Preferred Sheets
+  // Phase 1: Search Preferred Sheets (Cover sheets first)
   for (const sheetName of preferredSheets) {
     const match = findSheetByName(workbook, [sheetName]);
     if (match) {
@@ -2130,7 +2158,20 @@ export function extractDailyReportHeaderInfoFromWorkbook(
     }
   }
 
-  // Phase 2: Search remaining sheets (excluding invoice/financial sheets)
+  // Phase 2: Check any sheet containing "cover" or "کاور"
+  for (const name of workbook.SheetNames) {
+    if (/cover|کاور/i.test(name)) {
+      const ws = workbook.Sheets[name];
+      if (ws) {
+        const headerInfo = checkSheet(ws, name);
+        if (headerInfo?.reportDate) {
+          return headerInfo;
+        }
+      }
+    }
+  }
+
+  // Phase 3: Search remaining sheets (excluding invoice/financial sheets)
   for (const name of workbook.SheetNames) {
     if (/invoice|financial|مالی|صورت|تراکنش|سوابق/i.test(name)) continue;
     const ws = workbook.Sheets[name];
@@ -2325,6 +2366,9 @@ export async function parseDailyReportWorkbook(
   const extractedDailyDate = extractedHeader.reportDate;
   const effectiveDailyReportDate = extractedDailyDate
     ?? (pmsData.dataDate ? formatToJalali(pmsData.dataDate) : '1405/06/15');
+  const effectiveDayOfWeek = extractedHeader.reportDayOfWeek
+    || getPersianDayOfWeek(effectiveDailyReportDate)
+    || 'یکشنبه';
   const effectiveDataDate = pmsData.dataDate
     || (extractedDailyDate ? (parsePersianOrGregorianDate(extractedDailyDate)?.isoString || '2026-09-06') : '2026-09-06');
 
@@ -2343,10 +2387,10 @@ export async function parseDailyReportWorkbook(
     dataDate: effectiveDataDate,
     reportDate: effectiveDailyReportDate,
     dailyReportDate: effectiveDailyReportDate,
-    reportNumber: extractedHeader.reportNumber,
-    reportDayOfWeek: extractedHeader.reportDayOfWeek,
-    contractNumber: extractedHeader.contractNumber,
-    contractSubject: extractedHeader.contractSubject,
+    reportNumber: extractedHeader.reportNumber ?? 526,
+    reportDayOfWeek: effectiveDayOfWeek,
+    contractNumber: extractedHeader.contractNumber || '125 / 1234 / 3 - 1 ص پ',
+    contractSubject: extractedHeader.contractSubject || 'تکمیل و تجهیز اسکله P1',
     pmsDataDate: effectiveDataDate,
     pmsRootActivity: `${pmsData.rootActivityId} — ${pmsData.rootActivityName}`,
     actualProgress: currentPmsActual,

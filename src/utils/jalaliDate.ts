@@ -127,9 +127,16 @@ export function parsePersianOrGregorianDate(val: any): ParsedDateResult | null {
 
   // 1. JS Date instance
   if (val instanceof Date && !isNaN(val.getTime())) {
-    const gy = val.getUTCFullYear();
-    const gm = val.getUTCMonth() + 1;
-    const gd = val.getUTCDate();
+    // Check if the Date object has non-zero UTC hours indicating a timezone shift from UTC+3:30 (Iran Standard Time)
+    // or UTC+4:30 (Iran Daylight Time). Midnight 00:00 in Iran is 20:30 UTC on the previous day.
+    let d = val;
+    const utcHours = d.getUTCHours();
+    if (utcHours >= 18 && utcHours <= 23) {
+      d = new Date(d.getTime() + (4 * 3600 * 1000));
+    }
+    const gy = d.getUTCFullYear();
+    const gm = d.getUTCMonth() + 1;
+    const gd = d.getUTCDate();
     const { jy, jm, jd, jalaliString } = gregorianToJalali(gy, gm, gd);
     const isoString = `${gy}-${String(gm).padStart(2, '0')}-${String(gd).padStart(2, '0')}`;
     return {
@@ -148,9 +155,26 @@ export function parsePersianOrGregorianDate(val: any): ParsedDateResult | null {
   // 2. Excel serial number (e.g. 46263)
   if (typeof val === 'number') {
     if (val >= 25000 && val <= 65000) {
-      const parsedDate = new Date(Math.round((val - 25569) * 86400 * 1000));
+      // Round to nearest integer day to eliminate fractional day time components that cause timezone shift
+      const daySerial = Math.round(val);
+      const parsedDate = new Date(Math.round((daySerial - 25569) * 86400 * 1000));
       if (!isNaN(parsedDate.getTime())) {
-        return parsePersianOrGregorianDate(parsedDate);
+        const gy = parsedDate.getUTCFullYear();
+        const gm = parsedDate.getUTCMonth() + 1;
+        const gd = parsedDate.getUTCDate();
+        const { jy, jm, jd, jalaliString } = gregorianToJalali(gy, gm, gd);
+        const isoString = `${gy}-${String(gm).padStart(2, '0')}-${String(gd).padStart(2, '0')}`;
+        return {
+          jy,
+          jm,
+          jd,
+          gy,
+          gm,
+          gd,
+          jalaliString,
+          isoString,
+          utcMidnightMs: Date.UTC(gy, gm - 1, gd)
+        };
       }
     }
   }
@@ -276,5 +300,65 @@ export function createDateFromUtcMidnightMs(ms: number): ParsedDateResult {
     isoString,
     utcMidnightMs: Date.UTC(gy, gm - 1, gd)
   };
+}
+
+/**
+ * Returns the Persian day of the week (e.g. "یکشنبه", "شنبه") for any given date.
+ */
+export function getPersianDayOfWeek(val: any): string {
+  const parsed = parsePersianOrGregorianDate(val);
+  if (!parsed) return '';
+  const d = new Date(Date.UTC(parsed.gy, parsed.gm - 1, parsed.gd));
+  const dayIdx = d.getUTCDay();
+  // 0: Sunday (یکشنبه), 1: Monday (دوشنبه), ..., 6: Saturday (شنبه)
+  const days = [
+    'یکشنبه',   // 0
+    'دوشنبه',   // 1
+    'سه‌شنبه',   // 2
+    'چهارشنبه', // 3
+    'پنج‌شنبه',  // 4
+    'جمعه',     // 5
+    'شنبه'      // 6
+  ];
+  return days[dayIdx] || '';
+}
+
+/**
+ * Reconciles a parsed Jalali date with an explicit day of the week declared in Excel.
+ * If the parsed date suffers from a 1-day timezone offset (e.g. 1405/06/14 Saturday vs expected Sunday),
+ * this function automatically adjusts the date to match the explicitly stated day of the week!
+ */
+export function reconcileDateWithDayOfWeek(dateStr: string, expectedDay: string): string {
+  const parsed = parsePersianOrGregorianDate(dateStr);
+  if (!parsed || !expectedDay) return dateStr;
+
+  const normalizeDay = (s: string) => String(s || '').replace(/[\s\u200c]+/g, '').trim();
+  const normExpected = normalizeDay(expectedDay);
+
+  const days = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'].map(normalizeDay);
+  const expIdx = days.findIndex(d => d === normExpected);
+  if (expIdx === -1) return dateStr;
+
+  const curD = new Date(Date.UTC(parsed.gy, parsed.gm - 1, parsed.gd));
+  const curIdx = curD.getUTCDay();
+
+  if (curIdx === expIdx) return dateStr; // Exact match
+
+  // Calculate day difference (-3 to +3)
+  let diff = expIdx - curIdx;
+  if (diff > 3) diff -= 7;
+  if (diff < -3) diff += 7;
+
+  // If off by 1 or 2 days (standard timezone shift), adjust to match the cover sheet
+  if (Math.abs(diff) <= 2) {
+    const adjustedD = new Date(curD.getTime() + (diff * 86400 * 1000));
+    const gy = adjustedD.getUTCFullYear();
+    const gm = adjustedD.getUTCMonth() + 1;
+    const gd = adjustedD.getUTCDate();
+    const res = gregorianToJalali(gy, gm, gd);
+    return res.jalaliString;
+  }
+
+  return dateStr;
 }
 

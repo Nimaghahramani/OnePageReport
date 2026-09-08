@@ -7,6 +7,7 @@ import {
   Language
 } from '../../types';
 import { Edit3, Check, X } from 'lucide-react';
+import { getPersianDayOfWeek } from '../../utils/jalaliDate';
 
 interface ManualDataEditorModalProps {
   isOpen: boolean;
@@ -158,7 +159,14 @@ export const ManualDataEditorModal: React.FC<ManualDataEditorModalProps> = ({
                       type="text"
                       placeholder="1405/06/15"
                       value={formData.reportDate || ''}
-                      onChange={e => handleChange('reportDate', e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        handleChange('reportDate', val);
+                        const day = getPersianDayOfWeek(val);
+                        if (day) {
+                          handleChange('reportDayOfWeek', day);
+                        }
+                      }}
                       className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono font-bold focus:border-blue-600 outline-hidden"
                     />
                   </div>
