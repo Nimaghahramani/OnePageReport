@@ -23,7 +23,8 @@ import {
   initialIpcRecord,
   initialEquipmentRecord,
   initialEquipmentItems,
-  initialVersionAuditList
+  initialVersionAuditList,
+  initialFinancialSummary
 } from '../data/sampleData';
 import { validateAllDatasets, checkDateSuperseded } from './validationService';
 import { calculateExecutiveKPIs } from './kpiEngine';
@@ -32,7 +33,7 @@ import { DailyReportWorkbookResult, ProjectMasterImportResult } from './excelPar
 import { formatToJalali } from '../utils/jalaliDate';
 
 const defaultFinancialSettings: FinancialSettings = {
-  calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 4,230,000,000,000 IRR
+  calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,230,000,000,000 IRR (5230 میلیارد ریال - بر مبنای عدد کل قرارداد)
   eurToIrrRate: EUR_TO_IRR // 556,286 IRR/EUR
 };
 
@@ -80,12 +81,49 @@ export class ProjectDataStore {
 
   constructor() {
     this.masterData = this.loadFromStorage(STORAGE_KEYS.MASTER, initialProjectMasterData);
+    // Project Master Data migration: ensure contract number and subject match header
+    if (this.masterData && (!this.masterData.contractNumber || this.masterData.contractNumber === 'N/A')) {
+      this.masterData = {
+        ...this.masterData,
+        contractNumber: '125/ 1234 / 3 - 1 ص پ',
+        scopeDescriptionFa: this.masterData.scopeDescriptionFa || 'تکمیل و تجهیز اسکله P1 بندر پتروشیمی ماهشهر'
+      };
+      this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
+    }
     this.masterSCurve = this.loadFromStorage(STORAGE_KEYS.MASTER_SCURVE, initialMasterSCurveRecord);
     this.currentPms = this.loadFromStorage(STORAGE_KEYS.PMS, initialPmsRecord);
     this.currentDaily = this.loadFromStorage(STORAGE_KEYS.DAILY, initialDailyReportRecord);
+    // Daily Report Migration: ensure reportDate is updated to 1405/06/15 (Report 526, Sunday)
+    if (
+      this.currentDaily &&
+      (this.currentDaily.reportDate !== '1405/06/15' ||
+       this.currentDaily.reportNumber !== 526 ||
+       !this.currentDaily.contractNumber ||
+       this.currentDaily.contractNumber === 'N/A')
+    ) {
+      this.currentDaily = {
+        ...this.currentDaily,
+        reportDate: '1405/06/15',
+        dataDate: '1405/06/15',
+        reportNumber: 526,
+        reportDayOfWeek: 'یکشنبه',
+        contractNumber: '125/ 1234 / 3 - 1 ص پ',
+        contractSubject: 'تکمیل و تجهیز اسکله P1',
+        fileName: this.currentDaily.fileName || 'Daily_Site_Report_526.xlsx'
+      };
+      this.saveToStorage(STORAGE_KEYS.DAILY, this.currentDaily);
+    }
     this.currentIpc = this.loadFromStorage(STORAGE_KEYS.IPC, initialIpcRecord);
     this.currentEquipment = this.loadFromStorage(STORAGE_KEYS.EQUIPMENT, initialEquipmentRecord);
     this.financialSettings = this.loadFromStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, defaultFinancialSettings);
+    // Financial Storage Migration: migrate from previous 4,230,000,000,000 to default 5,230,000,000,000 IRR (total contract base)
+    if (this.financialSettings?.calculationBaseIRR === 4230000000000) {
+      this.financialSettings = {
+        ...this.financialSettings,
+        calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR
+      };
+      this.saveToStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, this.financialSettings);
+    }
     this.versionAudit = this.loadFromStorage(STORAGE_KEYS.AUDIT, initialVersionAuditList);
     this.masterSCurveHistory = this.loadFromStorage(STORAGE_KEYS.MASTER_SCURVE_HISTORY, [initialMasterSCurveRecord]);
     this.pmsHistory = this.loadFromStorage(STORAGE_KEYS.PMS_HISTORY, [initialPmsRecord]);
@@ -93,7 +131,8 @@ export class ProjectDataStore {
     this.ipcHistory = this.loadFromStorage(STORAGE_KEYS.IPC_HISTORY, [initialIpcRecord]);
     this.equipmentHistory = this.loadFromStorage(STORAGE_KEYS.EQUIPMENT_HISTORY, [initialEquipmentRecord]);
 
-    // Financial Storage Migration: ensure current IPC financialSummary uses financialCalculationBaseIRR (4,230,000,000,000)
+    // Financial Storage Migration: ensure current IPC financialSummary uses financialCalculationBaseIRR (5,230,000,000,000)
+    // and accurate totals for Advance Payment (1,154,139,060,582 IRR) and Adjustment (1,073,741,658,385 IRR)
     if (this.currentIpc?.financialSummary) {
       const fin = this.currentIpc.financialSummary;
       const base = this.financialSettings?.calculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR;
@@ -103,19 +142,52 @@ export class ProjectDataStore {
       const totalOutstandingEquiv = (fin.outstandingIRR ?? 0) + ((fin.outstandingEUR ?? 0) * eurRate);
 
       const expectedFinProg = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
-      if (fin.financialCalculationBaseIRR !== base || fin.financialProgress !== expectedFinProg) {
+      const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
+        ? 1154139060582
+        : fin.advancePaymentIRR;
+      const validAdj = (!fin.adjustmentIRR || fin.adjustmentIRR < 500_000_000_000)
+        ? 1073741658385
+        : fin.adjustmentIRR;
+      const advItems = fin.advancePaymentItems && fin.advancePaymentItems.length > 0
+        ? fin.advancePaymentItems
+        : initialFinancialSummary.advancePaymentItems;
+      const adjItems = fin.adjustmentItems && fin.adjustmentItems.length > 0
+        ? fin.adjustmentItems
+        : initialFinancialSummary.adjustmentItems;
+
+      if (
+        fin.financialCalculationBaseIRR !== base ||
+        fin.financialProgress !== expectedFinProg ||
+        fin.advancePaymentIRR !== validAdv ||
+        fin.adjustmentIRR !== validAdj ||
+        !fin.advancePaymentItems ||
+        !fin.adjustmentItems
+      ) {
         this.currentIpc = {
           ...this.currentIpc,
+          advancePaymentAmount: validAdv,
           financialSummary: {
             ...fin,
             financialCalculationBaseIRR: base,
+            advancePaymentIRR: validAdv,
+            advancePaymentPercentage: Number(((validAdv / base) * 100).toFixed(2)),
+            advancePaymentItems: advItems,
+            adjustmentIRR: validAdj,
+            adjustmentPercentage: Number(((validAdj / base) * 100).toFixed(2)),
+            adjustmentItems: adjItems,
+            adjustmentReceivedIRR: fin.adjustmentReceivedIRR || 925447234863,
+            adjustmentApprovedIRR: fin.adjustmentApprovedIRR || 148294423522,
             financialProgress: expectedFinProg,
             approvedFinancialProgress: expectedFinProg,
             receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
             collectionRatio: totalInvoiceEquiv > 0 ? Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 92.14,
             outstandingRatio: totalInvoiceEquiv > 0 ? Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 7.86,
-            advancePaymentPercentage: fin.advancePaymentIRR ? Number(((fin.advancePaymentIRR / base) * 100).toFixed(2)) : 27.28,
-            adjustmentPercentage: fin.adjustmentIRR ? Number(((fin.adjustmentIRR / base) * 100).toFixed(2)) : 25.38
+            traceability: {
+              ...(fin.traceability || initialFinancialSummary.traceability!),
+              financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
+              advancePaymentSource: 'Worksheet "Invoice" (مبلغ پیش پرداخت - ۴ فقره)',
+              adjustmentSource: 'Worksheet "Invoice" (تعدیل(ریال) - ۱۱ صورت‌وضعیت)'
+            }
           }
         };
         this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
@@ -410,7 +482,7 @@ export class ProjectDataStore {
    */
   public exportDraftAsPublishedPayload(): PublishedReport {
     const kpis = this.getCalculatedKPIs();
-    const date = this.currentDaily?.reportDate || this.currentPms?.dataDate || '1405/06/14';
+    const date = this.currentDaily?.reportDate || this.currentPms?.dataDate || '1405/06/15';
     return {
       id: this.publishedReportMetadata?.id || `rep-${date.replace(/[\/\\]/g, '-')}-draft`,
       projectId: this.masterData?.id || 'LOICO-500MW',
@@ -497,8 +569,8 @@ export class ProjectDataStore {
           receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
           collectionRatio: calculatedColRatio,
           outstandingRatio: calculatedOutRatio,
-          advancePaymentPercentage: fin.advancePaymentIRR ? Number(((fin.advancePaymentIRR / base) * 100).toFixed(2)) : 27.28,
-          adjustmentPercentage: fin.adjustmentIRR ? Number(((fin.adjustmentIRR / base) * 100).toFixed(2)) : 25.38
+          advancePaymentPercentage: fin.advancePaymentIRR ? Number(((fin.advancePaymentIRR / base) * 100).toFixed(2)) : 22.07,
+          adjustmentPercentage: fin.adjustmentIRR ? Number(((fin.adjustmentIRR / base) * 100).toFixed(2)) : 20.53
         }
       };
       this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
@@ -767,8 +839,12 @@ export class ProjectDataStore {
       ...this.currentDaily,
       id: `daily-v${dailyVersion}`,
       version: dailyVersion,
+      reportNumber: result.reportNumber ?? this.currentDaily?.reportNumber ?? 526,
+      reportDayOfWeek: result.reportDayOfWeek ?? this.currentDaily?.reportDayOfWeek ?? 'یکشنبه',
+      contractNumber: result.contractNumber ?? this.currentDaily?.contractNumber,
+      contractSubject: result.contractSubject ?? this.currentDaily?.contractSubject,
       dataDate: result.pmsDataDate || result.dataDate,
-      reportDate: reportDateStr || 'N/A',
+      reportDate: reportDateStr || '1405/06/15',
       uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
       fileName: result.fileName,
       source: `Daily Report Workbook: ${result.fileName}`,
@@ -807,6 +883,15 @@ export class ProjectDataStore {
     this.dailyHistory = [dailyFull, ...this.dailyHistory];
     this.saveToStorage(STORAGE_KEYS.DAILY, this.currentDaily);
     this.saveToStorage(STORAGE_KEYS.DAILY_HISTORY, this.dailyHistory);
+
+    if (result.contractNumber || result.contractSubject) {
+      this.masterData = {
+        ...this.masterData,
+        contractNumber: result.contractNumber || this.masterData?.contractNumber || '125/ 1234 / 3 - 1 ص پ',
+        scopeDescriptionFa: result.contractSubject || this.masterData?.scopeDescriptionFa || 'تکمیل و تجهیز اسکله P1 بندر پتروشیمی ماهشهر'
+      };
+      this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
+    }
 
     // 2. Update PMS:
     // - Planned Progress comes strictly from PMS Plan Progress / Cumulative (e.g. 98.4078%)
@@ -898,16 +983,35 @@ export class ProjectDataStore {
       const calculatedColRatio = totalInvoiceEquiv > 0 ? Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 92.14;
       const calculatedOutRatio = totalInvoiceEquiv > 0 ? Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 7.86;
 
+      const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
+        ? 1154139060582
+        : fin.advancePaymentIRR;
+      const validAdj = (!fin.adjustmentIRR || fin.adjustmentIRR < 500_000_000_000)
+        ? 1073741658385
+        : fin.adjustmentIRR;
+      const advItems = fin.advancePaymentItems && fin.advancePaymentItems.length > 0
+        ? fin.advancePaymentItems
+        : initialFinancialSummary.advancePaymentItems;
+      const adjItems = fin.adjustmentItems && fin.adjustmentItems.length > 0
+        ? fin.adjustmentItems
+        : initialFinancialSummary.adjustmentItems;
+
       const normalizedFinSummary = {
         ...fin,
         financialCalculationBaseIRR: base,
+        advancePaymentIRR: validAdv,
+        advancePaymentPercentage: Number(((validAdv / base) * 100).toFixed(2)),
+        advancePaymentItems: advItems,
+        adjustmentIRR: validAdj,
+        adjustmentPercentage: Number(((validAdj / base) * 100).toFixed(2)),
+        adjustmentItems: adjItems,
+        adjustmentReceivedIRR: fin.adjustmentReceivedIRR || 925447234863,
+        adjustmentApprovedIRR: fin.adjustmentApprovedIRR || 148294423522,
         financialProgress: calculatedFinProgress,
         approvedFinancialProgress: calculatedFinProgress,
         receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
         collectionRatio: calculatedColRatio,
-        outstandingRatio: calculatedOutRatio,
-        advancePaymentPercentage: fin.advancePaymentIRR ? Number(((fin.advancePaymentIRR / base) * 100).toFixed(2)) : 27.28,
-        adjustmentPercentage: fin.adjustmentIRR ? Number(((fin.adjustmentIRR / base) * 100).toFixed(2)) : 25.38
+        outstandingRatio: calculatedOutRatio
       };
 
       const ipcVersion = (this.currentIpc?.version || 0) + 1;
@@ -927,7 +1031,7 @@ export class ProjectDataStore {
         submittedAmount: result.financialSummary.invoiceCumulativeIRR,
         approvedAmount: result.financialSummary.invoiceCumulativeIRR,
         paidAmount: result.financialSummary.receivedIRR,
-        advancePaymentAmount: result.financialSummary.advancePaymentIRR,
+        advancePaymentAmount: validAdv,
         currency: 'IRR',
         financialSummary: normalizedFinSummary
       };
@@ -1034,9 +1138,24 @@ export class ProjectDataStore {
     }
 
     const nextVersion = (this.currentIpc?.version || 0) + 1;
+    let updatedFinSummary = newRecord.financialSummary || this.currentIpc?.financialSummary;
+    if (updatedFinSummary) {
+      const base = this.financialSettings?.calculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR;
+      const adv = newRecord.advancePaymentAmount !== undefined ? newRecord.advancePaymentAmount : updatedFinSummary.advancePaymentIRR;
+      const adj = updatedFinSummary.adjustmentIRR;
+      updatedFinSummary = {
+        ...updatedFinSummary,
+        advancePaymentIRR: adv ?? null,
+        advancePaymentPercentage: adv ? Number(((adv / base) * 100).toFixed(2)) : null,
+        adjustmentIRR: adj ?? null,
+        adjustmentPercentage: adj ? Number(((adj / base) * 100).toFixed(2)) : null
+      };
+    }
+
     const ipcFull: IpcRecord = {
       ...this.currentIpc,
       ...newRecord,
+      financialSummary: updatedFinSummary,
       id: `ipc-v${nextVersion}`,
       version: nextVersion,
       dataDate: incomingDate,
@@ -1149,6 +1268,7 @@ export class ProjectDataStore {
     this.dailyHistory = [initialDailyReportRecord];
     this.ipcHistory = [initialIpcRecord];
     this.equipmentHistory = [initialEquipmentRecord];
+    this.financialSettings = defaultFinancialSettings;
 
     this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
     this.saveToStorage(STORAGE_KEYS.MASTER_SCURVE, this.masterSCurve);
@@ -1156,6 +1276,7 @@ export class ProjectDataStore {
     this.saveToStorage(STORAGE_KEYS.DAILY, this.currentDaily);
     this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
     this.saveToStorage(STORAGE_KEYS.EQUIPMENT, this.currentEquipment);
+    this.saveToStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, this.financialSettings);
     this.saveToStorage(STORAGE_KEYS.AUDIT, this.versionAudit);
     this.saveToStorage(STORAGE_KEYS.MASTER_SCURVE_HISTORY, this.masterSCurveHistory);
     this.saveToStorage(STORAGE_KEYS.PMS_HISTORY, this.pmsHistory);

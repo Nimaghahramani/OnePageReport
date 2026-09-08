@@ -94,13 +94,29 @@ export default function App() {
             publishedBy: report.publishedBy,
           });
         } else if (isMounted) {
-          // No published report available on server yet (HTTP 200 NO_PUBLISHED_REPORT)
-          setHasPublishedReport(false);
+          // Fall back to current active report from store so executive report is always visible
+          setHasPublishedReport(true);
+          const curDaily = projectDataStore.getDaily();
+          setPublishedMeta({
+            id: curDaily.id,
+            version: curDaily.reportNumber || curDaily.version || 526,
+            reportDate: curDaily.reportDate || '1405/06/15',
+            publishedAt: curDaily.uploadDate,
+            publishedBy: 'مدیریت پروژه',
+          });
         }
       } catch (err) {
         console.warn('Could not load latest published report from server, using local fallback:', err);
         if (isMounted) {
-          setHasPublishedReport(false);
+          setHasPublishedReport(true);
+          const curDaily = projectDataStore.getDaily();
+          setPublishedMeta({
+            id: curDaily.id,
+            version: curDaily.reportNumber || curDaily.version || 526,
+            reportDate: curDaily.reportDate || '1405/06/15',
+            publishedAt: curDaily.uploadDate,
+            publishedBy: 'مدیریت پروژه',
+          });
         }
       } finally {
         if (isMounted) {

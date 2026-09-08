@@ -175,7 +175,7 @@ export interface DailyIssue {
   status?: 'open' | 'in_progress' | 'resolved' | null;
 }
 
-export const FINANCIAL_CALCULATION_BASE_IRR = 4230000000000; // 4,230,000,000,000 IRR (Current Approved Financial Calculation Base)
+export const FINANCIAL_CALCULATION_BASE_IRR = 5230000000000; // 5,230,000,000,000 IRR (5230 میلیارد ریال - بر مبنای عدد کل قرارداد)
 export const EUR_TO_IRR = 556286; // 1 EUR = 556,286 IRR (Contractual Exchange Rate)
 
 /**
@@ -193,7 +193,7 @@ export const EXECUTIVE_REPORT_CONFIG = {
     showEmptyPlaceholder: false, // Do NOT show "موردی ثبت نشده است" when empty; collapse/hide
   },
   financial: {
-    calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 4,230,000,000,000 IRR
+    calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,230,000,000,000 IRR (5230 میلیارد ریال)
     eurToIrrRate: EUR_TO_IRR, // 556,286 IRR/EUR
   },
   pdf: {
@@ -239,6 +239,10 @@ export interface SiteManpowerKPI {
 export interface DailyReportRecord {
   id: string;
   version: number;
+  reportNumber?: string | number;
+  reportDayOfWeek?: string;
+  contractNumber?: string;
+  contractSubject?: string;
   dataDate: string;
   reportDate: string;
   uploadDate: string;
@@ -299,7 +303,7 @@ export interface DailyReportRecord {
 }
 
 export interface FinancialSettings {
-  calculationBaseIRR: number; // e.g. 4230000000000
+  calculationBaseIRR: number; // e.g. 5230000000000 (5,230B IRR)
   eurToIrrRate: number; // e.g. 556286
 }
 
@@ -330,8 +334,8 @@ export function calculatePercentage(
 }
 
 /**
- * Calculates Financial Progress % against the independent approved financial base (4,230,000,000,000 IRR)
- * Formula: [ IRR Amount + (EUR Amount * 556,286) ] / 4,230,000,000,000 * 100
+ * Calculates Financial Progress % against the total contract value base (5,230,000,000,000 IRR)
+ * Formula: [ IRR Amount + (EUR Amount * 556,286) ] / 5,230,000,000,000 * 100
  */
 export function calculateFinancialProgress(
   irrAmount: number | null | undefined,
@@ -345,6 +349,21 @@ export function calculateFinancialProgress(
   return (totalEquiv / calculationBaseIRR) * 100;
 }
 
+export interface AdvancePaymentItem {
+  id: string | number;
+  itemNo?: number | string;
+  month?: string;
+  amountIRR: number;
+}
+
+export interface AdjustmentInvoiceItem {
+  id: string | number;
+  itemNo: number;
+  invoiceTitle: string;
+  amountIRR: number;
+  status: 'دریافت شده' | 'تأیید شده' | string;
+}
+
 export interface FinancialSummary {
   sourceFile: string;
   sourceSheet: string;
@@ -352,17 +371,18 @@ export interface FinancialSummary {
 
   exchangeRateEURtoIRR: number;
 
-  // Actual Contract Amounts from Project Master (NOT to be mixed with financialCalculationBaseIRR)
+  // Actual Contract Amounts from Project Master
   contractAmountIRR: number | null;
   contractAmountEUR: number | null;
   contractEUREquivalentIRR: number | null;
   totalContractEquivalentIRR: number | null;
 
-  // Dedicated Fixed Financial Percentage Calculation Base (Independent Business Rule: 4,230,000,000,000 IRR)
+  // Dedicated Total Contract Value Financial Percentage Calculation Base (5,230,000,000,000 IRR)
   financialCalculationBaseIRR: number;
 
   advancePaymentIRR: number | null;
-  advancePaymentPercentage?: number | null; // Against 4.23T base
+  advancePaymentPercentage?: number | null; // Against 5.23T base
+  advancePaymentItems?: AdvancePaymentItem[];
 
   latestInvoiceNumber: number | null;
   latestInvoicePeriod: string | null;
@@ -384,9 +404,12 @@ export interface FinancialSummary {
   totalOutstandingEquivalentIRR: number | null;
 
   adjustmentIRR: number | null;
-  adjustmentPercentage?: number | null; // Against 4.23T base
+  adjustmentPercentage?: number | null; // Against 5.23T base
+  adjustmentItems?: AdjustmentInvoiceItem[];
+  adjustmentReceivedIRR?: number | null;
+  adjustmentApprovedIRR?: number | null;
 
-  // Progress Percentages (Denominator = 4,230,000,000,000 IRR)
+  // Progress Percentages (Denominator = 5,230,000,000,000 IRR)
   financialProgress: number | null; // (totalInvoiceEquivalentIRR / financialCalculationBaseIRR) * 100
   approvedFinancialProgress?: number | null;
   receivedFinancialProgress?: number | null; // (totalReceivedEquivalentIRR / financialCalculationBaseIRR) * 100

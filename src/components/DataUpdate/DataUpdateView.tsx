@@ -266,9 +266,21 @@ export const DataUpdateView: React.FC<DataUpdateViewProps> = ({
             </div>
 
             <div className="space-y-1.5 text-xs text-slate-700 mb-3 bg-slate-50 p-2.5 rounded border border-slate-200 font-mono">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-sans">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
-                <span className="font-bold text-slate-900">{daily?.reportDate ?? '—'}</span>
+                <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                  {daily?.reportDate ?? '—'}
+                  {daily?.reportDayOfWeek && (
+                    <span className="text-[10px] font-medium text-slate-600 bg-slate-200/80 px-1 py-0.5 rounded">
+                      {daily.reportDayOfWeek}
+                    </span>
+                  )}
+                  {daily?.reportNumber && (
+                    <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200">
+                      {isFa ? `گزارش ${daily.reportNumber}` : `No. ${daily.reportNumber}`}
+                    </span>
+                  )}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500 font-sans">{isFa ? 'نیروی انسانی کل:' : 'Total Manpower:'}</span>

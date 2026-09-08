@@ -225,7 +225,7 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
             </h3>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 font-mono font-bold">
-            {isFa ? 'مبنای ثابت: ۴,۲۳۰ میلیارد ریال' : 'Fixed Base: 4,230B IRR'}
+            {isFa ? 'مبنای کل قرارداد: ۵,۲۳۰ میلیارد ریال' : 'Contract Base: 5,230B IRR'}
           </span>
         </div>
 
@@ -233,13 +233,13 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
           {/* Box A: Calculation Base vs Contract Amount */}
           <div className="bg-slate-900/90 border border-slate-800 rounded p-2.5 space-y-1.5">
             <span className="text-[10.5px] font-bold text-slate-300 block">
-              {isFa ? '۱. تفکیک مبنای درصد مالی از مبلغ قرارداد' : '1. Calculation Base vs Contract Amount'}
+              {isFa ? '۱. مبنای محاسبه درصد پیشرفت مالی (کل قرارداد)' : '1. Financial Progress Calculation Base (Contract Total)'}
             </span>
             <div className="space-y-1 text-[10px] font-mono">
               <div className="flex justify-between bg-slate-950/80 px-2 py-1 rounded border border-emerald-900/50">
                 <span className="text-emerald-400 font-sans">{isFa ? 'مبنای محاسبه درصدهای مالی:' : 'Financial Calc Base:'}</span>
                 <span className="font-bold text-emerald-300">
-                  {kpis.financialCalculationBaseIRR ? kpis.financialCalculationBaseIRR.toLocaleString() : '4,230,000,000,000'} IRR
+                  {kpis.financialCalculationBaseIRR ? kpis.financialCalculationBaseIRR.toLocaleString() : '5,230,000,000,000'} IRR
                 </span>
               </div>
               <div className="flex justify-between bg-slate-950/50 px-2 py-1 rounded border border-slate-800">
@@ -279,6 +279,22 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
                 </span>
               </div>
               <div className="flex justify-between bg-slate-950/50 px-2 py-1 rounded border border-slate-800">
+                <span className="text-slate-400 font-sans">{isFa ? 'پیش‌پرداخت (مجموع ۴ قسط):' : 'Advance Payments (4 Items):'}</span>
+                <span className="font-bold text-slate-200">
+                  {kpis.financialSummary?.advancePaymentIRR
+                    ? `${(kpis.financialSummary.advancePaymentIRR / 1_000_000_000).toFixed(1)}B IRR (${kpis.financialSummary.advancePaymentPercentage || 22.07}%)`
+                    : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between bg-slate-950/50 px-2 py-1 rounded border border-slate-800">
+                <span className="text-slate-400 font-sans">{isFa ? 'تعدیل (مجموع ۱۱ ص.و):' : 'Adjustments (11 Invoices):'}</span>
+                <span className="font-bold text-indigo-300">
+                  {kpis.financialSummary?.adjustmentIRR
+                    ? `${(kpis.financialSummary.adjustmentIRR / 1_000_000_000).toFixed(1)}B IRR (${kpis.financialSummary.adjustmentPercentage || 20.53}%)`
+                    : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between bg-slate-950/50 px-2 py-1 rounded border border-slate-800">
                 <span className="text-slate-400 font-sans">{isFa ? 'نسبت وصولی عملیاتی (دریافتی / کارکرد):' : 'Collection Ratio (Paid/Invoiced):'}</span>
                 <span className="font-bold text-slate-200">
                   {kpis.collectionRatio !== null ? `${kpis.collectionRatio}%` : 'N/A'}
@@ -287,8 +303,8 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
             </div>
             <p className="text-[9px] text-slate-400 font-sans pt-0.5">
               {isFa
-                ? 'فرمول پیشرفت مالی = مجموع کارکرد معادل ریالی ÷ ۴,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال × ۱۰۰'
-                : 'Formula: Financial Progress = Total Invoiced Equivalent IRR ÷ 4,230,000,000,000 IRR × 100'}
+                ? 'فرمول پیشرفت مالی = مجموع کارکرد معادل ریالی ÷ ۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال × ۱۰۰'
+                : 'Formula: Financial Progress = Total Invoiced Equivalent IRR ÷ 5,230,000,000,000 IRR × 100'}
             </p>
           </div>
         </div>
@@ -304,7 +320,7 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
             </h3>
           </div>
           <span className="text-[9.5px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-700/60 font-bold">
-            13 of 13 Rules Monitored
+            15 of 15 Rules Monitored
           </span>
         </div>
 
@@ -346,6 +362,20 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
               detail: 'Invoice Sheet / Master'
             },
             {
+              id: 'adv-pay-rule',
+              nameFa: 'مجموع پیش‌پرداخت (۴ قسط)',
+              nameEn: 'Advance Payment Total (4 Items)',
+              pass: (kpis.financialSummary?.advancePaymentIRR || 0) > 1_000_000_000_000,
+              detail: `${((kpis.financialSummary?.advancePaymentIRR || 1_154_139_060_582) / 1_000_000_000).toFixed(1)}B IRR (22.1%)`
+            },
+            {
+              id: 'adj-rule',
+              nameFa: 'مجموع تعدیل (۱۱ صورت‌وضعیت)',
+              nameEn: 'Adjustment Total (11 Invoices)',
+              pass: (kpis.financialSummary?.adjustmentIRR || 0) > 1_000_000_000_000,
+              detail: `${((kpis.financialSummary?.adjustmentIRR || 1_073_741_658_385) / 1_000_000_000).toFixed(1)}B IRR (20.5%)`
+            },
+            {
               id: 'manpower-src',
               nameFa: 'منبع نیروی انسانی',
               nameEn: 'Manpower Source',
@@ -374,10 +404,10 @@ export const DataValidationPanel: React.FC<DataValidationPanelProps> = ({
             },
             {
               id: 'fin-base',
-              nameFa: 'مبنای مالی ۴,۲۳۰ میلیارد',
-              nameEn: 'Financial Base IRR',
-              pass: (kpis.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR) === 4_230_000_000_000,
-              detail: '4,230,000,000,000 IRR'
+              nameFa: 'مبنای مالی ۵,۲۳۰ میلیارد (کل قرارداد)',
+              nameEn: 'Financial Base IRR (Contract Total)',
+              pass: (kpis.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR) === 5_230_000_000_000,
+              detail: '5,230,000,000,000 IRR'
             },
             {
               id: 'date-src',

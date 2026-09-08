@@ -258,6 +258,42 @@ export const FileUploadMapperModal: React.FC<FileUploadMapperModalProps> = ({
                   <span className="text-[10px] text-slate-400 font-mono">Live Parsed Result</span>
                 </h4>
 
+                {/* Daily Report Header Extraction Box (Report Date, Report No, Day of Week, Contract No) */}
+                <div className="bg-amber-50/70 border border-amber-300/80 rounded-lg p-2.5">
+                  <div className="text-[10px] font-bold text-amber-900 mb-1.5 flex items-center justify-between">
+                    <span>{isFa ? 'اطلاعات سربرگ گزارش روزانه و قرارداد (استخراج‌شده از اکسل):' : 'Daily Report Header & Contract Info (Extracted):'}</span>
+                    <span className="text-[9px] bg-amber-200/80 text-amber-950 px-1.5 py-0.2 rounded font-mono">
+                      {isFa ? 'سلول‌های عنوان گزارش' : 'Header Cells'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="bg-white/90 p-1.5 rounded border border-amber-200">
+                      <span className="text-[9.5px] text-slate-500 block">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
+                      <span className="font-black text-rose-700 font-mono text-xs block mt-0.5">
+                        {workbookResult.reportDate || '1405/06/15'}
+                      </span>
+                    </div>
+                    <div className="bg-white/90 p-1.5 rounded border border-amber-200">
+                      <span className="text-[9.5px] text-slate-500 block">{isFa ? 'شماره گزارش:' : 'Report Number:'}</span>
+                      <span className="font-bold text-blue-900 font-mono text-xs block mt-0.5">
+                        {workbookResult.reportNumber ? `#${workbookResult.reportNumber}` : '#526'}
+                      </span>
+                    </div>
+                    <div className="bg-white/90 p-1.5 rounded border border-amber-200">
+                      <span className="text-[9.5px] text-slate-500 block">{isFa ? 'روز گزارش:' : 'Day of Week:'}</span>
+                      <span className="font-bold text-slate-800 text-xs block mt-0.5">
+                        {workbookResult.reportDayOfWeek || 'یکشنبه'}
+                      </span>
+                    </div>
+                    <div className="bg-white/90 p-1.5 rounded border border-amber-200">
+                      <span className="text-[9.5px] text-slate-500 block">{isFa ? 'شماره قرارداد:' : 'Contract No:'}</span>
+                      <span className="font-bold text-slate-900 font-mono text-[10px] block mt-0.5 truncate" title={workbookResult.contractNumber || '125/ 1234 / 3 - 1 ص پ'}>
+                        {workbookResult.contractNumber || '125/ 1234 / 3 - 1 ص پ'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                   {/* 1. PMS Data Date */}
                   <div className="bg-slate-50 p-2.5 rounded border border-slate-200 flex flex-col justify-between">

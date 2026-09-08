@@ -146,6 +146,67 @@ export const ManualDataEditorModal: React.FC<ManualDataEditorModalProps> = ({
           {/* Daily Report Specific Fields */}
           {datasetType === 'daily' && (
             <div className="space-y-3">
+              {/* Report Header Metadata Inputs (Matching Excel Header) */}
+              <div className="bg-blue-50/60 border border-blue-200 rounded p-2.5 space-y-2">
+                <span className="block text-xs font-bold text-blue-900">
+                  {isFa ? 'سربرگ گزارش روزانه و قرارداد (Daily Report Header)' : 'Daily Report Header & Contract'}
+                </span>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</label>
+                    <input
+                      type="text"
+                      placeholder="1405/06/15"
+                      value={formData.reportDate || ''}
+                      onChange={e => handleChange('reportDate', e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono font-bold focus:border-blue-600 outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'شماره گزارش:' : 'Report Number:'}</label>
+                    <input
+                      type="number"
+                      placeholder="526"
+                      value={formData.reportNumber ?? 526}
+                      onChange={e => handleChange('reportNumber', parseInt(e.target.value) || 0)}
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono font-bold focus:border-blue-600 outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'روز گزارش:' : 'Day of Week:'}</label>
+                    <input
+                      type="text"
+                      placeholder="یکشنبه"
+                      value={formData.reportDayOfWeek || ''}
+                      onChange={e => handleChange('reportDayOfWeek', e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 focus:border-blue-600 outline-hidden"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'شماره قرارداد:' : 'Contract Number:'}</label>
+                    <input
+                      type="text"
+                      placeholder="125/ 1234 / 3 - 1 ص پ"
+                      value={formData.contractNumber || ''}
+                      onChange={e => handleChange('contractNumber', e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 font-mono focus:border-blue-600 outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 mb-0.5 font-semibold">{isFa ? 'موضوع قرارداد:' : 'Contract Subject:'}</label>
+                    <input
+                      type="text"
+                      placeholder="تکمیل و تجهیز اسکله P1"
+                      value={formData.contractSubject || ''}
+                      onChange={e => handleChange('contractSubject', e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded px-2 py-1 text-slate-900 focus:border-blue-600 outline-hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Site Manpower Inputs */}
               <div className="bg-slate-50 border border-slate-200 rounded p-2.5 space-y-2">
                 <span className="block text-xs font-bold text-slate-800">

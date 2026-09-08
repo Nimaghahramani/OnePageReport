@@ -1,6 +1,7 @@
-import React from 'react';
-import { IpcRecord, DailyReportRecord, Language } from '../../types';
-import { CreditCard, Users, Truck, UserCheck, UserX } from 'lucide-react';
+import React, { useState } from 'react';
+import { IpcRecord, DailyReportRecord, Language, FINANCIAL_CALCULATION_BASE_IRR } from '../../types';
+import { CreditCard, Users, Truck, UserCheck, UserX, ExternalLink } from 'lucide-react';
+import { AdvanceAdjustmentModal } from './AdvanceAdjustmentModal';
 
 interface IpcSectionProps {
   ipc: IpcRecord;
@@ -8,17 +9,16 @@ interface IpcSectionProps {
   lang: Language;
 }
 
-// Helper to format currency numbers compactly (e.g. 2,484.5B IRR, 848.1k EUR)
-function formatIrr(amount: number | null | undefined): string {
+// Helper to format currency numbers compactly in Billion Rials (م.ر) or Millions
+function formatIrr(amount: number | null | undefined, isFa: boolean = true): string {
   if (amount === null || amount === undefined) return '-';
-  if (Math.abs(amount) >= 1_000_000_000_000) {
-    return `${(amount / 1_000_000_000_000).toFixed(2)}T`;
-  }
   if (Math.abs(amount) >= 1_000_000_000) {
-    return `${(amount / 1_000_000_000).toFixed(1)}B`;
+    const val = (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return isFa ? `${val} م.ر` : `${val}B`;
   }
   if (Math.abs(amount) >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(1)}M`;
+    const val = (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return isFa ? `${val} م.ر` : `${val}M`;
   }
   return amount.toLocaleString();
 }
@@ -37,9 +37,10 @@ function formatEur(amount: number | null | undefined): string {
 export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
   const isFa = lang === 'fa';
   const fin = ipc.financialSummary;
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
   // Ratios and figures
-  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / 4230000000000) * 100).toFixed(1)) : 69.9);
+  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 56.5);
   const collectionRatio = fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 92.1);
   const outstandingRatio = fin?.outstandingRatio ?? (100 - collectionRatio);
 
@@ -171,18 +172,29 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           </div>
 
           {/* 4. Advance Payment & Adjustment */}
-          <div className="financial-metric-box financial-advance-box bg-slate-50 border border-slate-200 rounded p-1 flex flex-col justify-between">
-            <span className="fin-metric-title text-[7.5px] text-slate-600 font-sans block font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
+          <div
+            onClick={() => setShowBreakdownModal(true)}
+            className="financial-metric-box financial-advance-box bg-slate-50 hover:bg-blue-50/50 hover:border-blue-300 border border-slate-200 rounded p-1 flex flex-col justify-between cursor-pointer transition-all duration-150 group"
+            title={isFa ? 'کلیک کنید برای مشاهده ریز اقلام پیش‌پرداخت و تعدیل' : 'Click to view itemized advance payment & adjustment breakdown'}
+          >
+            <div className="flex items-center justify-between">
+              <span className="fin-metric-title text-[7.5px] text-slate-600 font-sans block font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
+              <span className="text-[6.5px] text-blue-600 font-sans group-hover:underline flex items-center gap-0.5">
+                {isFa ? 'ریز اقلام' : 'Details'}
+                <ExternalLink className="w-2 h-2 opacity-60" />
+              </span>
+            </div>
             <div>
-              <div className="fin-metric-irr text-[9px] font-bold text-slate-800 truncate" title={`پیش‌پرداخت: ${fin.advancePaymentIRR?.toLocaleString()} ریال`}>
-                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span> {formatIrr(fin.advancePaymentIRR)}
+              <div className="fin-metric-irr text-[8.5px] font-bold text-slate-800 truncate" title={`پیش‌پرداخت: ${fin.advancePaymentIRR?.toLocaleString()} ریال (${fin.advancePaymentPercentage || 22.07}٪ از کل قرارداد)`}>
+                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span> {formatIrr(fin.advancePaymentIRR, isFa)} <span className="text-[7px] font-normal text-slate-500 font-mono">({fin.advancePaymentPercentage || 22.07}%)</span>
               </div>
-              <div className="fin-metric-irr text-[9px] font-bold text-indigo-900 truncate" title={`تعدیل: ${fin.adjustmentIRR?.toLocaleString()} ریال`}>
-                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'تعدیل:' : 'Adj:'}</span> {formatIrr(fin.adjustmentIRR)}
+              <div className="fin-metric-irr text-[8.5px] font-bold text-indigo-900 truncate" title={`تعدیل: ${fin.adjustmentIRR?.toLocaleString()} ریال (${fin.adjustmentPercentage || 20.53}٪ از کل قرارداد)`}>
+                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'تعدیل:' : 'Adj:'}</span> {formatIrr(fin.adjustmentIRR, isFa)} <span className="text-[7px] font-normal text-indigo-500 font-mono">({fin.adjustmentPercentage || 20.53}%)</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7px] text-slate-500 font-sans mt-0.5 pt-0.5 border-t border-slate-200 truncate">
-              {isFa ? 'نرخ تسعیر: ۱€ = ۵۵۶،۲۸۶ ریال' : 'Rate: 1€ = 556,286 IRR'}
+            <div className="fin-metric-ratio text-[7px] text-slate-500 font-sans mt-0.5 pt-0.5 border-t border-slate-200 truncate flex items-center justify-between">
+              <span>{isFa ? 'مبنا: ۵,۲۳۰ م.ر' : 'Base: 5,230B'}</span>
+              <span className="text-slate-400 font-mono">{isFa ? '۴ قسط / ۱۱ ص.و' : '4 adv / 11 adj'}</span>
             </div>
           </div>
         </div>
@@ -337,6 +349,15 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           </div>
         </div>
       </div>
+
+      {fin && (
+        <AdvanceAdjustmentModal
+          isOpen={showBreakdownModal}
+          onClose={() => setShowBreakdownModal(false)}
+          fin={fin}
+          lang={lang}
+        />
+      )}
     </div>
   );
 };

@@ -76,9 +76,19 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
 
       {/* Date Strip: Report Date + PMS Data Date */}
       <div className="grid grid-cols-2 gap-1.5 mt-2 pt-2 border-t border-slate-100 text-[10px]">
-        <div className="flex items-center justify-between px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg">
+        <div className="flex items-center justify-between px-2 py-1 bg-slate-50 border border-slate-250 rounded-lg">
           <span className="text-slate-500 font-medium text-[9px]">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
-          <span className="font-bold text-slate-900 text-[10.5px] ltr-inline font-mono">{daily.reportDate}</span>
+          <div className="flex items-center gap-1">
+            <span className="font-black text-rose-700 text-[11px] ltr-inline font-mono">{daily.reportDate}</span>
+            {daily.reportDayOfWeek && (
+              <span className="text-slate-700 font-semibold text-[8.5px] bg-slate-200/90 px-1 py-0.2 rounded">({daily.reportDayOfWeek})</span>
+            )}
+            {daily.reportNumber && (
+              <span className="text-blue-900 font-bold text-[8.5px] bg-blue-100 px-1 py-0.2 rounded border border-blue-200">
+                #{daily.reportNumber}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center justify-between px-2 py-1 bg-blue-50/80 border border-blue-200 rounded-lg">
           <span className="text-blue-700 font-medium text-[9px]">{isFa ? 'تاریخ داده:' : 'Data Date:'}</span>
@@ -107,6 +117,18 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
         {showProjectDetails && (
           <div className="mt-2 space-y-1.5 p-2 bg-slate-50/80 border border-slate-200 rounded-lg text-[9.5px]">
             <div className="flex items-center justify-between">
+              <span className="text-slate-500">{isFa ? 'شماره قرارداد:' : 'Contract No:'}</span>
+              <span className="font-bold text-slate-900 font-mono text-[9px]">{daily.contractNumber || master.contractNumber || '125/ 1234 / 3 - 1 ص پ'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">{isFa ? 'موضوع قرارداد:' : 'Contract Subject:'}</span>
+              <span className="font-bold text-slate-800">{daily.contractSubject || master.scopeDescriptionFa || 'تکمیل و تجهیز اسکله P1'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">{isFa ? 'شماره گزارش:' : 'Report No:'}</span>
+              <span className="font-bold text-blue-900 font-mono">{daily.reportNumber || 526}</span>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'کارفرما:' : 'Client:'}</span>
               <span className="font-bold text-slate-800">{isFa ? master.clientNameFa : master.clientNameEn}</span>
             </div>
@@ -120,11 +142,11 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'تاریخ شروع:' : 'Start Date:'}</span>
-              <span className="font-bold text-slate-800 ltr-inline font-mono">{master.contractStartDate}</span>
+              <span className="font-bold text-slate-800 ltr-inline font-mono">{master.startDate || master.contractStartDate}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'مدت قرارداد:' : 'Duration:'}</span>
-              <span className="font-bold text-slate-800">{isFa ? `${master.contractDurationDays} روز` : `${master.contractDurationDays} Days`}</span>
+              <span className="font-bold text-slate-800">{master.contractDurationText || (master.durationDays ? `${master.durationDays} روز` : `${master.contractDurationDays} روز`)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'موقعیت:' : 'Location:'}</span>

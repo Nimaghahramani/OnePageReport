@@ -1,7 +1,7 @@
 import React from 'react';
 import { ProjectMasterData, PmsRecord, DailyReportRecord, Language, CalculatedReportKPIs } from '../../types';
 import { LoicoLogo } from '../LoicoLogo';
-import { Calendar, Building, FileText, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Calendar, Building, FileText, CheckCircle2, AlertTriangle, XCircle, Clock } from 'lucide-react';
 
 interface ReportHeaderProps {
   master: ProjectMasterData;
@@ -86,9 +86,19 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
 
         {/* Right Metadata Block (Dates) */}
         <div className="report-header-dates-container text-right rtl:text-left flex flex-col items-end rtl:items-start text-[10px] gap-1">
-          <div className="report-date-row flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-slate-250 bg-slate-100">
-            <span className="report-meta-label text-slate-500 font-medium text-[9.5px]">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
-            <span className="report-meta-date font-bold text-slate-800 text-[10.5px] ltr-inline">{daily.reportDate}</span>
+          <div className="report-date-row flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-300 bg-slate-50 flex-wrap justify-end shadow-2xs">
+            <span className="report-meta-label text-slate-600 font-bold text-[9.5px]">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
+            <span className="report-meta-date font-black text-rose-700 text-[11px] ltr-inline font-mono">{daily.reportDate}</span>
+            {daily.reportDayOfWeek && (
+              <span className="report-day-badge text-slate-700 font-semibold text-[9.5px] bg-slate-200/90 px-1.5 py-0.2 rounded border border-slate-300/80">
+                {daily.reportDayOfWeek}
+              </span>
+            )}
+            {daily.reportNumber && (
+              <span className="report-number-badge text-blue-900 font-black text-[9.5px] bg-blue-100 px-1.5 py-0.2 rounded border border-blue-300">
+                {isFa ? `شماره ${daily.reportNumber}` : `#${daily.reportNumber}`}
+              </span>
+            )}
           </div>
           <div className="report-date-row report-data-date-row flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-blue-200 bg-blue-100/90">
             <span className="report-data-date-label text-blue-700 font-medium text-[9.5px]">
@@ -105,8 +115,8 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
         </div>
       </div>
 
-      {/* Contract & Stakeholders Compact Grid (ROW 2: Client + Contractor + Consultant + Start Date + Duration) */}
-      <div className="report-stakeholders-grid grid grid-cols-2 md:grid-cols-5 gap-2 mt-1.5 pt-1.5 border-t border-slate-200 text-[9.5px]">
+      {/* Contract & Stakeholders Compact Grid (ROW 2: Client + Contractor + Consultant + Contract No + Start Date + Duration) */}
+      <div className="report-stakeholders-grid grid grid-cols-2 md:grid-cols-6 gap-2 mt-1.5 pt-1.5 border-t border-slate-200 text-[9.5px]">
         {/* Client */}
         <div className="report-stakeholder-item flex items-center gap-1.5 truncate">
           <Building className="report-info-icon w-3 h-3 text-blue-700 shrink-0" />
@@ -134,17 +144,26 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
           </span>
         </div>
 
+        {/* Contract Number */}
+        <div className="report-stakeholder-item flex items-center gap-1.5 truncate">
+          <FileText className="report-info-icon w-3 h-3 text-indigo-600 shrink-0" />
+          <span className="report-info-label text-slate-500 shrink-0 font-medium">{isFa ? 'شماره قرارداد:' : 'Contract No:'}</span>
+          <span className="report-info-value font-bold text-slate-900 truncate font-mono text-[9px]" title={daily.contractNumber || master.contractNumber}>
+            {daily.contractNumber || master.contractNumber || '125/ 1234 / 3 - 1 ص پ'}
+          </span>
+        </div>
+
         {/* Project Start Date */}
         <div className="report-stakeholder-item flex items-center gap-1.5 truncate">
           <Calendar className="report-info-icon w-3 h-3 text-emerald-600 shrink-0" />
           <span className="report-info-label text-slate-500 shrink-0 font-medium">{isFa ? 'تاریخ شروع:' : 'Start Date:'}</span>
-          <span className="report-info-value font-bold text-slate-800 truncate ltr-inline">{master.startDate || 'N/A'}</span>
+          <span className="report-info-value font-bold text-slate-800 truncate ltr-inline font-mono">{master.startDate || 'N/A'}</span>
         </div>
 
         {/* Duration / Notification */}
         <div className="report-stakeholder-item flex items-center gap-1.5 truncate justify-end">
-          <FileText className="report-info-icon w-3 h-3 text-slate-400 shrink-0" />
-          <span className="report-info-label text-slate-500 shrink-0 font-medium">{isFa ? 'مدت قرارداد:' : 'Duration:'}</span>
+          <Clock className="report-info-icon w-3 h-3 text-slate-400 shrink-0" />
+          <span className="report-info-label text-slate-500 shrink-0 font-medium">{isFa ? 'مدت:' : 'Duration:'}</span>
           <span className="report-info-value font-bold text-slate-800 truncate">
             {master.contractDurationText || (master.durationDays ? `${master.durationDays} روز` : 'N/A')}
           </span>

@@ -1,6 +1,7 @@
-import React from 'react';
-import { IpcRecord, DailyReportRecord, Language } from '../../types';
-import { CreditCard, Users, Truck } from 'lucide-react';
+import React, { useState } from 'react';
+import { IpcRecord, DailyReportRecord, Language, FINANCIAL_CALCULATION_BASE_IRR } from '../../types';
+import { CreditCard, Users, Truck, ExternalLink } from 'lucide-react';
+import { AdvanceAdjustmentModal } from '../ExecutiveReport/AdvanceAdjustmentModal';
 
 interface MobileFinancialSectionProps {
   ipc: IpcRecord;
@@ -8,16 +9,15 @@ interface MobileFinancialSectionProps {
   lang: Language;
 }
 
-function formatIrr(amount: number | null | undefined): string {
+function formatIrr(amount: number | null | undefined, isFa: boolean = true): string {
   if (amount === null || amount === undefined) return '-';
-  if (Math.abs(amount) >= 1_000_000_000_000) {
-    return `${(amount / 1_000_000_000_000).toFixed(2)}T`;
-  }
   if (Math.abs(amount) >= 1_000_000_000) {
-    return `${(amount / 1_000_000_000).toFixed(1)}B`;
+    const val = (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return isFa ? `${val} م.ر` : `${val}B`;
   }
   if (Math.abs(amount) >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(1)}M`;
+    const val = (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return isFa ? `${val} م.ر` : `${val}M`;
   }
   return amount.toLocaleString();
 }
@@ -36,8 +36,9 @@ function formatEur(amount: number | null | undefined): string {
 export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ ipc, daily, lang }) => {
   const isFa = lang === 'fa';
   const fin = ipc.financialSummary;
+  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
-  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / 4230000000000) * 100).toFixed(1)) : 69.9);
+  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 56.5);
   const collectionRatio = fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 92.1);
   const outstandingRatio = fin?.outstandingRatio ?? (100 - collectionRatio);
 
@@ -156,20 +157,30 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
         </div>
 
         {/* 4. Advance & Adjustment */}
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 flex flex-col justify-between">
-          <span className="text-[8.5px] text-slate-700 font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
+        <div
+          onClick={() => fin && setShowBreakdownModal(true)}
+          className="bg-slate-50 hover:bg-blue-50/50 hover:border-blue-300 border border-slate-200 rounded-lg p-2 flex flex-col justify-between cursor-pointer transition-colors"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[8.5px] text-slate-700 font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
+            <span className="text-[7px] text-blue-600 font-sans flex items-center gap-0.5">
+              {isFa ? 'ریز اقلام' : 'Details'}
+              <ExternalLink className="w-2 h-2 opacity-60" />
+            </span>
+          </div>
           <div className="my-1 space-y-0.5">
             <div className="text-[9.5px] font-bold text-slate-800 font-mono flex items-center justify-between">
               <span className="text-[7.5px] text-slate-500 font-sans">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span>
-              <span>{formatIrr(fin?.advancePaymentIRR || 0)}</span>
+              <span>{formatIrr(fin?.advancePaymentIRR || 0, isFa)} <span className="text-[7.5px] font-normal text-slate-500 font-mono">({fin?.advancePaymentPercentage || 22.07}%)</span></span>
             </div>
             <div className="text-[9.5px] font-bold text-indigo-900 font-mono flex items-center justify-between">
               <span className="text-[7.5px] text-slate-500 font-sans">{isFa ? 'تعدیل:' : 'Adj:'}</span>
-              <span>{formatIrr(fin?.adjustmentIRR || 0)}</span>
+              <span>{formatIrr(fin?.adjustmentIRR || 0, isFa)} <span className="text-[7.5px] font-normal text-indigo-500 font-mono">({fin?.adjustmentPercentage || 20.53}%)</span></span>
             </div>
           </div>
-          <div className="text-[7.5px] text-slate-500 pt-1 border-t border-slate-200/70 truncate">
-            {isFa ? 'نرخ تسعیر: ۱€ = ۵۵۶،۲۸۶ ریال' : 'Rate: 1€ = 556,286 IRR'}
+          <div className="text-[7.5px] text-slate-500 pt-1 border-t border-slate-200/70 flex items-center justify-between">
+            <span>{isFa ? 'مبنا: ۵,۲۳۰ م.ر' : 'Base: 5,230B'}</span>
+            <span className="text-slate-400 font-mono">{isFa ? '۴ قسط / ۱۱ ص.و' : '4 adv / 11 adj'}</span>
           </div>
         </div>
       </div>
@@ -260,6 +271,15 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
           </div>
         </div>
       </div>
+
+      {fin && (
+        <AdvanceAdjustmentModal
+          isOpen={showBreakdownModal}
+          onClose={() => setShowBreakdownModal(false)}
+          fin={fin}
+          lang={lang}
+        />
+      )}
     </div>
   );
 };

@@ -76,7 +76,7 @@ export const initialProjectMasterData: ProjectMasterData = {
   projectManagerEn: 'N/A',
   locationFa: 'بندر پتروشیمی ماهشهر',
   locationEn: 'N/A',
-  contractNumber: 'N/A',
+  contractNumber: '125/ 1234 / 3 - 1 ص پ',
   contractNotificationDate: '1403/12/14',
   startDate: '1403/12/21',
   durationDays: 550,
@@ -293,12 +293,16 @@ export const initialPmsRecord: PmsRecord = {
 };
 
 export const initialDailyReportRecord: DailyReportRecord = {
-  id: 'daily-v189',
-  version: 189,
-  dataDate: '1405/06/07',
-  reportDate: '1405/06/07',
-  uploadDate: '1405/06/07 18:00',
-  fileName: 'Daily_Site_Report_Day_189.xlsx',
+  id: 'daily-v526',
+  version: 526,
+  reportNumber: 526,
+  reportDayOfWeek: 'یکشنبه',
+  contractNumber: '125/ 1234 / 3 - 1 ص پ',
+  contractSubject: 'تکمیل و تجهیز اسکله P1',
+  dataDate: '1405/06/15',
+  reportDate: '1405/06/15',
+  uploadDate: '1405/06/15 18:00',
+  fileName: 'Daily_Site_Report_526.xlsx',
   source: 'Site Supervision & Construction Management Team',
   importantActivities: [
     {
@@ -448,11 +452,17 @@ export const initialFinancialSummary: FinancialSummary = {
   contractEUREquivalentIRR: 673167 * EUR_TO_IRR,
   totalContractEquivalentIRR: 4653170392630 + (673167 * EUR_TO_IRR),
 
-  // Dedicated Financial Percentage Calculation Base: 4,230,000,000,000 IRR
+  // Dedicated Total Contract Value Financial Percentage Calculation Base: 5,230,000,000,000 IRR (5230 میلیارد ریال)
   financialCalculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR,
 
   advancePaymentIRR: 1154139060582,
-  advancePaymentPercentage: Number(((1154139060582 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 27.28%
+  advancePaymentPercentage: Number(((1154139060582 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 22.07%
+  advancePaymentItems: [
+    { id: 1, itemNo: 1, month: 'اسفند 1403', amountIRR: 425188605151 },
+    { id: 2, itemNo: 2, month: 'اردیبهشت 1404', amountIRR: 318891453863 },
+    { id: 3, itemNo: 3, month: 'بهمن 1404', amountIRR: 328805197613 },
+    { id: 4, itemNo: 'خرید کالا', month: 'پیش پرداخت خرید کالا', amountIRR: 81253803955 }
+  ],
 
   latestInvoiceNumber: 16,
   latestInvoicePeriod: 'تیرماه 1405',
@@ -474,12 +484,27 @@ export const initialFinancialSummary: FinancialSummary = {
   totalOutstandingEquivalentIRR: 44722805465 + (337532.10 * EUR_TO_IRR),
 
   adjustmentIRR: 1073741658385,
-  adjustmentPercentage: Number(((1073741658385 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 25.38%
+  adjustmentPercentage: Number(((1073741658385 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 20.53%
+  adjustmentItems: [
+    { id: 1, itemNo: 1, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۱', amountIRR: 1320883200, status: 'دریافت شده' },
+    { id: 2, itemNo: 2, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۲', amountIRR: 20685139277, status: 'دریافت شده' },
+    { id: 3, itemNo: 3, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۳', amountIRR: 113053361792, status: 'دریافت شده' },
+    { id: 4, itemNo: 4, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۴', amountIRR: 68367784684, status: 'دریافت شده' },
+    { id: 5, itemNo: 5, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۵', amountIRR: 44742284930, status: 'دریافت شده' },
+    { id: 6, itemNo: 6, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۶', amountIRR: 73436625759, status: 'دریافت شده' },
+    { id: 7, itemNo: 7, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۷ (مربوط به ص.و ۷)', amountIRR: 63468733002, status: 'دریافت شده' },
+    { id: 8, itemNo: 8, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۷ (مربوط به ص.و ۸)', amountIRR: 305066913260, status: 'دریافت شده' },
+    { id: 9, itemNo: 9, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۸ (مربوط به ص.و ۹)', amountIRR: 107307098559, status: 'دریافت شده' },
+    { id: 10, itemNo: 10, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۹ (مربوط به ص.و ۱۰)', amountIRR: 127998410400, status: 'دریافت شده' },
+    { id: 11, itemNo: 11, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۹ (مربوط به ص.و ۱۱)', amountIRR: 148294423522, status: 'تأیید شده' }
+  ],
+  adjustmentReceivedIRR: 925447234863,
+  adjustmentApprovedIRR: 148294423522,
 
-  // Progress Percentages (against 4,230,000,000,000 IRR)
-  financialProgress: Number((((2484501777490 + (848082.51 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 69.89%
-  approvedFinancialProgress: Number((((2484501777490 + (848082.51 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 69.89%
-  receivedFinancialProgress: Number((((2439778972025 + (510550.41 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 64.39%
+  // Progress Percentages (against 5,230,000,000,000 IRR)
+  financialProgress: Number((((2484501777490 + (848082.51 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 56.53%
+  approvedFinancialProgress: Number((((2484501777490 + (848082.51 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 56.53%
+  receivedFinancialProgress: Number((((2439778972025 + (510550.41 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 52.08%
 
   // Operational Ratios (against total invoice equivalent)
   collectionRatio: Number((((2439778972025 + (510550.41 * EUR_TO_IRR)) / (2484501777490 + (848082.51 * EUR_TO_IRR))) * 100).toFixed(2)), // 92.14%
@@ -487,7 +512,7 @@ export const initialFinancialSummary: FinancialSummary = {
 
   traceability: {
     exchangeRateFormula: 'EUR Amount × 556,286 IRR',
-    financialCalculationBaseSource: 'مصوب مبنای محاسبات مالی (4,230,000,000,000 IRR)',
+    financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
     latestInvoiceSource: 'Worksheet "Invoice" Row 16',
     cumulativeIRRSource: 'Worksheet "Invoice" (مبلغ تجمعی ریالی)',
     cumulativeEURSource: 'Worksheet "Invoice" (مبلغ تجمعی ارزی)',
