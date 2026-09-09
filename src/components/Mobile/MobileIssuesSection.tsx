@@ -9,7 +9,9 @@ interface MobileIssuesSectionProps {
 
 export const MobileIssuesSection: React.FC<MobileIssuesSectionProps> = ({ daily, lang }) => {
   const isFa = lang === 'fa';
-  const issues = (daily.keyIssues || []).slice(0, 5);
+  const issues = (daily.keyIssues || []).filter(
+    item => item && (item.issueFa?.trim() || item.issueEn?.trim())
+  );
 
   if (issues.length === 0) {
     return null;

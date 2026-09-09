@@ -35,7 +35,7 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
     (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment?.installationPercentage ?? 0));
 
   return (
-    <div id="equipment-section" className="equipment-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full relative">
+    <div id="equipment-section" className="equipment-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full relative print:break-inside-avoid">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
         <div className="flex items-center gap-1.5">

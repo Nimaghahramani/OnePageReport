@@ -427,7 +427,7 @@ export default function App() {
         /* ========================================================================= */
         /* 1. AUTHENTICATED ADMIN WORKSPACE (ALWAYS DESKTOP / LAPTOP PRESENTATION)    */
         /* ========================================================================= */
-        <div className="admin-desktop-application flex flex-col flex-1 min-h-screen">
+        <div className="admin-desktop-application flex flex-col flex-1 min-h-screen print:hidden">
           {/* Admin Header Bar */}
           <AdminHeaderBar
             publishedMeta={publishedMeta}
@@ -527,7 +527,7 @@ export default function App() {
         /* ========================================================================= */
         /* 2. PUBLIC DASHBOARD (ALWAYS MOBILE EXECUTIVE PRESENTATION)                 */
         /* ========================================================================= */
-        <div className="public-mobile-app min-h-screen bg-[#eef2f7] text-slate-800 flex flex-col pb-20">
+        <div className="public-mobile-app min-h-screen bg-[#eef2f7] text-slate-800 flex flex-col pb-20 print:hidden">
           {/* Centered Mobile Shell (Phone: 100%, Tablet/Desktop: max-width 440px) */}
           <div className="public-mobile-shell w-full max-w-[440px] mx-auto min-w-0 bg-[#f8fafc] sm:rounded-2xl sm:shadow-xl sm:my-3 overflow-hidden border-slate-200/80 sm:border">
             {isInitialReportLoading ? (
@@ -594,26 +594,28 @@ export default function App() {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. DEDICATED PRINT-ONLY ROOT CONTAINER (A4 LANDSCAPE EXECUTIVE DESKTOP)   */}
-      {/* Preserved for both Public and Admin PDF export and direct browser print   */}
+      {/* 3. DEDICATED PRINT-ONLY ROOT CONTAINER (A3 LANDSCAPE EXECUTIVE DESKTOP)   */}
+      {/* Scaled automatically via √2 (1.414) geometric ratio for A3 paper print     */}
       {/* ========================================================================= */}
       <div
         id="print-report-root"
-        className="print-only-report"
+        className="print-only-report print:block print:w-full print:m-0 print:p-0"
         data-theme="light"
         dir={lang === 'fa' ? 'rtl' : 'ltr'}
       >
-        <ExecutiveReportView
-          sheetId="print-report-sheet"
-          master={master}
-          pms={pms}
-          daily={daily}
-          ipc={ipc}
-          equipment={equipment}
-          kpis={kpis}
-          masterSCurve={masterSCurve}
-          lang={lang}
-        />
+        <div className="print-a3-wrapper print:w-full print:h-full print:m-0 print:p-0">
+          <ExecutiveReportView
+            sheetId="print-report-sheet"
+            master={master}
+            pms={pms}
+            daily={daily}
+            ipc={ipc}
+            equipment={equipment}
+            kpis={kpis}
+            masterSCurve={masterSCurve}
+            lang={lang}
+          />
+        </div>
       </div>
 
       {/* Publish Official Report Modal (Admin only) */}

@@ -10,7 +10,9 @@ interface IssuesAndActionsSectionProps {
 export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = ({ daily, lang }) => {
   const isFa = lang === 'fa';
 
-  const issues = (daily.keyIssues || []).slice(0, 3);
+  const issues = (daily.keyIssues || []).filter(
+    item => item && (item.issueFa?.trim() || item.issueEn?.trim())
+  );
   
   const rawActivities = (daily.importantActivities && daily.importantActivities.length > 0)
     ? daily.importantActivities
@@ -33,9 +35,9 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
   const decisions = daily.managementDecisionsRequired || [];
 
   return (
-    <div className="grid grid-cols-12 gap-2 h-full">
+    <div className="grid grid-cols-12 gap-2 h-full print:grid print:grid-cols-12 print:break-inside-avoid">
       {/* Key Issues & Constraints (7 cols) */}
-      <div id="issues-section" className="key-issues-card col-span-7 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between">
+      <div id="issues-section" className="key-issues-card col-span-7 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between print:break-inside-avoid">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
           <div className="flex items-center gap-1.5">
             <AlertOctagon className="w-3.5 h-3.5 text-rose-600" />
@@ -48,18 +50,18 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
           </span>
         </div>
 
-        <div className="space-y-1.5 text-[8.5px] flex-1">
+        <div className="space-y-1 text-[8.5px] flex-1">
           {issues.length === 0 ? (
             <div className="p-3 text-center text-slate-500 font-medium text-[8.5px] bg-slate-50 rounded border border-slate-200">
               {isFa ? 'موردی در گزارش روزانه ثبت نشده است' : 'No issues recorded in daily report'}
             </div>
           ) : (
             issues.map((item, idx) => (
-              <div key={item.id || idx} className="issue-item-card p-1.5 bg-slate-50/80 border border-slate-200 rounded flex items-center justify-between gap-1.5">
+              <div key={item.id || idx} className="issue-item-card p-1 px-1.5 bg-slate-50/80 border border-slate-200 rounded flex items-center justify-between gap-1.5">
                 {/* Clean Issue Presentation: Number + Description ONLY */}
                 <div className="flex items-start gap-1 flex-1">
                   <span className="issue-num text-blue-600/90 font-bold text-[8.5px] shrink-0 mt-0.5">#{idx + 1}</span>
-                  <span className="issue-text font-semibold text-slate-900 leading-snug text-[8.5px]">
+                  <span className="issue-text font-semibold text-slate-900 leading-tight text-[8.5px]">
                     {isFa ? item.issueFa : (item.issueEn || item.issueFa)}
                   </span>
                 </div>
@@ -79,7 +81,7 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
       </div>
 
       {/* Activities & Management Decisions (5 cols) */}
-      <div id="activities-section" className="activities-decisions-card col-span-5 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between">
+      <div id="activities-section" className="activities-decisions-card col-span-5 border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between print:break-inside-avoid">
         <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />

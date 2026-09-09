@@ -90,7 +90,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
   const attTheme = getAttendanceTheme(attendanceRatio);
 
   return (
-    <div id="financial-section" className="ipc-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full">
+    <div id="financial-section" className="ipc-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full print:break-inside-avoid">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">
@@ -179,7 +179,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           >
             <div className="flex items-center justify-between">
               <span className="fin-metric-title text-[7.5px] text-slate-600 font-sans block font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
-              <span className="text-[6.5px] text-blue-600 font-sans group-hover:underline flex items-center gap-0.5">
+              <span className="text-[6.5px] text-blue-600 font-sans group-hover:underline flex items-center gap-0.5 print:hidden">
                 {isFa ? 'ریز اقلام' : 'Details'}
                 <ExternalLink className="w-2 h-2 opacity-60" />
               </span>

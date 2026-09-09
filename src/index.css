@@ -1047,10 +1047,10 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 }
 
 /* ======================================================== */
-/* 3. PRINT & PDF SPECIFIC RULES (1-PAGE A4 LANDSCAPE)     */
+/* 3. PRINT & PDF SPECIFIC RULES (A3 LANDSCAPE EXECUTIVE)   */
 /* ======================================================== */
 /* Screen Mode: Position dedicated print root offscreen with full standard layout (1140px)
-   so html2canvas can snapshot it at un-transformed 1:1 scale with pure light theme */
+   so html2canvas/html-to-image can snapshot it at un-transformed 1:1 scale with pure light theme */
 @media screen {
   #print-report-root {
     position: fixed !important;
@@ -1065,48 +1065,70 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     visibility: visible !important;
     z-index: -9999 !important;
   }
+  .print-a3-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+  }
 }
 
 @media print {
+  /* 1. PHYSICAL CANVAS SETUP: A3 Landscape with 10mm standard margins */
   @page {
-    size: A4 landscape;
-    margin: 5mm;
+    size: A3 landscape;
+    margin: 10mm;
   }
 
-  /* CRITICAL PRINT RULE: Force white background and dark text regardless of theme */
-  html, body, #root, .app-screen-container, #print-report-root, #executive-report-sheet, #print-report-sheet {
-    width: 297mm !important;
-    height: 210mm !important;
+  /* 2. UNIVERSAL COLOR FIDELITY: Guarantee background colors, blue headers and logo branding */
+  *,
+  *::before,
+  *::after,
+  html,
+  body,
+  #root,
+  .app-screen-container,
+  #print-report-root,
+  #print-report-sheet,
+  .print-a3-wrapper,
+  .print-canvas {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html,
+  body {
+    width: 420mm !important;
+    height: 297mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
     overflow: hidden !important;
   }
 
-  /* Hide screen container, sidebar and interactive elements */
+  /* Hide screen container, navigation, sidebar, interactive modals and buttons */
   .no-print,
   .app-sidebar,
   .app-screen-container,
   nav,
-  header,
-  aside {
+  header.app-top-header,
+  aside,
+  button,
+  .modal-backdrop,
+  [role="dialog"] {
     display: none !important;
   }
 
-  /* Dedicated Print Root is visible only when printing */
+  /* 3. DEDICATED PRINT ROOT: Occupies the 400mm x 277mm A3 printable canvas */
   #print-report-root {
     display: block !important;
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    width: 287mm !important;
-    height: 200mm !important;
+    right: auto !important;
+    width: 400mm !important;
+    height: 277mm !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -1114,27 +1136,67 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     z-index: 99999 !important;
   }
 
-  /* Exactly fit within A4 Landscape 287mm x 200mm printable box */
+  /* 4. GEOMETRIC SCALING WRAPPER (A4 to A3):
+     Ratio of A4 to A3 is exact √2 ≈ 1.4142.
+     Base A4 sheet (282mm x 195mm) scales with mathematical precision to fill A3 (400mm x 277mm)
+     Transform origin is strictly anchored to 'top left' to eliminate clipping. */
+  .print-a3-wrapper {
+    display: block !important;
+    width: 282mm !important;
+    max-width: 282mm !important;
+    height: 195mm !important;
+    max-height: 195mm !important;
+    transform: scale(1.414) !important;
+    transform-origin: top left !important;
+    -webkit-transform: scale(1.414) !important;
+    -webkit-transform-origin: top left !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* High-density base sheet container */
   .print-canvas {
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
-    width: 287mm !important;
-    max-width: 287mm !important;
-    height: 200mm !important;
-    max-height: 200mm !important;
-    margin: 0 auto !important;
-    padding: 3.5mm 4.5mm !important;
+    width: 282mm !important;
+    max-width: 282mm !important;
+    height: 195mm !important;
+    max-height: 195mm !important;
+    margin: 0 !important;
+    padding: 3mm 4mm !important;
     border: 1px solid #94a3b8 !important;
     border-radius: 4px !important;
     background-color: #ffffff !important;
     color: #0f172a !important;
     box-shadow: none !important;
+    break-inside: avoid !important;
     page-break-inside: avoid !important;
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
     overflow: hidden !important;
+  }
+
+  /* 5. AVOID BREAK INSIDE: Eliminate multi-page fragmentation across all key blocks */
+  .print-break-inside-avoid,
+  .report-header,
+  .project-header,
+  #report-header-card,
+  .report-stakeholders-grid,
+  .report-contract-values-grid,
+  .kpi-card,
+  .executive-summary-card,
+  .progress-chart-card,
+  .equipment-section-card,
+  .key-issues-card,
+  .ipc-section-card,
+  .report-footer,
+  table,
+  tr,
+  td,
+  th {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 
   /* Force print elements to have dark text & crisp borders */

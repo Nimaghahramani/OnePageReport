@@ -64,11 +64,11 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
   };
 
   return (
-    <header id="report-header-card" className="report-header project-header report-project-info border-b border-slate-250 pb-1.5 mb-1.5 bg-slate-50/80 rounded-t px-2.5 pt-1.5 text-slate-900 border border-slate-200">
+    <header id="report-header-card" className="report-header project-header report-project-info border-b border-slate-250 pb-1.5 mb-1.5 bg-slate-50/80 rounded-t px-2.5 pt-1.5 text-slate-900 border border-slate-200 print:break-inside-avoid print:bg-white print:border-slate-300">
       {/* Top Banner (ROW 1: Project title + status + logo + report dates) */}
-      <div className="report-header-top-banner flex items-center justify-between gap-2">
+      <div className="report-header-top-banner flex items-center justify-between gap-2 print:break-inside-avoid">
         <div className="flex items-center gap-2.5">
-          <div className="report-header-logo-container flex items-center justify-center p-0.5 rounded-lg shrink-0">
+          <div className="report-header-logo-container flex items-center justify-center p-0.5 rounded-lg shrink-0 print:break-inside-avoid">
             <LoicoLogo size={36} id="report-header-loico-logo" />
           </div>
           <div>
@@ -79,18 +79,22 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
               {getStatusBadge()}
             </div>
             <p className="report-project-subtitle text-[10.5px] font-medium text-blue-900 flex items-center gap-1 mt-0.5">
-              <span className="report-subtitle-badge bg-blue-100 text-blue-900 px-1.5 py-0.2 rounded text-[9.5px] font-bold uppercase">
+              <span className="report-subtitle-badge bg-blue-100 text-blue-900 px-1.5 py-0.2 rounded text-[9.5px] font-bold uppercase print:bg-blue-100 print:text-blue-900">
                 {isFa ? 'گزارش مدیریتی روزانه پروژه' : 'DAILY EXECUTIVE PROJECT REPORT'}
               </span>
               <span className="report-subtitle-divider text-slate-400 font-normal">|</span>
               <span className="report-location-text text-slate-600 font-medium">{isFa ? master.locationFa : master.locationEn}</span>
+              <span className="report-subtitle-divider text-slate-400 font-normal">|</span>
+              <span className="text-[9px] font-bold text-slate-700 bg-slate-200/80 px-1.5 py-0.2 rounded print:bg-slate-100">
+                SCETIRAN & LOICO
+              </span>
             </p>
           </div>
         </div>
 
         {/* Right Metadata Block (Dates) */}
-        <div className="report-header-dates-container text-right rtl:text-left flex flex-col items-end rtl:items-start text-[10px] gap-1">
-          <div className="report-date-row flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-300 bg-slate-50 flex-wrap justify-end shadow-2xs">
+        <div className="report-header-dates-container text-right rtl:text-left flex flex-col items-end rtl:items-start text-[10px] gap-1 print:break-inside-avoid">
+          <div className="report-date-row flex items-center gap-1.5 px-2 py-0.5 rounded border border-slate-300 bg-slate-50 flex-wrap justify-end shadow-2xs print:bg-slate-50 print:border-slate-300">
             <span className="report-meta-label text-slate-600 font-bold text-[9.5px]">{isFa ? 'تاریخ گزارش:' : 'Report Date:'}</span>
             <span className="report-meta-date font-black text-rose-700 text-[11px] ltr-inline font-mono">{daily.reportDate}</span>
             {daily.reportDayOfWeek && (
@@ -104,7 +108,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
               </span>
             )}
           </div>
-          <div className="report-date-row report-data-date-row flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-blue-200 bg-blue-100/90">
+          <div className="report-date-row report-data-date-row flex items-center gap-1.5 px-1.5 py-0.5 rounded border border-blue-200 bg-blue-100/90 print:bg-blue-100 print:border-blue-300">
             <span className="report-data-date-label text-blue-700 font-medium text-[9.5px]">
               {isFa ? (
                 <>
@@ -120,7 +124,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
       </div>
 
       {/* Contract & Stakeholders Compact Grid (ROW 2: Client + Contractor + Consultant + Contract Scope) */}
-      <div className="report-stakeholders-grid grid grid-cols-2 md:grid-cols-4 gap-2 mt-1.5 pt-1 border-t border-slate-200 text-[9.5px]">
+      <div className="report-stakeholders-grid grid grid-cols-2 md:grid-cols-4 gap-2 mt-1.5 pt-1 border-t border-slate-200 text-[9.5px] print:break-inside-avoid print:grid print:grid-cols-4">
         {/* Client */}
         <div className="report-stakeholder-item flex items-center gap-1.5 truncate">
           <Building className="report-info-icon w-3 h-3 text-blue-700 shrink-0" />
@@ -159,7 +163,7 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
       </div>
 
       {/* Financial Values & Contract Timeline (ROW 3: Contract No + Start Date + Duration + Value IRR + Value EUR) */}
-      <div className="report-contract-values-grid grid grid-cols-2 sm:grid-cols-5 gap-1.5 mt-1 pt-1 border-t border-slate-200/80 text-[9px]">
+      <div className="report-contract-values-grid grid grid-cols-2 sm:grid-cols-5 gap-1.5 mt-1 pt-1 border-t border-slate-200/80 text-[9px] print:break-inside-avoid print:grid print:grid-cols-5">
         {/* Contract Number */}
         <div className="report-stakeholder-item flex items-center gap-1.5 truncate">
           <FileText className="report-info-icon w-3 h-3 text-indigo-600 shrink-0" />

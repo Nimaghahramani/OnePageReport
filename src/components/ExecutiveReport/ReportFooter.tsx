@@ -14,7 +14,7 @@ export const ReportFooter: React.FC<ReportFooterProps> = ({ pms, daily, ipc, equ
   const isFa = lang === 'fa';
 
   return (
-    <footer id="report-footer" className="report-footer mt-2 pt-1.5 border-t border-slate-250 text-[8.5px] text-slate-500">
+    <footer id="report-footer" className="report-footer mt-2 pt-1.5 border-t border-slate-250 text-[8.5px] text-slate-500 print:break-inside-avoid print:border-slate-300">
       <div className="flex items-center justify-between gap-3">
         {/* Source Traceability Strip */}
         <div className="flex items-center gap-3 truncate">

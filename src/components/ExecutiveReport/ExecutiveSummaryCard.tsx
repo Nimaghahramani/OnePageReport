@@ -25,7 +25,7 @@ export const ExecutiveSummaryCard: React.FC<ExecutiveSummaryCardProps> = ({ kpis
   }
 
   return (
-    <div id="executive-summary-section" className="executive-summary-card border border-blue-200 bg-blue-50/50 rounded p-2 shadow-2xs mb-2">
+    <div id="executive-summary-section" className="executive-summary-card border border-blue-200 bg-blue-50/50 rounded p-2 shadow-2xs mb-2 print:break-inside-avoid print:bg-blue-50/70 print:border-blue-200">
       <div className="flex items-center justify-between border-b border-blue-200/80 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">
           <FileText className="w-3.5 h-3.5 text-blue-700" />

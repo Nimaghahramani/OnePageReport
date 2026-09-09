@@ -278,6 +278,9 @@ export class ProjectDataStore {
             !iss.issueFa ||
             /^(مدیریت\s*طرح|مشاور|پیمانکار|موانع\s*و\s*مشکلات)$/i.test(iss.issueFa.trim()) ||
             iss.issueFa.includes('تأخیر ترخیص گمرکی')
+        ) || (
+          this.currentDaily.keyIssues.length === 3 &&
+          this.currentDaily.keyIssues.some((iss: any) => iss.id === 'iss-1')
         );
         if (hasStaleOrInvalidIssues) {
           this.currentDaily = {

@@ -16,9 +16,9 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
   const isPositiveVariance = variance !== null && variance >= 0;
 
   return (
-    <div id="pms-section" className="grid grid-cols-6 gap-2 mb-2">
+    <div id="pms-section" className="grid grid-cols-6 gap-2 mb-2 print:grid print:grid-cols-6 print:break-inside-avoid">
       {/* 1. Planned Progress */}
-      <div id="kpi-card-planned" className="kpi-card kpi-card-planned bg-white border border-slate-250 rounded p-1.5 flex flex-col justify-between shadow-2xs">
+      <div id="kpi-card-planned" className="kpi-card kpi-card-planned bg-white border border-slate-250 rounded p-1.5 flex flex-col justify-between shadow-2xs print:break-inside-avoid">
         <div className="flex items-center justify-between text-slate-600 text-[9.5px] font-semibold">
           <span className="kpi-title">{isFa ? 'پیشرفت برنامه‌ای' : 'PLANNED PROGRESS'}</span>
           <Activity className="w-3 h-3 text-slate-400" />

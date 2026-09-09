@@ -170,7 +170,7 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
   });
 
   return (
-    <div id="scurve-section" className="progress-chart-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full">
+    <div id="scurve-section" className="progress-chart-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full print:break-inside-avoid">
       {/* Title */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">

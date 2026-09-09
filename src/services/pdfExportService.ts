@@ -71,7 +71,8 @@ export const ensureNotoSansArabicFontLoaded = ensureVazirmatnFontLoaded;
 
 export async function exportExecutiveReportToPdf(
   elementId = 'print-report-sheet',
-  fileName = 'Executive_Daily_Report.pdf'
+  fileName = 'Executive_Daily_Report_A3.pdf',
+  format: 'a3' | 'a4' = 'a3'
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // 1. Locate the dedicated target report container element
@@ -134,20 +135,22 @@ export async function exportExecutiveReportToPdf(
       throw new Error('امکان تبدیل ساختار صفحه به تصویر جهت صدور PDF میسر نشد.');
     }
 
-    // 4. Create A4 Landscape jsPDF document
+    // 4. Create jsPDF document (A3 or A4 Landscape)
+    const isA3 = format.toLowerCase() === 'a3';
     const pdf = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: 'a4',
+      format: isA3 ? 'a3' : 'a4',
       compress: true
     });
 
-    // A4 Landscape is 297mm x 210mm
-    const pageWidth = 297;
-    const pageHeight = 210;
-    const margin = 5;
-    const printableWidth = pageWidth - margin * 2; // 287mm
-    const printableHeight = pageHeight - margin * 2; // 200mm
+    // A3 Landscape: 420mm x 297mm, margin: 10mm -> printableWidth: 400mm, printableHeight: 277mm
+    // A4 Landscape: 297mm x 210mm, margin: 5mm  -> printableWidth: 287mm, printableHeight: 200mm
+    const pageWidth = isA3 ? 420 : 297;
+    const pageHeight = isA3 ? 297 : 210;
+    const margin = isA3 ? 10 : 5;
+    const printableWidth = pageWidth - margin * 2;
+    const printableHeight = pageHeight - margin * 2;
 
     const aspectRatio = canvasWidth / (canvasHeight || 1);
 
