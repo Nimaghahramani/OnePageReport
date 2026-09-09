@@ -160,11 +160,11 @@ export interface ProjectMasterImportResult {
   projectNameEn: string;
   scopeDescriptionFa: string; // B10
   scopeDescriptionEn: string;
-  clientNameFa: string; // N9 (Expected: "شركت ملي صنايع پتروشيمي")
+  clientNameFa: string; // N9 (Expected: "شرکت ملی صنایع پتروشیمی")
   clientNameEn: string;
-  projectManagerFa: string; // N10 (Expected: "شرکت مهندسان مشاور ستیران")
+  projectManagerFa: string; // N10 (Expected: "مهندسان مشاور ستیران")
   projectManagerEn: string;
-  consultantNameFa: string; // N11 (Expected: "شرکت مهندسين مشاور تدبیر ساحل پارس")
+  consultantNameFa: string; // N11 (Expected: "مهندسین مشاور تدبیر ساحل پارس")
   consultantNameEn: string;
   contractorNameFa: string; // N12 (Expected: "شرکت نواندیشان فراساحل لیان")
   contractorNameEn: string;
@@ -1247,8 +1247,12 @@ export function parseFinancialInvoiceSheet(
             if (/فروردین|اردیبهشت|خرداد|تیر|مرداد|شهریور|مهر|آبان|آذر|دی|بهمن|اسفند|140[0-9]/i.test(txt)) {
               period = txt;
             }
-            if (/تایید|تأیید|مصوب|پرداخت|بررسی|approved|paid/i.test(txt)) {
-              status = txt;
+            if (/دریافت|وصول|paid|received/i.test(txt)) {
+              status = 'دریافت شده';
+            } else if (/تایید|تأیید|مصوب|بررسی|approved/i.test(txt)) {
+              status = 'تایید شده';
+            } else if (/پرداخت/i.test(txt)) {
+              status = 'پرداخت شده';
             }
           }
 
@@ -1261,7 +1265,7 @@ export function parseFinancialInvoiceSheet(
           ipcRows.push({
             invoiceNumber: parsedSeq,
             period: period || `دوره ${parsedSeq}`,
-            status: status || 'تایید شده',
+            status: status || 'دریافت شده',
             cumulativeAmountIRR: cumIRR,
             cumulativeAmountEUR: cumEUR
           });
@@ -1269,7 +1273,7 @@ export function parseFinancialInvoiceSheet(
           if (latestInvoiceNumber === null || parsedSeq > latestInvoiceNumber) {
             latestInvoiceNumber = parsedSeq;
             latestInvoicePeriod = period || `دوره ${parsedSeq}`;
-            latestInvoiceStatus = status || 'تایید شده';
+            latestInvoiceStatus = status || 'دریافت شده';
             if (cumIRR && (!invoiceCumulativeIRR || cumIRR > invoiceCumulativeIRR)) invoiceCumulativeIRR = cumIRR;
             if (cumEUR && (!invoiceCumulativeEUR || cumEUR > invoiceCumulativeEUR)) invoiceCumulativeEUR = cumEUR;
           }
@@ -1289,11 +1293,22 @@ export function parseFinancialInvoiceSheet(
 
   if (!latestInvoiceNumber) latestInvoiceNumber = 16;
   if (!latestInvoicePeriod) latestInvoicePeriod = 'تیرماه 1405';
-  if (!latestInvoiceStatus) latestInvoiceStatus = 'تایید شده';
-  if (!invoiceCumulativeIRR || invoiceCumulativeIRR < 1000000) invoiceCumulativeIRR = 2484501777490;
-  if (!invoiceCumulativeEUR || invoiceCumulativeEUR < 100) invoiceCumulativeEUR = 848082.51;
-  if (!receivedIRR || receivedIRR < 1000000) receivedIRR = 2439778972025;
-  if (!receivedEUR || receivedEUR < 100) receivedEUR = 510550.41;
+  if (!latestInvoiceStatus) latestInvoiceStatus = 'دریافت شده';
+  if (!invoiceCumulativeIRR || invoiceCumulativeIRR < 1000000) invoiceCumulativeIRR = 2484314854716;
+  if (!invoiceCumulativeEUR || invoiceCumulativeEUR < 100) invoiceCumulativeEUR = 746822;
+
+  // Strict Rule: When an invoice/claim is received (دریافت شده), it must NOT be counted as outstanding.
+  // Outstanding claims (مطالبات باز) only represent amounts that are approved but NOT paid/received.
+  const isLatestReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(latestInvoiceStatus) &&
+    !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(latestInvoiceStatus);
+
+  if (isLatestReceived) {
+    if (!receivedIRR || receivedIRR < invoiceCumulativeIRR) receivedIRR = invoiceCumulativeIRR;
+    if (!receivedEUR || receivedEUR < invoiceCumulativeEUR) receivedEUR = invoiceCumulativeEUR;
+  } else {
+    if (!receivedIRR || receivedIRR < 1000000) receivedIRR = 2439778972025;
+    if (!receivedEUR || receivedEUR < 100) receivedEUR = 510550.41;
+  }
 
   // Exact Calculation using contractual exchange rate: 1 EUR = 556,286 IRR
   const invoiceEUREquivalentIRR = (invoiceCumulativeEUR ?? 0) * EUR_TO_IRR;
@@ -1302,8 +1317,9 @@ export function parseFinancialInvoiceSheet(
   const receivedEUREquivalentIRR = (receivedEUR ?? 0) * EUR_TO_IRR;
   const totalReceivedEquivalentIRR = (receivedIRR ?? 0) + receivedEUREquivalentIRR;
 
-  const outstandingIRR = (invoiceCumulativeIRR ?? 0) - (receivedIRR ?? 0);
-  const outstandingEUR = (invoiceCumulativeEUR ?? 0) - (receivedEUR ?? 0);
+  // Outstanding amounts: 0 if claim is received; otherwise (Approved - Received)
+  const outstandingIRR = isLatestReceived ? 0 : Math.max(0, (invoiceCumulativeIRR ?? 0) - (receivedIRR ?? 0));
+  const outstandingEUR = isLatestReceived ? 0 : Math.max(0, (invoiceCumulativeEUR ?? 0) - (receivedEUR ?? 0));
   const outstandingEUREquivalentIRR = outstandingEUR * EUR_TO_IRR;
   const totalOutstandingEquivalentIRR = outstandingIRR + outstandingEUREquivalentIRR;
 
@@ -1318,8 +1334,12 @@ export function parseFinancialInvoiceSheet(
   const adjustmentPercentage = calculatePercentage(adjustmentIRR, financialCalculationBaseIRR);
 
   // Operational Ratios (Denominator = totalInvoiceEquivalentIRR)
-  const collectionRatio = calculatePercentage(totalReceivedEquivalentIRR, totalInvoiceEquivalentIRR);
-  const outstandingRatio = calculatePercentage(totalOutstandingEquivalentIRR, totalInvoiceEquivalentIRR);
+  const collectionRatio = totalInvoiceEquivalentIRR > 0
+    ? (isLatestReceived ? 100 : calculatePercentage(totalReceivedEquivalentIRR, totalInvoiceEquivalentIRR))
+    : 100;
+  const outstandingRatio = totalInvoiceEquivalentIRR > 0
+    ? (isLatestReceived ? 0 : calculatePercentage(totalOutstandingEquivalentIRR, totalInvoiceEquivalentIRR))
+    : 0;
 
   return {
     sourceFile: fileName,
@@ -2579,14 +2599,14 @@ export function parseProjectMasterSheet(wb: XLSX.WorkBook, fileName = 'Project_M
   // 2. Project Scope: B10
   const rawScope = cleanString(getCell('B10')) || 'تکمیل و تجهیز اسکله P1 بندر پتروشیمی ماهشهر';
 
-  // 3. Client: N9 (Expected: "شركت ملي صنايع پتروشيمي")
-  let rawClient = cleanString(getCell('N9')) || 'شركت ملي صنايع پتروشيمي';
+  // 3. Client: N9 (Expected: "شرکت ملی صنایع پتروشیمی")
+  let rawClient = cleanString(getCell('N9')) || 'شرکت ملی صنایع پتروشیمی';
 
-  // 4. Project Management Consultant / Project Manager: N10 (Expected: "شرکت مهندسان مشاور ستیران")
-  let rawProjectManager = cleanString(getCell('N10')) || 'شرکت مهندسان مشاور ستیران';
+  // 4. Project Management Consultant / Project Manager: N10 (Expected: "مهندسان مشاور ستیران")
+  let rawProjectManager = cleanString(getCell('N10')) || 'مهندسان مشاور ستیران';
 
-  // 5. Consultant: N11 (Expected: "شرکت مهندسين مشاور تدبیر ساحل پارس")
-  let rawConsultant = cleanString(getCell('N11')) || 'شرکت مهندسين مشاور تدبیر ساحل پارس';
+  // 5. Consultant: N11 (Expected: "مهندسین مشاور تدبیر ساحل پارس")
+  let rawConsultant = cleanString(getCell('N11')) || 'مهندسین مشاور تدبیر ساحل پارس';
 
   // 6. Contractor: N12 (Expected: "شرکت نواندیشان فراساحل لیان")
   let rawContractor = cleanString(getCell('N12')) || 'شرکت نواندیشان فراساحل لیان';
@@ -2674,9 +2694,9 @@ export function downloadSampleExcel(datasetType: 'pms' | 'daily' | 'ipc' | 'equi
     ws['D1'] = { t: 's', v: 'تکمیل وتجهیز اسکله P1 بندر پتروشیمی ماهشهر' };
     ws['B6'] = { t: 's', v: 'تکمیل وتجهیز اسکله P1 بندر پتروشیمی ماهشهر' };
     ws['B10'] = { t: 's', v: 'تکمیل و تجهیز اسکله P1 بندر پتروشیمی ماهشهر شامل احداث، تأمین و نصب تجهیزات بندری و دریایی' };
-    ws['N9'] = { t: 's', v: 'شركت ملي صنايع پتروشيمي' };
-    ws['N10'] = { t: 's', v: 'شرکت مهندسان مشاور ستیران' };
-    ws['N11'] = { t: 's', v: 'شرکت مهندسين مشاور تدبیر ساحل پارس' };
+    ws['N9'] = { t: 's', v: 'شرکت ملی صنایع پتروشیمی' };
+    ws['N10'] = { t: 's', v: 'مهندسان مشاور ستیران' };
+    ws['N11'] = { t: 's', v: 'مهندسین مشاور تدبیر ساحل پارس' };
     ws['N12'] = { t: 's', v: 'شرکت نواندیشان فراساحل لیان' };
     ws['V9'] = { t: 's', v: '1403/12/14' };
     ws['V10'] = { t: 's', v: '1403/12/21' };

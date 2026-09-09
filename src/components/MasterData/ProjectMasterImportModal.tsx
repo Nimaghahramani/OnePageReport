@@ -88,7 +88,7 @@ export const ProjectMasterImportModal: React.FC<ProjectMasterImportModalProps> =
                 {isFa ? 'ورود اطلاعات پایه پروژه از اکسل (Project Master Excel Import)' : 'Import Project Master Data from Excel'}
               </h3>
               <p className="text-[11px] text-slate-500 font-medium">
-                {isFa ? 'نگاشت سلولی قطعی برگه "اسکله" (نام، کارفرما، مشاور، پیمانکار، تاریخ شروع و مبالغ ریالی/ارزی)' : 'Cell-mapped ingestion from sheet "اسکله"'}
+                {isFa ? 'نگاشت سلولی قطعی برگه "اسکله" (نام، کارفرما، مدیریت طرح، مشاور، پیمانکار، تاریخ شروع و مبالغ)' : 'Cell-mapped ingestion from sheet "اسکله"'}
               </p>
             </div>
           </div>
@@ -233,10 +233,21 @@ export const ProjectMasterImportModal: React.FC<ProjectMasterImportModalProps> =
                   </span>
                 </div>
 
+                {/* Project Manager / MC */}
+                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                  <div className="flex items-center justify-between text-[10.5px] text-slate-500 mb-1">
+                    <span>{isFa ? 'مدیریت طرح / ستیران (N10):' : 'Project Manager / MC (N10):'}</span>
+                    <span className="font-mono text-emerald-700 font-bold">Cell N10</span>
+                  </div>
+                  <span className="font-bold text-slate-900 text-xs block">
+                    {importResult.projectManagerFa || 'مهندسان مشاور ستیران'}
+                  </span>
+                </div>
+
                 {/* Consultant */}
                 <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                   <div className="flex items-center justify-between text-[10.5px] text-slate-500 mb-1">
-                    <span>{isFa ? 'مهندس مشاور (N11):' : 'Consultant (N11):'}</span>
+                    <span>{isFa ? 'مشاور پروژه (N11):' : 'Consultant (N11):'}</span>
                     <span className="font-mono text-emerald-700 font-bold">Cell N11</span>
                   </div>
                   <span className="font-bold text-slate-900 text-xs block">
@@ -252,17 +263,6 @@ export const ProjectMasterImportModal: React.FC<ProjectMasterImportModalProps> =
                   </div>
                   <span className="font-bold text-slate-900 text-xs block">
                     {importResult.contractorNameFa}
-                  </span>
-                </div>
-
-                {/* Project Manager / MC */}
-                <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                  <div className="flex items-center justify-between text-[10.5px] text-slate-500 mb-1">
-                    <span>{isFa ? 'مدیر طرح / نظارت عالیه (N10):' : 'Project Manager / MC (N10):'}</span>
-                    <span className="font-mono text-emerald-700 font-bold">Cell N10</span>
-                  </div>
-                  <span className="font-bold text-slate-900 text-xs block">
-                    {importResult.projectManagerFa}
                   </span>
                 </div>
 

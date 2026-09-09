@@ -38,6 +38,40 @@
   font-display: swap;
 }
 
+/* Direct mapping for Vazirmatn.ttf font requests */
+@font-face {
+  font-family: 'Vazirmatn.ttf';
+  src: url('/fonts/Vazirmatn-Regular.woff2') format('woff2'),
+       url('/fonts/Vazirmatn.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn.ttf';
+  src: url('/fonts/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn.ttf';
+  src: url('/fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn.ttf';
+  src: url('/fonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* -------------------------------------------------------------------------- */
 /* 2. SECONDARY LOCAL FALLBACK: IRANSansWeb                                    */
 /* -------------------------------------------------------------------------- */
@@ -72,7 +106,9 @@
   /* Proven Typography Hierarchy */
   --font-persian: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif;
   --font-persian-display: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif;
-  --font-latin: 'Vazirmatn', Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-latin: 'Vazirmatn', 'Vazirmatn.ttf', Arial, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-table-nums: 'Vazirmatn', 'Vazirmatn.ttf', Arial, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-tabular-nums: 'Vazirmatn', 'Vazirmatn.ttf', Arial, -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Screen App & Report Palette (Light Executive Standard) */
   --bg-app: #F7F5EE;

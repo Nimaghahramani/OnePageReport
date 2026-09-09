@@ -80,13 +80,13 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
         <table className="equipment-table w-full text-right rtl:text-right ltr:text-left border-collapse">
           <thead className="bg-slate-100/90 text-slate-700 font-bold border-b border-slate-200 select-none">
             <tr className="h-4">
-              <th className="px-1 py-0.5 text-center w-5">{isFa ? '#' : 'No'}</th>
+              <th className="px-1 py-0.5 text-center w-5 col-num">{isFa ? '#' : 'No'}</th>
               <th className="px-1 py-0.5">{isFa ? 'تجهیز / شرح آیتم' : 'Equipment / Item'}</th>
               <th className="px-0.5 py-0.5 text-center w-7">{isFa ? 'واحد' : 'Unit'}</th>
-              <th className="px-0.5 py-0.5 text-center w-8">{isFa ? 'کل' : 'Total'}</th>
-              <th className="px-0.5 py-0.5 text-center w-8">{isFa ? 'انجام' : 'Done'}</th>
-              <th className="px-0.5 py-0.5 text-center w-8">{isFa ? 'مانده' : 'Rem.'}</th>
-              <th className="px-1 py-0.5 text-center w-14">{isFa ? 'پیشرفت' : 'Progress'}</th>
+              <th className="px-0.5 py-0.5 text-center w-8 col-qty">{isFa ? 'کل' : 'Total'}</th>
+              <th className="px-0.5 py-0.5 text-center w-8 col-qty">{isFa ? 'انجام' : 'Done'}</th>
+              <th className="px-0.5 py-0.5 text-center w-8 col-qty">{isFa ? 'مانده' : 'Rem.'}</th>
+              <th className="px-1 py-0.5 text-center w-14 col-percent">{isFa ? 'پیشرفت' : 'Progress'}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -105,7 +105,7 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
                     isComplete ? 'bg-emerald-50/20' : ''
                   }`}
                 >
-                  <td className="px-1 py-0.2 text-center text-slate-400 font-mono text-[7px]">
+                  <td className="px-1 py-0.2 text-center text-slate-400 font-tabular tabular-nums text-[7px]">
                     {item.sequence || idx + 1}
                   </td>
                   <td className="px-1 py-0.2 font-sans font-medium text-slate-800 truncate max-w-[100px]">
@@ -126,12 +126,12 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
                   <td className="px-0.5 py-0.2 text-center font-sans text-slate-500 text-[7px] truncate max-w-[28px]">
                     {item.unit || 'عدد'}
                   </td>
-                  <td className="px-0.5 py-0.2 text-center font-bold text-slate-700">{itemTotal}</td>
-                  <td className={`px-0.5 py-0.2 text-center font-black ${itemCompleted > 0 ? 'text-teal-700' : 'text-slate-400'}`}>
+                  <td className="px-0.5 py-0.2 text-center font-bold text-slate-700 font-tabular tabular-nums col-qty">{itemTotal}</td>
+                  <td className={`px-0.5 py-0.2 text-center font-black font-tabular tabular-nums col-qty ${itemCompleted > 0 ? 'text-teal-700' : 'text-slate-400'}`}>
                     {itemCompleted}
                   </td>
-                  <td className="px-0.5 py-0.2 text-center text-slate-500">{itemRemaining}</td>
-                  <td className="px-1 py-0.2 text-center">
+                  <td className="px-0.5 py-0.2 text-center text-slate-500 font-tabular tabular-nums col-qty">{itemRemaining}</td>
+                  <td className="px-1 py-0.2 text-center col-percent">
                     <div className="flex items-center gap-1 justify-center">
                       <div className="w-6 bg-slate-200 rounded-full h-1 overflow-hidden shrink-0">
                         <div
@@ -142,7 +142,7 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
                         />
                       </div>
                       <span
-                        className={`text-[7px] font-bold min-w-[22px] text-right ${
+                        className={`text-[7px] font-bold min-w-[22px] text-right font-tabular tabular-nums ${
                           isComplete ? 'text-emerald-700' : progress > 0 ? 'text-teal-800' : 'text-slate-400'
                         }`}
                       >

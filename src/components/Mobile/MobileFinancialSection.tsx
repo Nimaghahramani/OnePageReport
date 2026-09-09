@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IpcRecord, DailyReportRecord, Language, FINANCIAL_CALCULATION_BASE_IRR } from '../../types';
-import { CreditCard, Users, Truck, ExternalLink } from 'lucide-react';
-import { AdvanceAdjustmentModal } from '../ExecutiveReport/AdvanceAdjustmentModal';
+import { CreditCard, Users, Truck } from 'lucide-react';
 
 interface MobileFinancialSectionProps {
   ipc: IpcRecord;
@@ -9,38 +8,63 @@ interface MobileFinancialSectionProps {
   lang: Language;
 }
 
-function formatIrr(amount: number | null | undefined, isFa: boolean = true): string {
+function formatIrrValue(amount: number | null | undefined): string {
   if (amount === null || amount === undefined) return '-';
   if (Math.abs(amount) >= 1_000_000_000) {
-    const val = (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    return isFa ? `${val} م.ر` : `${val}B`;
+    return (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   }
   if (Math.abs(amount) >= 1_000_000) {
-    const val = (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    return isFa ? `${val} م.ر` : `${val}M`;
+    return (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   }
-  return amount.toLocaleString();
+  return amount.toLocaleString('en-US');
 }
 
-function formatEur(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return '-';
+function getIrrUnit(amount: number | null | undefined, isFa: boolean = true): string {
+  if (amount === null || amount === undefined) return '';
+  if (amount === 0) return isFa ? 'م.ر' : 'B IRR';
+  if (Math.abs(amount) >= 1_000_000_000) {
+    return isFa ? 'م.ر' : 'B IRR';
+  }
   if (Math.abs(amount) >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(2)}M €`;
+    return isFa ? 'م.ر' : 'M IRR';
+  }
+  return isFa ? 'ریال' : 'IRR';
+}
+
+function formatEurValue(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined) return '-';
+  if (amount === 0) return '0';
+  if (Math.abs(amount) >= 1_000_000) {
+    return `${(amount / 1_000_000).toFixed(1)}M`;
   }
   if (Math.abs(amount) >= 1_000) {
-    return `${(amount / 1_000).toFixed(1)}k €`;
+    return `${(amount / 1_000).toFixed(1)}k`;
   }
-  return `${amount.toLocaleString()} €`;
+  return amount.toLocaleString('en-US');
 }
 
 export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ ipc, daily, lang }) => {
   const isFa = lang === 'fa';
   const fin = ipc.financialSummary;
-  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
 
-  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 56.5);
-  const collectionRatio = fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 92.1);
-  const outstandingRatio = fin?.outstandingRatio ?? (100 - collectionRatio);
+  // Strict Rule: When a claim is received, it must NOT be in outstanding claims.
+  // Outstanding claims only apply when approved but NOT paid/received.
+  const isReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin?.latestInvoiceStatus || ipc.status || '') &&
+    !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin?.latestInvoiceStatus || ipc.status || '');
+
+  const displayOutstandingIRR = isReceived ? 0 : (fin?.outstandingIRR ?? Math.max(0, ipc.approvedAmount - ipc.paidAmount));
+  const displayOutstandingEUR = isReceived ? 0 : (fin?.outstandingEUR ?? 0);
+
+  const displayReceivedIRR = isReceived
+    ? (fin?.invoiceCumulativeIRR ?? fin?.receivedIRR ?? ipc.approvedAmount)
+    : (fin?.receivedIRR ?? ipc.paidAmount);
+  const displayReceivedEUR = isReceived
+    ? (fin?.invoiceCumulativeEUR ?? fin?.receivedEUR ?? 0)
+    : (fin?.receivedEUR ?? 0);
+
+  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 55.4);
+  const collectionRatio = isReceived ? 100 : (fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 100));
+  const outstandingRatio = isReceived ? 0 : (fin?.outstandingRatio ?? Math.max(0, 100 - collectionRatio));
 
   // Site Manpower calculations from structured DailyReportRecord
   const mp = daily.siteManpower || (daily.manpower ? {
@@ -108,79 +132,104 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
         {/* 1. Cumulative */}
         <div className="bg-blue-50/60 border border-blue-200 rounded-lg p-2 flex flex-col justify-between">
           <span className="text-[8.5px] text-blue-800 font-semibold">{isFa ? 'کارکرد تجمعی' : 'Cumulative'}</span>
-          <div className="my-1">
-            <div className="text-[12px] font-bold text-blue-950 font-mono">
-              {formatIrr(fin?.invoiceCumulativeIRR || ipc.approvedAmount)} <span className="text-[7.5px] font-sans text-blue-700">ریال</span>
+          <div className="my-1 text-center">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-[13px] font-bold text-blue-950 font-tabular tabular-nums">
+                {formatIrrValue(fin?.invoiceCumulativeIRR || ipc.approvedAmount)}
+              </span>
+              <span className="text-[8px] font-semibold text-blue-700 font-sans">
+                {getIrrUnit(fin?.invoiceCumulativeIRR || ipc.approvedAmount, isFa)}
+              </span>
             </div>
-            <div className="text-[9.5px] font-medium text-blue-800 font-mono">
-              {formatEur(fin?.invoiceCumulativeEUR || (ipc.approvedAmount / 556286))}
+            <div className="flex items-baseline justify-center gap-0.5 text-[9.5px] font-medium text-blue-800 mt-0.5">
+              <span className="font-tabular tabular-nums">{formatEurValue(fin?.invoiceCumulativeEUR || (ipc.approvedAmount / 556286))}</span>
+              <span className="text-[8px] font-sans">€</span>
             </div>
           </div>
           <div className="text-[8px] text-blue-700 pt-1 border-t border-blue-200/50 flex items-center justify-between">
             <span>{isFa ? 'پیشرفت مالی:' : 'Prog:'}</span>
-            <span className="font-bold font-mono">{finProgress}%</span>
+            <span className="font-bold font-tabular tabular-nums">{finProgress}%</span>
           </div>
         </div>
 
         {/* 2. Received */}
         <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-2 flex flex-col justify-between">
           <span className="text-[8.5px] text-emerald-800 font-semibold">{isFa ? 'دریافتی / وصولی' : 'Received'}</span>
-          <div className="my-1">
-            <div className="text-[12px] font-bold text-emerald-950 font-mono">
-              {formatIrr(fin?.receivedIRR || ipc.paidAmount)} <span className="text-[7.5px] font-sans text-emerald-700">ریال</span>
+          <div className="my-1 text-center">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-[13px] font-bold text-emerald-950 font-tabular tabular-nums">
+                {formatIrrValue(displayReceivedIRR)}
+              </span>
+              <span className="text-[8px] font-semibold text-emerald-700 font-sans">
+                {getIrrUnit(displayReceivedIRR, isFa)}
+              </span>
             </div>
-            <div className="text-[9.5px] font-medium text-emerald-800 font-mono">
-              {formatEur(fin?.receivedEUR || (ipc.paidAmount / 556286))}
+            <div className="flex items-baseline justify-center gap-0.5 text-[9.5px] font-medium text-emerald-800 mt-0.5">
+              <span className="font-tabular tabular-nums">{formatEurValue(displayReceivedEUR)}</span>
+              <span className="text-[8px] font-sans">€</span>
             </div>
           </div>
           <div className="text-[8px] text-emerald-700 pt-1 border-t border-emerald-200/50 flex items-center justify-between">
             <span>{isFa ? 'نسبت وصول:' : 'Col Ratio:'}</span>
-            <span className="font-bold font-mono">{collectionRatio}%</span>
+            <span className="font-bold font-tabular tabular-nums">{collectionRatio.toFixed(1)}%</span>
           </div>
         </div>
 
         {/* 3. Outstanding */}
         <div className="bg-amber-50/60 border border-amber-200 rounded-lg p-2 flex flex-col justify-between">
           <span className="text-[8.5px] text-amber-800 font-semibold">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
-          <div className="my-1">
-            <div className="text-[12px] font-bold text-amber-950 font-mono">
-              {formatIrr(fin?.outstandingIRR || Math.max(0, ipc.approvedAmount - ipc.paidAmount))} <span className="text-[7.5px] font-sans text-amber-700">ریال</span>
+          <div className="my-1 text-center">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-[13px] font-bold text-amber-950 font-tabular tabular-nums">
+                {formatIrrValue(displayOutstandingIRR)}
+              </span>
+              <span className="text-[8px] font-semibold text-amber-700 font-sans">
+                {getIrrUnit(displayOutstandingIRR, isFa)}
+              </span>
             </div>
-            <div className="text-[9.5px] font-medium text-amber-800 font-mono">
-              {formatEur(fin?.outstandingEUR || Math.max(0, (ipc.approvedAmount - ipc.paidAmount) / 556286))}
+            <div className="flex items-baseline justify-center gap-0.5 text-[9.5px] font-medium text-amber-800 mt-0.5">
+              <span className="font-tabular tabular-nums">{formatEurValue(displayOutstandingEUR)}</span>
+              <span className="text-[8px] font-sans">€</span>
             </div>
           </div>
           <div className="text-[8px] text-amber-700 pt-1 border-t border-amber-200/50 flex items-center justify-between">
             <span>{isFa ? 'نسبت مطالبات:' : 'Out Ratio:'}</span>
-            <span className="font-bold font-mono">{outstandingRatio.toFixed(1)}%</span>
+            <span className="font-bold font-tabular tabular-nums">{outstandingRatio.toFixed(1)}%</span>
           </div>
         </div>
 
         {/* 4. Advance & Adjustment */}
-        <div
-          onClick={() => fin && setShowBreakdownModal(true)}
-          className="bg-slate-50 hover:bg-blue-50/50 hover:border-blue-300 border border-slate-200 rounded-lg p-2 flex flex-col justify-between cursor-pointer transition-colors"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[8.5px] text-slate-700 font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
-            <span className="text-[7px] text-blue-600 font-sans flex items-center gap-0.5">
-              {isFa ? 'ریز اقلام' : 'Details'}
-              <ExternalLink className="w-2 h-2 opacity-60" />
-            </span>
-          </div>
-          <div className="my-1 space-y-0.5">
-            <div className="text-[9.5px] font-bold text-slate-800 font-mono flex items-center justify-between">
-              <span className="text-[7.5px] text-slate-500 font-sans">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span>
-              <span>{formatIrr(fin?.advancePaymentIRR || 0, isFa)} <span className="text-[7.5px] font-normal text-slate-500 font-mono">({fin?.advancePaymentPercentage || 22.07}%)</span></span>
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 flex flex-col justify-between">
+          <span className="text-[8.5px] text-slate-700 font-semibold text-center">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
+          <div className="my-1 space-y-1">
+            <div className="text-[9.5px] flex items-baseline justify-between">
+              <span className="text-[8px] text-slate-600 font-sans">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span>
+              <div className="flex items-baseline gap-0.5 font-bold text-slate-900">
+                <span className="font-tabular tabular-nums">{formatIrrValue(fin?.advancePaymentIRR || 0)}</span>
+                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                <span className="text-[7px] font-normal text-slate-400 font-tabular tabular-nums">({Number(fin?.advancePaymentPercentage || 22.07).toFixed(1)}%)</span>
+              </div>
             </div>
-            <div className="text-[9.5px] font-bold text-indigo-900 font-mono flex items-center justify-between">
-              <span className="text-[7.5px] text-slate-500 font-sans">{isFa ? 'تعدیل:' : 'Adj:'}</span>
-              <span>{formatIrr(fin?.adjustmentIRR || 0, isFa)} <span className="text-[7.5px] font-normal text-indigo-500 font-mono">({fin?.adjustmentPercentage || 20.53}%)</span></span>
+            <div className="text-[9.5px] flex items-baseline justify-between">
+              <span className="text-[8px] text-indigo-700 font-sans">{isFa ? 'تعدیل:' : 'Adj:'}</span>
+              <div className="flex items-baseline gap-0.5 font-bold text-indigo-950">
+                <span className="font-tabular tabular-nums">{formatIrrValue(fin?.adjustmentIRR || 0)}</span>
+                <span className="text-[7px] text-indigo-600 font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                <span className="text-[7px] font-normal text-indigo-400 font-tabular tabular-nums">({Number(fin?.adjustmentPercentage || 20.53).toFixed(1)}%)</span>
+              </div>
             </div>
           </div>
           <div className="text-[7.5px] text-slate-500 pt-1 border-t border-slate-200/70 flex items-center justify-between">
-            <span>{isFa ? 'مبنا: ۵,۲۳۰ م.ر' : 'Base: 5,230B'}</span>
-            <span className="text-slate-400 font-mono">{isFa ? '۴ قسط / ۱۱ ص.و' : '4 adv / 11 adj'}</span>
+            <span>{isFa ? 'مجموع:' : 'Total:'}</span>
+            <div className="flex items-baseline gap-0.5 font-bold text-slate-800">
+              <span className="font-tabular tabular-nums">
+                {formatIrrValue((fin?.advancePaymentIRR || 0) + (fin?.adjustmentIRR || 0))}
+              </span>
+              <span className="text-[7px] font-sans">{isFa ? 'م.ر' : 'B'}</span>
+              <span className="text-[7px] font-normal text-slate-400 font-tabular tabular-nums">
+                ({(Number(fin?.advancePaymentPercentage || 22.07) + Number(fin?.adjustmentPercentage || 20.53)).toFixed(1)}%)
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -271,15 +320,6 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
           </div>
         </div>
       </div>
-
-      {fin && (
-        <AdvanceAdjustmentModal
-          isOpen={showBreakdownModal}
-          onClose={() => setShowBreakdownModal(false)}
-          fin={fin}
-          lang={lang}
-        />
-      )}
     </div>
   );
 };

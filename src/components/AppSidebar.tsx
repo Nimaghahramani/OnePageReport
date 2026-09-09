@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Download,
   Printer,
+  QrCode,
   Sun,
   Palette,
   RotateCcw,
@@ -51,6 +52,8 @@ interface AppSidebarProps {
   onResetData: () => void;
   issues: ValidationIssue[];
   isAdminMode?: boolean;
+  onOpenQrModal?: () => void;
+  onOpenPrintPreview?: () => void;
 }
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -64,6 +67,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onResetData,
   issues,
   isAdminMode = false,
+  onOpenQrModal,
+  onOpenPrintPreview,
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const isFa = lang === 'fa';
@@ -310,6 +315,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           </div>
         </div>
 
+        {/* Print Preview Button (Admin Mode) */}
+        {onOpenPrintPreview && (
+          <div className="relative group">
+            <button
+              type="button"
+              onClick={onOpenPrintPreview}
+              className="w-full h-[34px] flex items-center justify-center gap-1 rounded-lg bg-blue-950/40 hover:bg-blue-900/60 text-cyan-300 hover:text-white border border-cyan-500/30 font-semibold text-[10px] transition cursor-pointer shadow-xs"
+              title={isFa ? 'پیش‌نمایش چاپ دقیق کاغذ A4 افقی' : 'A4 Print Preview'}
+              aria-label="A4 Print Preview"
+            >
+              <Printer className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+              <span>{isFa ? 'پیش‌نمایش چاپ' : 'Preview'}</span>
+            </button>
+            <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+              {isFa ? 'پیش‌نمایش چاپ شبیه‌سازی کاغذ A4 افقی با قابلیت کنترل سربرگ و پاورقی' : 'A4 Paper Print Preview with Header/Footer toggles'}
+            </div>
+          </div>
+        )}
+
         {/* Print Button (Direct single-click native browser print) */}
         <div className="relative group">
           <button
@@ -326,6 +350,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             {isFa ? 'چاپ مستقیم گزارش (پنجره چاپ مرورگر)' : 'Direct Print Report (Native Print Dialog)'}
           </div>
         </div>
+
+        {/* Share QR Code Button */}
+        {onOpenQrModal && (
+          <div className="relative group">
+            <button
+              type="button"
+              onClick={onOpenQrModal}
+              className="w-full h-[34px] flex items-center justify-center gap-1.5 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 hover:text-cyan-100 border border-cyan-500/30 font-semibold text-[10px] transition cursor-pointer"
+              title={isFa ? 'تولید و اشتراک‌گذاری بارکد QR برای موبایل' : 'Generate & Share Mobile QR Code'}
+              aria-label="Share QR Code"
+            >
+              <QrCode className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+              <span>{isFa ? 'کد QR' : 'QR Code'}</span>
+            </button>
+            <div className="sidebar-tooltip-popup pointer-events-none absolute right-[100%] top-1/2 -translate-y-1/2 mr-2 px-2.5 py-1 bg-[#061A3A] border border-cyan-500/40 text-white text-[10.5px] font-medium rounded-md shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap z-50">
+              {isFa ? 'تولید و اشتراک‌گذاری بارکد QR برای ذینفعان' : 'Generate & Share QR Code for Stakeholders'}
+            </div>
+          </div>
+        )}
 
         {/* Utility Controls Row: Theme, Language, Reset */}
         <div className="flex items-center justify-around pt-1 border-t border-white/5">

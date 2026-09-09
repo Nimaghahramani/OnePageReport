@@ -2,8 +2,17 @@
 @import "./theme/tokens.css";
 
 @layer base {
-  body {
+  html,
+  body,
+  h1, h2, h3, h4, h5, h6,
+  p, span, div,
+  table, thead, tbody, th, td, tr,
+  input, button, select, textarea, label {
     font-family: var(--font-persian);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "liga" 1;
   }
 }
 
@@ -45,10 +54,38 @@
 
 #print-report-root,
 #print-report-root * {
-  font-family: var(--font-persian) !important;
+  font-family: var(--font-persian);
 }
 
-/* Latin & numerical font class for screen UI */
+/* ========================================================================== */
+/* GLOBAL STYLING FOR NUMBERS IN REPORT TABLES (TABULAR NUMS / LATIN DIGITS)  */
+/* Ensures perfect vertical alignment in financial and quantity table columns */
+/* ========================================================================== */
+
+:root {
+  --font-table-nums: 'Vazirmatn', 'Vazirmatn.ttf', Arial, 'Plus Jakarta Sans', sans-serif;
+  --font-tabular-nums: 'Vazirmatn', 'Vazirmatn.ttf', Arial, 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Core classes for Latin tabular numerals */
+.tabular-nums,
+.font-tabular,
+.table-num,
+.num-cell,
+.table-numeric-cell,
+.col-num,
+.col-qty,
+.col-financial,
+.col-percent,
+.font-mono {
+  font-family: var(--font-table-nums) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  -moz-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+}
+
+/* Latin digits in numerical elements */
 .font-en,
 .font-number,
 .font-latin,
@@ -56,10 +93,108 @@
 .kpi-delay-badge,
 .report-data-date-badge,
 .report-meta-date,
-.fin-metric-irr,
-.fin-metric-eur,
 .equipment-metric-val {
-  font-family: var(--font-latin);
+  font-family: var(--font-table-nums) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  -moz-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+}
+
+/* Automatic global tabular-nums application to all numbers in report tables */
+.equipment-table td:nth-child(1),
+.equipment-table td:nth-child(4),
+.equipment-table td:nth-child(5),
+.equipment-table td:nth-child(6),
+.equipment-table td:nth-child(7),
+.equipment-table td .equipment-metric-val,
+.equipment-table td .progress-val,
+.advance-table td:nth-child(1),
+.advance-table td:nth-child(4),
+.advance-table td:nth-child(5),
+.report-table td.col-financial,
+.report-table td.col-qty,
+.report-table td.col-percent,
+.report-table td.col-num,
+.print-table td.col-financial,
+.print-table td.col-qty,
+.print-table td.col-percent,
+.print-table td.col-num,
+table td[data-numeric="true"],
+table td.table-numeric-cell,
+table td.tabular-nums,
+table td.font-tabular,
+table td.font-mono {
+  font-family: var(--font-table-nums) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  -moz-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  letter-spacing: -0.01em;
+}
+
+/* Alignment rules for quantity columns in tables */
+.col-qty,
+.col-quantity,
+.table-qty-cell,
+.equipment-table td:nth-child(4),
+.equipment-table td:nth-child(5),
+.equipment-table td:nth-child(6) {
+  text-align: center;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  white-space: nowrap;
+}
+
+/* Alignment rules for financial columns in tables */
+.col-financial,
+.col-amount,
+.table-financial-cell,
+.advance-table td:nth-child(4) {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  white-space: nowrap;
+}
+
+/* Alignment rules for percentage and progress columns */
+.col-percent,
+.col-progress,
+.table-percent-cell,
+.equipment-table td:nth-child(7),
+.advance-table td:nth-child(5) {
+  text-align: center;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  white-space: nowrap;
+}
+
+/* Print container numeric exceptions:
+   Ensure numbers in print mode keep tabular-nums and Latin digits */
+#print-report-root .tabular-nums,
+#print-report-root .font-tabular,
+#print-report-root .table-num,
+#print-report-root .table-numeric-cell,
+#print-report-root .col-financial,
+#print-report-root .col-qty,
+#print-report-root .col-percent,
+#print-report-root .col-num,
+#print-report-root .font-mono,
+#print-report-root .fin-metric-irr,
+#print-report-root .fin-metric-eur,
+#print-report-root .equipment-metric-val,
+#print-report-root .equipment-table td:nth-child(1),
+#print-report-root .equipment-table td:nth-child(4),
+#print-report-root .equipment-table td:nth-child(5),
+#print-report-root .equipment-table td:nth-child(6),
+#print-report-root .equipment-table td:nth-child(7) {
+  font-family: var(--font-table-nums) !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  -webkit-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  -moz-font-feature-settings: "tnum" 1, "lnum" 1 !important;
+  font-feature-settings: "tnum" 1, "lnum" 1 !important;
 }
 
 /* RTL / Bidi isolation */
@@ -1108,6 +1243,8 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   }
 
   /* Hide screen container, navigation, sidebar, interactive modals and buttons */
+  #app-header,
+  #main-tabs,
   .no-print,
   .app-sidebar,
   .app-screen-container,
@@ -1116,7 +1253,9 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   aside,
   button,
   .modal-backdrop,
-  [role="dialog"] {
+  [role="dialog"],
+  .mobile-bottom-navigation,
+  .admin-viewport-warning {
     display: none !important;
   }
 
@@ -1205,6 +1344,59 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     backdrop-filter: none !important;
     text-shadow: none !important;
     box-shadow: none !important;
+  }
+
+  /* 6. DEDICATED PRINT TABLE STYLING (.print-table):
+     Deep Navy (#003366) Header, Alternating Rows & Crisp Engineering Borders */
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 0.75rem !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-family: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-table thead,
+  .print-table thead tr,
+  .print-table th {
+    background-color: #003366 !important;
+    color: #ffffff !important;
+    font-family: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 8.5pt !important;
+    padding: 6px 8px !important;
+    border: 1px solid #002244 !important;
+    text-align: right !important;
+    vertical-align: middle !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-table th.text-center {
+    text-align: center !important;
+  }
+
+  .print-table td {
+    color: #0f172a !important;
+    font-family: 'Vazirmatn', 'IRANSansWeb', Tahoma, Arial, sans-serif !important;
+    font-size: 8pt !important;
+    padding: 5px 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    vertical-align: middle !important;
+    line-height: 1.4 !important;
+  }
+
+  .print-table tbody tr:nth-child(even) {
+    background-color: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-table tbody tr:nth-child(odd) {
+    background-color: #ffffff !important;
   }
 
   #executive-report-sheet .bg-white,

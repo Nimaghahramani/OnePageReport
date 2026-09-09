@@ -29,6 +29,7 @@ interface MobileExecutiveViewProps {
   kpis: CalculatedReportKPIs;
   masterSCurve?: MasterSCurveRecord;
   lang: Language;
+  onOpenQrModal?: () => void;
 }
 
 export const MobileExecutiveView: React.FC<MobileExecutiveViewProps> = ({
@@ -39,7 +40,8 @@ export const MobileExecutiveView: React.FC<MobileExecutiveViewProps> = ({
   equipment,
   kpis,
   masterSCurve,
-  lang
+  lang,
+  onOpenQrModal
 }) => {
   return (
     <div
@@ -55,6 +57,7 @@ export const MobileExecutiveView: React.FC<MobileExecutiveViewProps> = ({
         daily={daily}
         kpis={kpis}
         lang={lang}
+        onOpenQrModal={onOpenQrModal}
       />
 
       {/* 2. 2-Column KPI Grid */}

@@ -14,7 +14,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Shield
+  Shield,
+  QrCode
 } from 'lucide-react';
 
 interface MobileMoreSheetProps {
@@ -30,6 +31,7 @@ interface MobileMoreSheetProps {
   onResetData: () => void;
   issues: ValidationIssue[];
   isAdminMode?: boolean;
+  onOpenQrModal?: () => void;
 }
 
 export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
@@ -45,6 +47,7 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
   onResetData,
   issues,
   isAdminMode = false,
+  onOpenQrModal,
 }) => {
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const isFa = lang === 'fa';
@@ -195,6 +198,22 @@ export const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({
           <span className="text-[10px] font-bold text-slate-700 block mb-2">
             {isFa ? 'اقدامات و خروجی‌ها' : 'Actions & Outputs'}
           </span>
+
+          {/* Featured QR Share Action */}
+          {onOpenQrModal && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                setTimeout(() => onOpenQrModal(), 120);
+              }}
+              className="w-full flex items-center justify-center gap-2 p-2.5 mb-2 bg-linear-to-r from-blue-900 to-cyan-900 hover:from-blue-950 hover:to-cyan-950 text-white rounded-xl font-bold text-xs transition-all cursor-pointer min-h-[44px] shadow-sm border border-cyan-500/30"
+            >
+              <QrCode className="w-4 h-4 text-cyan-300 shrink-0" />
+              <span>{isFa ? 'اشتراک‌گذاری گزارش با کد QR' : 'Share Report via QR Code'}</span>
+            </button>
+          )}
+
           <div className="grid grid-cols-2 gap-2 text-[10px]">
             {/* 1. PDF Export */}
             <button

@@ -12,12 +12,12 @@ export interface ProjectMasterData {
   projectNameEn: string;
   clientNameFa: string;
   clientNameEn: string;
-  contractorNameFa: string;
-  contractorNameEn: string;
-  consultantNameFa: string;
-  consultantNameEn: string;
-  projectManagerFa?: string; // MC / مدیر طرح: شرکت مهندسان مشاور ستیران
+  projectManagerFa?: string; // MC / مدیریت طرح: مهندسان مشاور ستیران
   projectManagerEn?: string;
+  consultantNameFa: string; // مشاور: مهندسین مشاور تدبیر ساحل پارس
+  consultantNameEn: string;
+  contractorNameFa: string; // پیمانکار: شرکت نواندیشان فراساحل لیان
+  contractorNameEn: string;
   locationFa: string;
   locationEn: string;
   contractNumber: string;

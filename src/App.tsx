@@ -14,6 +14,8 @@ import { MobileMoreSheet } from './components/Mobile/MobileMoreSheet';
 import { AdminHeaderBar } from './components/Admin/AdminHeaderBar';
 import { AdminLoginModal } from './components/Admin/AdminLoginModal';
 import { PublishModal } from './components/Admin/PublishModal';
+import { ShareQrModal } from './components/ShareQrModal';
+import { PrintPreviewOverlay } from './components/Admin/PrintPreviewOverlay';
 import { exportExecutiveReportToPdf } from './services/pdfExportService';
 import { FileText } from 'lucide-react';
 
@@ -30,7 +32,11 @@ export default function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isPrintPreviewOpen, setIsPrintPreviewOpen] = useState(false);
   const [publishedMeta, setPublishedMeta] = useState<PublishedReportMetadata | null>(null);
+  const [lastCloudFetchTime, setLastCloudFetchTime] = useState<Date | null>(null);
+  const [isCloudFetching, setIsCloudFetching] = useState(false);
   const [isInitialReportLoading, setIsInitialReportLoading] = useState(true);
   const [hasPublishedReport, setHasPublishedReport] = useState<boolean | null>(null);
 
@@ -77,60 +83,55 @@ export default function App() {
   }, []);
 
   // Fetch published report from server and initialize data
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadLatestReport() {
-      try {
-        const report = await apiClient.getLatestReport();
-        if (report && isMounted) {
-          setHasPublishedReport(true);
-          projectDataStore.hydratePublishedReport(report);
-          setPublishedMeta({
-            id: report.id,
-            version: report.version,
-            reportDate: report.reportDate,
-            publishedAt: report.publishedAt,
-            publishedBy: report.publishedBy,
-          });
-        } else if (isMounted) {
-          // Fall back to current active report from store so executive report is always visible
-          setHasPublishedReport(true);
-          const curDaily = projectDataStore.getDaily();
-          setPublishedMeta({
-            id: curDaily.id,
-            version: curDaily.reportNumber || curDaily.version || 526,
-            reportDate: curDaily.reportDate || '1405/06/15',
-            publishedAt: curDaily.uploadDate,
-            publishedBy: 'مدیریت پروژه',
-          });
-        }
-      } catch (err) {
-        console.warn('Could not load latest published report from server, using local fallback:', err);
-        if (isMounted) {
-          setHasPublishedReport(true);
-          const curDaily = projectDataStore.getDaily();
-          setPublishedMeta({
-            id: curDaily.id,
-            version: curDaily.reportNumber || curDaily.version || 526,
-            reportDate: curDaily.reportDate || '1405/06/15',
-            publishedAt: curDaily.uploadDate,
-            publishedBy: 'مدیریت پروژه',
-          });
-        }
-      } finally {
-        if (isMounted) {
-          setIsInitialReportLoading(false);
-        }
+  const loadLatestReport = useCallback(async (isManualRefresh = false) => {
+    setIsCloudFetching(true);
+    try {
+      const report = await apiClient.getLatestReport();
+      if (report) {
+        setHasPublishedReport(true);
+        projectDataStore.hydratePublishedReport(report);
+        setPublishedMeta({
+          id: report.id,
+          version: report.version,
+          reportDate: report.reportDate,
+          publishedAt: report.publishedAt,
+          publishedBy: report.publishedBy,
+        });
+        setLastCloudFetchTime(new Date());
+      } else {
+        // Fall back to current active report from store so executive report is always visible
+        setHasPublishedReport(true);
+        const curDaily = projectDataStore.getDaily();
+        setPublishedMeta({
+          id: curDaily.id,
+          version: curDaily.reportNumber || curDaily.version || 526,
+          reportDate: curDaily.reportDate || '1405/06/15',
+          publishedAt: curDaily.uploadDate,
+          publishedBy: 'مدیریت پروژه',
+        });
+        setLastCloudFetchTime(new Date());
       }
+    } catch (err) {
+      console.warn('Could not load latest published report from server, using local fallback:', err);
+      setHasPublishedReport(true);
+      const curDaily = projectDataStore.getDaily();
+      setPublishedMeta({
+        id: curDaily.id,
+        version: curDaily.reportNumber || curDaily.version || 526,
+        reportDate: curDaily.reportDate || '1405/06/15',
+        publishedAt: curDaily.uploadDate,
+        publishedBy: 'مدیریت پروژه',
+      });
+      setLastCloudFetchTime(new Date());
+    } finally {
+      setIsInitialReportLoading(false);
+      setIsCloudFetching(false);
     }
-
-    loadLatestReport();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadLatestReport();
+  }, [loadLatestReport]);
 
   // Check Admin authentication status if on /admin
   useEffect(() => {
@@ -442,6 +443,11 @@ export default function App() {
             onOpenPublishModal={() => setIsPublishModalOpen(true)}
             onLogout={handleLogout}
             lang={lang}
+            onOpenQrModal={() => setIsQrModalOpen(true)}
+            onOpenPrintPreview={() => setIsPrintPreviewOpen(true)}
+            lastCloudSync={lastCloudFetchTime}
+            isCloudFetching={isCloudFetching}
+            onRefreshCloud={() => loadLatestReport(true)}
           />
 
           {/* Non-blocking Warning Banner if Admin opens on narrow phone/tablet display */}
@@ -469,6 +475,7 @@ export default function App() {
                     kpis={kpis}
                     masterSCurve={masterSCurve}
                     lang={lang}
+                    onOpenQrModal={() => setIsQrModalOpen(true)}
                   />
                 )}
 
@@ -520,6 +527,8 @@ export default function App() {
               onResetData={handleResetData}
               issues={issues}
               isAdminMode={isAdminEditingMode}
+              onOpenQrModal={() => setIsQrModalOpen(true)}
+              onOpenPrintPreview={() => setIsPrintPreviewOpen(true)}
             />
           </div>
         </div>
@@ -561,6 +570,7 @@ export default function App() {
                 kpis={kpis}
                 masterSCurve={masterSCurve}
                 lang={lang}
+                onOpenQrModal={() => setIsQrModalOpen(true)}
               />
             )}
           </div>
@@ -589,6 +599,7 @@ export default function App() {
             onResetData={handleResetData}
             issues={issues}
             isAdminMode={false}
+            onOpenQrModal={() => setIsQrModalOpen(true)}
           />
         </div>
       )}
@@ -631,7 +642,34 @@ export default function App() {
               publishedAt: rep.publishedAt,
               publishedBy: rep.publishedBy,
             });
+            setLastCloudFetchTime(new Date());
           }}
+        />
+      )}
+
+      {/* Share Report QR Code Modal (Accessible across Mobile & Admin) */}
+      <ShareQrModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        master={master}
+        daily={daily}
+        kpis={kpis}
+        lang={lang}
+      />
+
+      {/* Print Preview Mode Overlay (Admin Workspace) */}
+      {isAdminEditingMode && (
+        <PrintPreviewOverlay
+          isOpen={isPrintPreviewOpen}
+          onClose={() => setIsPrintPreviewOpen(false)}
+          master={master}
+          pms={pms}
+          daily={daily}
+          ipc={ipc}
+          equipment={equipment}
+          kpis={kpis}
+          masterSCurve={masterSCurve}
+          lang={lang}
         />
       )}
     </div>

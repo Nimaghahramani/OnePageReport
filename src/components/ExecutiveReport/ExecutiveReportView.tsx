@@ -28,6 +28,9 @@ interface ExecutiveReportViewProps {
   kpis: CalculatedReportKPIs;
   masterSCurve?: MasterSCurveRecord;
   lang: Language;
+  onOpenQrModal?: () => void;
+  showHeader?: boolean;
+  showFooter?: boolean;
 }
 
 export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
@@ -39,7 +42,10 @@ export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
   equipment,
   kpis,
   masterSCurve,
-  lang
+  lang,
+  onOpenQrModal,
+  showHeader = true,
+  showFooter = true
 }) => {
   return (
     <div id="executive-report" className="w-full flex justify-center py-2 px-1 print:p-0 print:m-0 print:w-full print:block">
@@ -57,9 +63,11 @@ export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
         }}
       >
         {/* Section 1: Header with Client, Contractor, Consultant (Scetiran), Logos and Contract Data */}
-        <div className="print:break-inside-avoid">
-          <ReportHeader master={master} pms={pms} daily={daily} kpis={kpis} lang={lang} />
-        </div>
+        {showHeader && (
+          <div className="print:break-inside-avoid">
+            <ReportHeader master={master} pms={pms} daily={daily} kpis={kpis} lang={lang} onOpenQrModal={onOpenQrModal} />
+          </div>
+        )}
 
         {/* Section 2: Top KPI Cards */}
         <div className="print:break-inside-avoid">
@@ -92,9 +100,11 @@ export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
         </div>
 
         {/* Section 6: Footer with Signatures & Source Traceability */}
-        <div className="print:break-inside-avoid">
-          <ReportFooter pms={pms} daily={daily} ipc={ipc} equipment={equipment} lang={lang} />
-        </div>
+        {showFooter && (
+          <div className="print:break-inside-avoid">
+            <ReportFooter pms={pms} daily={daily} ipc={ipc} equipment={equipment} lang={lang} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IpcRecord, DailyReportRecord, Language, FINANCIAL_CALCULATION_BASE_IRR } from '../../types';
-import { CreditCard, Users, Truck, UserCheck, UserX, ExternalLink } from 'lucide-react';
-import { AdvanceAdjustmentModal } from './AdvanceAdjustmentModal';
+import { CreditCard, Users, Truck, UserCheck, UserX } from 'lucide-react';
 
 interface IpcSectionProps {
   ipc: IpcRecord;
@@ -10,39 +9,64 @@ interface IpcSectionProps {
 }
 
 // Helper to format currency numbers compactly in Billion Rials (م.ر) or Millions
-function formatIrr(amount: number | null | undefined, isFa: boolean = true): string {
+function formatIrrValue(amount: number | null | undefined): string {
   if (amount === null || amount === undefined) return '-';
   if (Math.abs(amount) >= 1_000_000_000) {
-    const val = (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    return isFa ? `${val} م.ر` : `${val}B`;
+    return (amount / 1_000_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   }
   if (Math.abs(amount) >= 1_000_000) {
-    const val = (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    return isFa ? `${val} م.ر` : `${val}M`;
+    return (amount / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   }
-  return amount.toLocaleString();
+  return amount.toLocaleString('en-US');
 }
 
-function formatEur(amount: number | null | undefined): string {
-  if (amount === null || amount === undefined) return '-';
+function getIrrUnit(amount: number | null | undefined, isFa: boolean = true): string {
+  if (amount === null || amount === undefined) return '';
+  if (amount === 0) return isFa ? 'م.ر' : 'B IRR';
+  if (Math.abs(amount) >= 1_000_000_000) {
+    return isFa ? 'م.ر' : 'B IRR';
+  }
   if (Math.abs(amount) >= 1_000_000) {
-    return `${(amount / 1_000_000).toFixed(2)}M €`;
+    return isFa ? 'م.ر' : 'M IRR';
+  }
+  return isFa ? 'ریال' : 'IRR';
+}
+
+function formatEurValue(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined) return '-';
+  if (amount === 0) return '0';
+  if (Math.abs(amount) >= 1_000_000) {
+    return `${(amount / 1_000_000).toFixed(1)}M`;
   }
   if (Math.abs(amount) >= 1_000) {
-    return `${(amount / 1_000).toFixed(1)}k €`;
+    return `${(amount / 1_000).toFixed(1)}k`;
   }
-  return `${amount.toLocaleString()} €`;
+  return amount.toLocaleString('en-US');
 }
 
 export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
   const isFa = lang === 'fa';
   const fin = ipc.financialSummary;
-  const [showBreakdownModal, setShowBreakdownModal] = useState(false);
+
+  // Strict Rule: When a claim is received, it must NOT be in outstanding claims.
+  // Outstanding claims only apply when approved but NOT paid/received.
+  const isReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin?.latestInvoiceStatus || ipc.status || '') &&
+    !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin?.latestInvoiceStatus || ipc.status || '');
+
+  const displayOutstandingIRR = isReceived ? 0 : (fin?.outstandingIRR ?? Math.max(0, ipc.approvedAmount - ipc.paidAmount));
+  const displayOutstandingEUR = isReceived ? 0 : (fin?.outstandingEUR ?? 0);
+
+  const displayReceivedIRR = isReceived
+    ? (fin?.invoiceCumulativeIRR ?? fin?.receivedIRR ?? ipc.approvedAmount)
+    : (fin?.receivedIRR ?? ipc.paidAmount);
+  const displayReceivedEUR = isReceived
+    ? (fin?.invoiceCumulativeEUR ?? fin?.receivedEUR ?? 0)
+    : (fin?.receivedEUR ?? 0);
 
   // Ratios and figures
-  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 56.5);
-  const collectionRatio = fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 92.1);
-  const outstandingRatio = fin?.outstandingRatio ?? (100 - collectionRatio);
+  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 55.4);
+  const collectionRatio = isReceived ? 100 : (fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 100));
+  const outstandingRatio = isReceived ? 0 : (fin?.outstandingRatio ?? Math.max(0, 100 - collectionRatio));
 
   // Site Manpower calculations from structured DailyReportRecord
   const mp = daily.siteManpower || (daily.manpower ? {
@@ -124,16 +148,22 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           <div className="financial-metric-box financial-cumulative-box bg-blue-50/70 border border-blue-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-blue-800 font-sans block font-semibold">{isFa ? 'کارکرد تجمعی' : 'Cumulative'}</span>
             <div>
-              <div className="fin-metric-irr text-[10.5px] font-bold text-blue-950">
-                {formatIrr(fin.invoiceCumulativeIRR)} <span className="fin-metric-curr text-[7px] text-blue-600 font-sans">ریال</span>
+              <div className="flex items-baseline justify-center gap-1 leading-tight">
+                <span className="font-tabular tabular-nums text-[11px] font-bold text-blue-950">
+                  {formatIrrValue(fin.invoiceCumulativeIRR)}
+                </span>
+                <span className="text-[7.5px] text-blue-700 font-semibold font-sans">
+                  {getIrrUnit(fin.invoiceCumulativeIRR, isFa)}
+                </span>
               </div>
-              <div className="fin-metric-eur text-[8.5px] font-medium text-blue-800">
-                {formatEur(fin.invoiceCumulativeEUR)}
+              <div className="flex items-baseline justify-center gap-0.5 text-[8.5px] font-medium text-blue-800 mt-0.5">
+                <span className="font-tabular tabular-nums">{formatEurValue(fin.invoiceCumulativeEUR)}</span>
+                <span className="text-[7.5px] font-sans">€</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7.5px] text-blue-700 font-sans mt-0.5 pt-0.5 border-t border-blue-200/60 flex items-center justify-center gap-0.5">
-              <span>{isFa ? 'پیشرفت مالی' : 'Fin Prog'}:</span>
-              <span className="font-bold">{finProgress}%</span>
+            <div className="fin-metric-ratio text-[7.5px] text-blue-700 font-sans mt-0.5 pt-0.5 border-t border-blue-200/60 flex items-center justify-center gap-1">
+              <span>{isFa ? 'پیشرفت مالی:' : 'Fin Prog:'}</span>
+              <span className="font-bold font-tabular tabular-nums">{finProgress}%</span>
             </div>
           </div>
 
@@ -141,16 +171,22 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           <div className="financial-metric-box financial-received-box bg-emerald-50/70 border border-emerald-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-emerald-800 font-sans block font-semibold">{isFa ? 'دریافتی / وصولی' : 'Received'}</span>
             <div>
-              <div className="fin-metric-irr text-[10.5px] font-bold text-emerald-950">
-                {formatIrr(fin.receivedIRR)} <span className="fin-metric-curr text-[7px] text-emerald-600 font-sans">ریال</span>
+              <div className="flex items-baseline justify-center gap-1 leading-tight">
+                <span className="font-tabular tabular-nums text-[11px] font-bold text-emerald-950">
+                  {formatIrrValue(displayReceivedIRR)}
+                </span>
+                <span className="text-[7.5px] text-emerald-700 font-semibold font-sans">
+                  {getIrrUnit(displayReceivedIRR, isFa)}
+                </span>
               </div>
-              <div className="fin-metric-eur text-[8.5px] font-medium text-emerald-800">
-                {formatEur(fin.receivedEUR)}
+              <div className="flex items-baseline justify-center gap-0.5 text-[8.5px] font-medium text-emerald-800 mt-0.5">
+                <span className="font-tabular tabular-nums">{formatEurValue(displayReceivedEUR)}</span>
+                <span className="text-[7.5px] font-sans">€</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7.5px] text-emerald-700 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/60 flex items-center justify-center gap-0.5">
-              <span>{isFa ? 'نسبت وصول' : 'Col Ratio'}:</span>
-              <span className="font-bold">{collectionRatio}%</span>
+            <div className="fin-metric-ratio text-[7.5px] text-emerald-700 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/60 flex items-center justify-center gap-1">
+              <span>{isFa ? 'نسبت وصول:' : 'Col Ratio:'}</span>
+              <span className="font-bold font-tabular tabular-nums">{collectionRatio.toFixed(1)}%</span>
             </div>
           </div>
 
@@ -158,148 +194,181 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           <div className="financial-metric-box financial-outstanding-box bg-amber-50/70 border border-amber-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-amber-800 font-sans block font-semibold">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
             <div>
-              <div className="fin-metric-irr text-[10.5px] font-bold text-amber-950">
-                {formatIrr(fin.outstandingIRR)} <span className="fin-metric-curr text-[7px] text-amber-600 font-sans">ریال</span>
+              <div className="flex items-baseline justify-center gap-1 leading-tight">
+                <span className="font-tabular tabular-nums text-[11px] font-bold text-amber-950">
+                  {formatIrrValue(displayOutstandingIRR)}
+                </span>
+                <span className="text-[7.5px] text-amber-700 font-semibold font-sans">
+                  {getIrrUnit(displayOutstandingIRR, isFa)}
+                </span>
               </div>
-              <div className="fin-metric-eur text-[8.5px] font-medium text-amber-800">
-                {formatEur(fin.outstandingEUR)}
+              <div className="flex items-baseline justify-center gap-0.5 text-[8.5px] font-medium text-amber-800 mt-0.5">
+                <span className="font-tabular tabular-nums">{formatEurValue(displayOutstandingEUR)}</span>
+                <span className="text-[7.5px] font-sans">€</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7.5px] text-amber-700 font-sans mt-0.5 pt-0.5 border-t border-amber-200/60 flex items-center justify-center gap-0.5">
-              <span>{isFa ? 'نسبت مطالبات' : 'Out Ratio'}:</span>
-              <span className="font-bold">{outstandingRatio.toFixed(1)}%</span>
+            <div className="fin-metric-ratio text-[7.5px] text-amber-700 font-sans mt-0.5 pt-0.5 border-t border-amber-200/60 flex items-center justify-center gap-1">
+              <span>{isFa ? 'نسبت مطالبات:' : 'Out Ratio:'}</span>
+              <span className="font-bold font-tabular tabular-nums">{outstandingRatio.toFixed(1)}%</span>
             </div>
           </div>
 
           {/* 4. Advance Payment & Adjustment */}
-          <div
-            onClick={() => setShowBreakdownModal(true)}
-            className="financial-metric-box financial-advance-box bg-slate-50 hover:bg-blue-50/50 hover:border-blue-300 border border-slate-200 rounded p-1 flex flex-col justify-between cursor-pointer transition-all duration-150 group"
-            title={isFa ? 'کلیک کنید برای مشاهده ریز اقلام پیش‌پرداخت و تعدیل' : 'Click to view itemized advance payment & adjustment breakdown'}
-          >
-            <div className="flex items-center justify-between">
-              <span className="fin-metric-title text-[7.5px] text-slate-600 font-sans block font-semibold">{isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}</span>
-              <span className="text-[6.5px] text-blue-600 font-sans group-hover:underline flex items-center gap-0.5 print:hidden">
-                {isFa ? 'ریز اقلام' : 'Details'}
-                <ExternalLink className="w-2 h-2 opacity-60" />
-              </span>
-            </div>
-            <div>
-              <div className="fin-metric-irr text-[8.5px] font-bold text-slate-800 truncate" title={`پیش‌پرداخت: ${fin.advancePaymentIRR?.toLocaleString()} ریال (${fin.advancePaymentPercentage || 22.07}٪ از کل قرارداد)`}>
-                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span> {formatIrr(fin.advancePaymentIRR, isFa)} <span className="text-[7px] font-normal text-slate-500 font-mono">({fin.advancePaymentPercentage || 22.07}%)</span>
+          <div className="financial-metric-box financial-advance-box bg-slate-50 border border-slate-200 rounded p-1 flex flex-col justify-between">
+            <span className="fin-metric-title text-[7.5px] text-slate-700 font-sans block font-semibold text-center">
+              {isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}
+            </span>
+            <div className="space-y-0.5 my-0.5">
+              {/* Advance Payment Row */}
+              <div className="flex items-baseline justify-between text-[8px] leading-tight px-0.5">
+                <span className="text-slate-600 font-sans text-[7.5px]">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span>
+                <div className="flex items-baseline gap-0.5 font-bold text-slate-900">
+                  <span className="font-tabular tabular-nums">{formatIrrValue(fin.advancePaymentIRR)}</span>
+                  <span className="text-[6.5px] text-slate-500 font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                  <span className="text-[6.5px] font-normal text-slate-400 font-tabular tabular-nums">({Number(fin.advancePaymentPercentage || 22.07).toFixed(1)}%)</span>
+                </div>
               </div>
-              <div className="fin-metric-irr text-[8.5px] font-bold text-indigo-900 truncate" title={`تعدیل: ${fin.adjustmentIRR?.toLocaleString()} ریال (${fin.adjustmentPercentage || 20.53}٪ از کل قرارداد)`}>
-                <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'تعدیل:' : 'Adj:'}</span> {formatIrr(fin.adjustmentIRR, isFa)} <span className="text-[7px] font-normal text-indigo-500 font-mono">({fin.adjustmentPercentage || 20.53}%)</span>
+              {/* Adjustment Row */}
+              <div className="flex items-baseline justify-between text-[8px] leading-tight px-0.5">
+                <span className="text-indigo-800 font-sans text-[7.5px]">{isFa ? 'تعدیل:' : 'Adj:'}</span>
+                <div className="flex items-baseline gap-0.5 font-bold text-indigo-950">
+                  <span className="font-tabular tabular-nums">{formatIrrValue(fin.adjustmentIRR)}</span>
+                  <span className="text-[6.5px] text-indigo-600 font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                  <span className="text-[6.5px] font-normal text-indigo-400 font-tabular tabular-nums">({Number(fin.adjustmentPercentage || 20.53).toFixed(1)}%)</span>
+                </div>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7px] text-slate-500 font-sans mt-0.5 pt-0.5 border-t border-slate-200 truncate flex items-center justify-between">
-              <span>{isFa ? 'مبنا: ۵,۲۳۰ م.ر' : 'Base: 5,230B'}</span>
-              <span className="text-slate-400 font-mono">{isFa ? '۴ قسط / ۱۱ ص.و' : '4 adv / 11 adj'}</span>
+            {/* Summary Footer */}
+            <div className="fin-metric-ratio text-[7px] text-slate-500 font-sans mt-0.5 pt-0.5 border-t border-slate-200 flex items-center justify-between px-0.5">
+              <span>{isFa ? 'مجموع:' : 'Total:'}</span>
+              <div className="flex items-baseline gap-0.5 font-bold text-slate-800">
+                <span className="font-tabular tabular-nums">
+                  {formatIrrValue((fin.advancePaymentIRR || 0) + (fin.adjustmentIRR || 0))}
+                </span>
+                <span className="text-[6.5px] font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                <span className="text-[6.5px] font-normal text-slate-400 font-tabular tabular-nums">
+                  ({(Number(fin.advancePaymentPercentage || 22.07) + Number(fin.adjustmentPercentage || 20.53)).toFixed(1)}%)
+                </span>
+              </div>
             </div>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center">
-          <div className="financial-metric-box financial-cumulative-box bg-slate-50 border border-slate-200 rounded p-1">
+          <div className="financial-metric-box financial-cumulative-box bg-slate-50 border border-slate-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-slate-500 font-sans block">{isFa ? 'ارائه‌شده' : 'Submitted'}</span>
-            <span className="fin-metric-irr text-[10.5px] font-bold text-slate-800">
-              {(ipc.submittedAmount / 1000000).toFixed(2)}M
-            </span>
-            <span className="fin-metric-curr text-[7px] text-slate-400 block">{ipc.currency}</span>
+            <div className="flex items-baseline justify-center gap-1 leading-tight">
+              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-slate-800">
+                {(ipc.submittedAmount / 1000000).toFixed(1)}
+              </span>
+              <span className="text-[7px] text-slate-500 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+            </div>
           </div>
-          <div className="financial-metric-box financial-cumulative-box bg-blue-50/70 border border-blue-200 rounded p-1">
+          <div className="financial-metric-box financial-cumulative-box bg-blue-50/70 border border-blue-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-blue-700 font-sans block">{isFa ? 'تأییدشده' : 'Approved'}</span>
-            <span className="fin-metric-irr text-[10.5px] font-bold text-blue-950">
-              {(ipc.approvedAmount / 1000000).toFixed(2)}M
-            </span>
-            <span className="fin-metric-curr text-[7px] text-blue-600 block">{finProgress}%</span>
+            <div className="flex items-baseline justify-center gap-1 leading-tight">
+              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-blue-950">
+                {(ipc.approvedAmount / 1000000).toFixed(1)}
+              </span>
+              <span className="text-[7px] text-blue-600 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+            </div>
+            <div className="fin-metric-ratio text-[7px] text-blue-700 font-sans mt-0.5 pt-0.5 border-t border-blue-200/60">
+              <span className="font-bold font-tabular tabular-nums">{finProgress}%</span>
+            </div>
           </div>
-          <div className="financial-metric-box financial-received-box bg-emerald-50/70 border border-emerald-200 rounded p-1">
+          <div className="financial-metric-box financial-received-box bg-emerald-50/70 border border-emerald-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-emerald-700 font-sans block">{isFa ? 'پرداخت‌شده' : 'Paid'}</span>
-            <span className="fin-metric-irr text-[10.5px] font-bold text-emerald-950">
-              {(ipc.paidAmount / 1000000).toFixed(2)}M
-            </span>
-            <span className="fin-metric-curr text-[7px] text-emerald-600 block">{collectionRatio}%</span>
+            <div className="flex items-baseline justify-center gap-1 leading-tight">
+              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-emerald-950">
+                {(displayReceivedIRR / 1000000).toFixed(1)}
+              </span>
+              <span className="text-[7px] text-emerald-600 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+            </div>
+            <div className="fin-metric-ratio text-[7px] text-emerald-700 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/60">
+              <span className="font-bold font-tabular tabular-nums">{collectionRatio.toFixed(1)}%</span>
+            </div>
           </div>
-          <div className="financial-metric-box financial-outstanding-box bg-amber-50/70 border border-amber-200 rounded p-1">
+          <div className="financial-metric-box financial-outstanding-box bg-amber-50/70 border border-amber-200 rounded p-1 flex flex-col justify-between">
             <span className="fin-metric-title text-[7.5px] text-amber-700 font-sans block">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
-            <span className="fin-metric-irr text-[10.5px] font-bold text-amber-950">
-              {(ipc.outstandingAmount / 1000000).toFixed(2)}M
-            </span>
-            <span className="fin-metric-curr text-[7px] text-amber-600 block">{ipc.currency}</span>
+            <div className="flex items-baseline justify-center gap-1 leading-tight">
+              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-amber-950">
+                {(displayOutstandingIRR / 1000000).toFixed(1)}
+              </span>
+              <span className="text-[7px] text-amber-600 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+            </div>
           </div>
         </div>
       )}
 
       {/* Site Resources Strip: Site Manpower KPI + Machinery KPI */}
       <div id="manpower-section" className="ipc-resources-strip mt-1 pt-1.5 border-t border-slate-200 grid grid-cols-12 gap-1.5 text-[8.5px]">
-        {/* Site Manpower KPI (نیروی انسانی کارگاه) - Replaces Safe Man-Hours */}
-        <div id="kpi-site-manpower" className="col-span-8 bg-slate-50 border border-slate-200 rounded px-2 py-1 flex flex-col justify-between">
-          <div className="flex items-center justify-between gap-1 mb-0.5">
-            <div className="flex items-center gap-1 text-slate-800 font-bold">
+        {/* Site Manpower KPI (نیروی انسانی کارگاه) */}
+        <div id="kpi-site-manpower" className="col-span-7 bg-slate-50 border border-slate-200 rounded px-2 py-1 flex flex-col justify-between min-w-0">
+          {/* Header Row */}
+          <div className="flex items-center justify-between gap-1 mb-0.5 min-w-0">
+            <div className="flex items-center gap-1 text-slate-800 font-bold min-w-0 truncate">
               <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span className="text-[8.5px] text-slate-800">
+              <span className="text-[8.5px] text-slate-800 truncate">
                 {isFa ? 'نیروی انسانی کارگاه' : 'Site Manpower'}
               </span>
             </div>
             {attendanceRatio !== null ? (
-              <span className={`text-[7.5px] font-bold px-1.5 py-0.2 rounded border ${attTheme.badge}`}>
+              <span className={`text-[7.5px] font-bold px-1.5 py-0.2 rounded border shrink-0 whitespace-nowrap ${attTheme.badge}`}>
                 {attendanceRatio.toFixed(1)}% {isFa ? 'نسبت حضور' : 'Attendance'}
               </span>
             ) : (
-              <span className="text-[7.5px] text-slate-400 font-medium">—</span>
+              <span className="text-[7.5px] text-slate-400 font-medium shrink-0">—</span>
             )}
           </div>
 
-          <div className="flex items-center justify-between gap-2 mt-0.5">
-            {/* Primary Value: Total Manpower */}
+          {/* Primary Counts Row: Total, Present, Absent */}
+          <div className="flex items-baseline justify-between text-[7.5px] mt-0.5 mb-1 px-0.5 min-w-0">
             <div className="flex items-baseline gap-1">
-              <span className="text-slate-500 text-[7.5px]">{isFa ? 'کل:' : 'Total:'}</span>
-              <span className="font-extrabold text-slate-950 text-[12px] font-mono leading-none">
+              <span className="text-slate-500">{isFa ? 'کل:' : 'Total:'}</span>
+              <strong className="font-extrabold text-slate-950 text-[11.5px] font-mono leading-none">
                 {totalMp !== null ? totalMp : '—'}
-              </span>
-              <span className="text-slate-500 text-[7.5px] font-medium">{isFa ? 'نفر' : 'pax'}</span>
+              </strong>
+              <span className="text-slate-400 text-[7px]">{isFa ? 'نفر' : 'pax'}</span>
             </div>
 
-            {/* Secondary Values: Present & Absent */}
-            <div className="flex items-center gap-2 text-[7.5px]">
+            <div className="flex items-center gap-2">
               <span className="text-emerald-700 font-semibold flex items-center gap-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
                 {isFa ? 'حاضر:' : 'Pres:'}{' '}
-                <strong className="font-bold text-[8.5px] text-emerald-900">{presentMp !== null ? `${presentMp} نفر` : '—'}</strong>
+                <strong className="font-bold text-[8.5px] text-emerald-900 font-mono">{presentMp !== null ? presentMp : '—'}</strong>
               </span>
               <span className="text-slate-600 font-semibold flex items-center gap-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
-                {isFa ? 'مرخصی/غیرحاضر:' : 'Abs:'}{' '}
-                <strong className="font-bold text-[8.5px] text-slate-800">{absentMp !== null ? `${absentMp} نفر` : '—'}</strong>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block shrink-0"></span>
+                {isFa ? 'غایب/مرخصی:' : 'Abs:'}{' '}
+                <strong className="font-bold text-[8.5px] text-slate-800 font-mono">{absentMp !== null ? absentMp : '—'}</strong>
               </span>
             </div>
+          </div>
 
-            {/* Breakdown: Direct & Indirect */}
-            <div className="flex items-center gap-1.5 text-[7px] text-slate-600 bg-white border border-slate-200 px-1 py-0.5 rounded">
-              <span title={isFa ? 'نیروی مستقیم: حاضر از کل' : 'Direct: Present of Total'} className="flex items-center gap-0.5">
-                <span>{isFa ? 'مستقیم:' : 'Dir:'}</span>
-                <strong className="text-slate-900 font-bold">
-                  {dirPresent !== null && dirTotal !== null ? `${dirPresent} از ${dirTotal} حاضر` : (dirPresent ?? '—')}
-                </strong>
-                {dirAttendance !== null && (
-                  <span className="text-[6.5px] font-bold px-0.5 py-0.1 bg-sky-50 text-sky-700 border border-sky-200 rounded">
-                    {dirAttendance.toFixed(1)}%
-                  </span>
-                )}
-              </span>
-              <span className="text-slate-300">|</span>
-              <span title={isFa ? 'نیروی غیرمستقیم: حاضر از کل' : 'Indirect: Present of Total'} className="flex items-center gap-0.5">
-                <span>{isFa ? 'غیرمستقیم:' : 'Ind:'}</span>
-                <strong className="text-slate-900 font-bold">
-                  {indPresent !== null && indTotal !== null ? `${indPresent} از ${indTotal} حاضر` : (indPresent ?? '—')}
-                </strong>
-                {indAttendance !== null && (
-                  <span className="text-[6.5px] font-bold px-0.5 py-0.1 bg-amber-50 text-amber-800 border border-amber-200 rounded">
-                    {indAttendance.toFixed(1)}%
-                  </span>
-                )}
-              </span>
+          {/* Breakdown Strip: Direct & Indirect */}
+          <div className="flex items-center justify-between text-[7px] text-slate-600 bg-white border border-slate-200/90 rounded px-1.5 py-0.5 min-w-0">
+            <div className="flex items-center gap-1 min-w-0 truncate" title={isFa ? 'نیروی مستقیم: حاضر از کل' : 'Direct: Present of Total'}>
+              <span className="text-slate-500 shrink-0">{isFa ? 'مستقیم:' : 'Dir:'}</span>
+              <strong className="text-slate-900 font-bold font-mono">
+                {dirPresent !== null && dirTotal !== null ? `${dirPresent}/${dirTotal}` : (dirPresent ?? '—')}
+              </strong>
+              {dirAttendance !== null && (
+                <span className="text-[6.5px] font-bold px-0.5 py-0.1 bg-sky-50 text-sky-700 border border-sky-200 rounded font-mono shrink-0">
+                  {dirAttendance.toFixed(0)}%
+                </span>
+              )}
+            </div>
+            <span className="text-slate-300 mx-1 shrink-0">|</span>
+            <div className="flex items-center gap-1 min-w-0 truncate" title={isFa ? 'نیروی غیرمستقیم: حاضر از کل' : 'Indirect: Present of Total'}>
+              <span className="text-slate-500 shrink-0">{isFa ? 'غیرمستقیم:' : 'Ind:'}</span>
+              <strong className="text-slate-900 font-bold font-mono">
+                {indPresent !== null && indTotal !== null ? `${indPresent}/${indTotal}` : (indPresent ?? '—')}
+              </strong>
+              {indAttendance !== null && (
+                <span className="text-[6.5px] font-bold px-0.5 py-0.1 bg-amber-50 text-amber-800 border border-amber-200 rounded font-mono shrink-0">
+                  {indAttendance.toFixed(0)}%
+                </span>
+              )}
             </div>
           </div>
 
@@ -313,31 +382,57 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
         </div>
 
         {/* Machinery KPI Card */}
-        <div id="kpi-site-machinery" className="col-span-4 bg-slate-50 border border-slate-200 rounded px-1.5 py-1 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-700">
-            <div className="flex items-center gap-1">
+        <div id="kpi-site-machinery" className="col-span-5 bg-slate-50 border border-slate-200 rounded px-2 py-1 flex flex-col justify-between min-w-0">
+          {/* Header Row */}
+          <div className="flex items-center justify-between text-slate-700 mb-0.5 min-w-0">
+            <div className="flex items-center gap-1 min-w-0 truncate">
               <Truck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span className="res-label text-slate-700 font-bold text-[8px] truncate">
+              <span className="res-label text-slate-800 font-bold text-[8.5px] truncate">
                 {isFa ? 'ماشین‌آلات فعال' : 'Active Machinery'}
               </span>
             </div>
-            <span className="text-[7.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1 rounded">
+            <span className="text-[7.5px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded shrink-0 whitespace-nowrap">
               {daily.machinery?.active !== undefined && daily.machinery?.total !== undefined && daily.machinery.total > 0
                 ? `${Math.round((daily.machinery.active / daily.machinery.total) * 100)}%`
-                : ''}
+                : '—'}
             </span>
           </div>
-          <div className="mt-0.5 flex items-baseline justify-between">
-            <span className="res-val font-extrabold text-slate-900 text-[11px] font-mono">
-              {daily.machinery?.active ?? '—'} <span className="text-[8px] font-normal text-slate-500">/ {daily.machinery?.total ?? '—'}</span>
-            </span>
-            <span className="text-[7px] text-slate-500">
+
+          {/* Primary Counts Row: Active / Total & Standby units */}
+          <div className="flex items-baseline justify-between text-[7.5px] mt-0.5 mb-1 px-0.5 min-w-0">
+            <div className="flex items-baseline gap-1">
+              <span className="text-slate-500">{isFa ? 'فعال:' : 'Act:'}</span>
+              <strong className="res-val font-extrabold text-slate-900 text-[11.5px] font-mono leading-none">
+                {daily.machinery?.active ?? '—'}
+              </strong>
+              <span className="text-[7.5px] font-normal text-slate-500 font-mono">/ {daily.machinery?.total ?? '—'}</span>
+            </div>
+            <span className="text-[7.5px] text-slate-600 font-medium">
               {daily.machinery?.standby ? `${daily.machinery.standby} ${isFa ? 'آماده' : 'stby'}` : (isFa ? 'دستگاه' : 'units')}
             </span>
           </div>
+
+          {/* Breakdown Strip: Standby & Utilization */}
+          <div className="flex items-center justify-between text-[7px] text-slate-600 bg-white border border-slate-200/90 rounded px-1.5 py-0.5 min-w-0">
+            <div className="flex items-center gap-1 min-w-0 truncate">
+              <span className="text-slate-500 shrink-0">{isFa ? 'آماده‌به‌کار:' : 'Standby:'}</span>
+              <strong className="font-mono text-slate-800 font-bold">{daily.machinery?.standby ?? 0}</strong>
+            </div>
+            <span className="text-slate-300 mx-1 shrink-0">|</span>
+            <div className="flex items-center gap-1 min-w-0 truncate">
+              <span className="text-slate-500 shrink-0">{isFa ? 'بهره‌برداری:' : 'Util:'}</span>
+              <strong className="font-mono text-amber-800 font-bold">
+                {daily.machinery?.active !== undefined && daily.machinery?.total !== undefined && daily.machinery.total > 0
+                  ? `${Math.round((daily.machinery.active / daily.machinery.total) * 100)}%`
+                  : '—'}
+              </strong>
+            </div>
+          </div>
+
+          {/* Machinery Progress Bar */}
           <div className="w-full bg-slate-200/80 h-1 rounded-full mt-1 overflow-hidden">
             <div
-              className="bg-amber-500 h-full rounded-full"
+              className="bg-amber-500 h-full rounded-full transition-all duration-300"
               style={{
                 width: `${
                   daily.machinery?.active !== undefined && daily.machinery?.total !== undefined && daily.machinery.total > 0
@@ -349,15 +444,6 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           </div>
         </div>
       </div>
-
-      {fin && (
-        <AdvanceAdjustmentModal
-          isOpen={showBreakdownModal}
-          onClose={() => setShowBreakdownModal(false)}
-          fin={fin}
-          lang={lang}
-        />
-      )}
     </div>
   );
 };

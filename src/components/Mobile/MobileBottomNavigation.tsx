@@ -93,7 +93,7 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
 
       {/* Fixed Bottom Navigation Bar - Aligned to Centered Shell */}
       <nav
-        id="mobile-bottom-nav"
+        id="main-tabs"
         className="mobile-bottom-navigation public-mobile-bottom-nav fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] h-[62px] bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg z-40 flex items-center justify-around px-2 select-none no-print sm:rounded-t-xl"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-label={isFa ? 'ناوبری موبایل' : 'Mobile Bottom Navigation'}

@@ -153,18 +153,19 @@ export const ProjectMasterDataView: React.FC<ProjectMasterDataViewProps> = ({ ma
 
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                {isFa ? 'پیمانکار اصلی (N12):' : 'Contractor Name:'}
+                {isFa ? 'مدیریت طرح / ستیران (N10):' : 'Project Management Consultant (MC):'}
               </label>
               <input
                 type="text"
-                value={formData.contractorNameFa}
-                onChange={e => handleChange('contractorNameFa', e.target.value)}
+                value={formData.projectManagerFa || 'مهندسان مشاور ستیران'}
+                onChange={e => handleChange('projectManagerFa', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-900 focus:bg-white focus:border-blue-600 outline-hidden"
               />
             </div>
+
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                {isFa ? 'مهندس مشاور (N11):' : 'Consultant / Engineer:'}
+                {isFa ? 'مشاور پروژه (N11):' : 'Consultant / Engineer:'}
               </label>
               <input
                 type="text"
@@ -176,12 +177,12 @@ export const ProjectMasterDataView: React.FC<ProjectMasterDataViewProps> = ({ ma
 
             <div>
               <label className="block text-slate-700 font-semibold mb-1">
-                {isFa ? 'مدیر طرح / نظارت عالیه (N10):' : 'Project Management Consultant / PM:'}
+                {isFa ? 'پیمانکار (N12):' : 'Contractor Name:'}
               </label>
               <input
                 type="text"
-                value={formData.projectManagerFa || 'شرکت مهندسان مشاور ستیران'}
-                onChange={e => handleChange('projectManagerFa', e.target.value)}
+                value={formData.contractorNameFa}
+                onChange={e => handleChange('contractorNameFa', e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded p-1.5 text-slate-900 focus:bg-white focus:border-blue-600 outline-hidden"
               />
             </div>

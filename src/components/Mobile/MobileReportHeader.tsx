@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ProjectMasterData, PmsRecord, DailyReportRecord, Language, CalculatedReportKPIs } from '../../types';
 import { LoicoLogo } from '../LoicoLogo';
-import { Calendar, Building, FileText, CheckCircle2, AlertTriangle, XCircle, Info, ChevronDown, ChevronUp, MapPin, Clock } from 'lucide-react';
+import { Calendar, Building, FileText, Info, ChevronDown, ChevronUp, MapPin, Clock, QrCode } from 'lucide-react';
 
 interface MobileReportHeaderProps {
   master: ProjectMasterData;
@@ -9,14 +9,15 @@ interface MobileReportHeaderProps {
   daily: DailyReportRecord;
   kpis: CalculatedReportKPIs;
   lang: Language;
+  onOpenQrModal?: () => void;
 }
 
 export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
   master,
   pms,
   daily,
-  kpis,
-  lang
+  lang,
+  onOpenQrModal
 }) => {
   const isFa = lang === 'fa';
   const [showProjectDetails, setShowProjectDetails] = useState(false);
@@ -24,48 +25,18 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
   const contractValIRR = master.contractValueIRR || master.contractAmountIRR || master.contractValue || 4653170392630;
   const contractValEUR = master.contractValueEUR || master.contractAmountEUR || 673167;
 
-  const getStatusBadge = () => {
-    switch (kpis.overallStatus) {
-      case 'critical':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-300">
-            <XCircle className="w-3 h-3 text-red-600 shrink-0" />
-            <span>{isFa ? 'بحرانی' : 'Critical'}</span>
-          </span>
-        );
-      case 'attention':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-            <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-            <span>{isFa ? 'نیازمند توجه' : 'Attention'}</span>
-          </span>
-        );
-      case 'normal':
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-            <span>{isFa ? 'مطلوب' : 'On Track'}</span>
-          </span>
-        );
-    }
-  };
-
   return (
     <header id="mobile-report-header" className="mobile-report-header bg-white border border-slate-200 rounded-xl p-3 shadow-xs mb-2.5">
-      {/* Top Identity Row: Logo + Project Title & Status */}
+      {/* Top Identity Row: Logo + Project Title */}
       <div className="flex items-center justify-between gap-2.5">
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex items-center justify-center p-1 bg-slate-50 border border-slate-200 rounded-lg shrink-0">
             <LoicoLogo size={30} id="mobile-header-logo" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-[13.5px] font-bold text-slate-900 leading-tight truncate" title={isFa ? master.projectNameFa : master.projectNameEn}>
-                {isFa ? master.projectNameFa : master.projectNameEn}
-              </h1>
-              {getStatusBadge()}
-            </div>
+            <h1 className="text-[13.5px] font-bold text-slate-900 leading-tight truncate" title={isFa ? master.projectNameFa : master.projectNameEn}>
+              {isFa ? master.projectNameFa : master.projectNameEn}
+            </h1>
             <p className="text-[9.5px] font-semibold text-blue-900 flex items-center gap-1 mt-0.5 truncate">
               <span className="bg-blue-50 text-blue-800 px-1.5 py-0.2 rounded font-bold">
                 {isFa ? 'گزارش مدیریتی روزانه' : 'DAILY REPORT'}
@@ -75,6 +46,19 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Share QR Code Button */}
+        {onOpenQrModal && (
+          <button
+            type="button"
+            onClick={onOpenQrModal}
+            className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200/90 text-blue-950 font-bold text-[10px] transition-all cursor-pointer shadow-2xs"
+            title={isFa ? 'تولید و اشتراک‌گذاری بارکد QR گزارش' : 'Share QR Code'}
+          >
+            <QrCode className="w-3.5 h-3.5 text-blue-700" />
+            <span>{isFa ? 'کد QR' : 'QR'}</span>
+          </button>
+        )}
       </div>
 
       {/* Date Strip: Report Date + PMS Data Date */}
@@ -145,15 +129,19 @@ export const MobileReportHeader: React.FC<MobileReportHeaderProps> = ({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'کارفرما:' : 'Client:'}</span>
-              <span className="font-bold text-slate-800">{isFa ? master.clientNameFa : master.clientNameEn}</span>
+              <span className="font-bold text-slate-800">{isFa ? (master.clientNameFa || 'شرکت ملی صنایع پتروشیمی') : (master.clientNameEn || 'NPC')}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">{isFa ? 'مدیریت طرح:' : 'Project Manager:'}</span>
+              <span className="font-bold text-slate-800">{isFa ? (master.projectManagerFa || 'مهندسان مشاور ستیران') : (master.projectManagerEn || 'Scetiran')}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">{isFa ? 'مشاور:' : 'Consultant:'}</span>
+              <span className="font-bold text-slate-800">{isFa ? (master.consultantNameFa || 'مهندسین مشاور تدبیر ساحل پارس') : (master.consultantNameEn || 'Tadbir Sahel Pars')}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'پیمانکار:' : 'Contractor:'}</span>
-              <span className="font-bold text-slate-800">{isFa ? master.contractorNameFa : master.contractorNameEn}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">{isFa ? 'مهندس مشاور:' : 'Consultant:'}</span>
-              <span className="font-bold text-slate-800">{isFa ? master.consultantNameFa : master.consultantNameEn}</span>
+              <span className="font-bold text-slate-800">{isFa ? (master.contractorNameFa || 'شرکت نواندیشان فراساحل لیان') : (master.contractorNameEn || 'Lian')}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">{isFa ? 'تاریخ شروع:' : 'Start Date:'}</span>

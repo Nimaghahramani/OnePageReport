@@ -102,6 +102,18 @@ export class ProjectDataStore {
         updatedMaster.contractValueEUR = 673167;
         masterUpdated = true;
       }
+      if (!updatedMaster.projectManagerFa || updatedMaster.projectManagerFa === 'N/A' || updatedMaster.projectManagerFa === 'شرکت مهندسان مشاور ستیران') {
+        updatedMaster.projectManagerFa = 'مهندسان مشاور ستیران';
+        masterUpdated = true;
+      }
+      if (updatedMaster.consultantNameFa === 'شرکت مهندسين مشاور تدبیر ساحل پارس') {
+        updatedMaster.consultantNameFa = 'مهندسین مشاور تدبیر ساحل پارس';
+        masterUpdated = true;
+      }
+      if (updatedMaster.clientNameFa === 'شركت ملي صنايع پتروشيمي') {
+        updatedMaster.clientNameFa = 'شرکت ملی صنایع پتروشیمی';
+        masterUpdated = true;
+      }
       if (masterUpdated) {
         this.masterData = updatedMaster;
         this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
@@ -150,13 +162,31 @@ export class ProjectDataStore {
 
     // Financial Storage Migration: ensure current IPC financialSummary uses financialCalculationBaseIRR (5,230,000,000,000)
     // and accurate totals for Advance Payment (1,154,139,060,582 IRR) and Adjustment (1,073,741,658,385 IRR)
+    // Rule: When claim is received (دریافت شده), it must NOT be in outstanding claims (مطالبات باز).
     if (this.currentIpc?.financialSummary) {
       const fin = this.currentIpc.financialSummary;
       const base = this.financialSettings?.calculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR;
       const eurRate = this.financialSettings?.eurToIrrRate || EUR_TO_IRR;
-      const totalInvoiceEquiv = (fin.invoiceCumulativeIRR ?? 0) + ((fin.invoiceCumulativeEUR ?? 0) * eurRate);
-      const totalReceivedEquiv = (fin.receivedIRR ?? 0) + ((fin.receivedEUR ?? 0) * eurRate);
-      const totalOutstandingEquiv = (fin.outstandingIRR ?? 0) + ((fin.outstandingEUR ?? 0) * eurRate);
+
+      const isFinReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '') &&
+        !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '');
+      
+      const isInvoice16Received = fin.latestInvoiceNumber === 16;
+      const shouldBeReceived = isFinReceived || isInvoice16Received;
+
+      const correctedLatestStatus = shouldBeReceived ? 'دریافت شده' : (fin.latestInvoiceStatus || 'تایید شده');
+      const correctedInvIRR = (fin.invoiceCumulativeIRR && fin.invoiceCumulativeIRR > 1000000) ? (fin.invoiceCumulativeIRR === 2484501777490 ? 2484314854716 : fin.invoiceCumulativeIRR) : 2484314854716;
+      const correctedInvEUR = (fin.invoiceCumulativeEUR && fin.invoiceCumulativeEUR > 100) ? (fin.invoiceCumulativeEUR === 848082.51 ? 746822 : fin.invoiceCumulativeEUR) : 746822;
+
+      const correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? 2439778972025);
+      const correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 510550.41);
+
+      const correctedOutstandingIRR = shouldBeReceived ? 0 : Math.max(0, correctedInvIRR - correctedReceivedIRR);
+      const correctedOutstandingEUR = shouldBeReceived ? 0 : Math.max(0, correctedInvEUR - correctedReceivedEUR);
+
+      const totalInvoiceEquiv = correctedInvIRR + (correctedInvEUR * eurRate);
+      const totalReceivedEquiv = correctedReceivedIRR + (correctedReceivedEUR * eurRate);
+      const totalOutstandingEquiv = correctedOutstandingIRR + (correctedOutstandingEUR * eurRate);
 
       const expectedFinProg = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
       const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
@@ -177,15 +207,32 @@ export class ProjectDataStore {
         fin.financialProgress !== expectedFinProg ||
         fin.advancePaymentIRR !== validAdv ||
         fin.adjustmentIRR !== validAdj ||
+        fin.outstandingIRR !== correctedOutstandingIRR ||
+        fin.receivedIRR !== correctedReceivedIRR ||
+        fin.latestInvoiceStatus !== correctedLatestStatus ||
         !fin.advancePaymentItems ||
         !fin.adjustmentItems
       ) {
         this.currentIpc = {
           ...this.currentIpc,
+          status: (shouldBeReceived ? 'دریافت شده' : this.currentIpc.status) as any,
+          paymentStatus: (shouldBeReceived ? 'paid' : this.currentIpc.paymentStatus) as any,
+          paidAmount: correctedReceivedIRR,
+          outstandingAmount: correctedOutstandingIRR,
           advancePaymentAmount: validAdv,
           financialSummary: {
             ...fin,
             financialCalculationBaseIRR: base,
+            latestInvoiceStatus: correctedLatestStatus,
+            invoiceCumulativeIRR: correctedInvIRR,
+            invoiceCumulativeEUR: correctedInvEUR,
+            receivedIRR: correctedReceivedIRR,
+            receivedEUR: correctedReceivedEUR,
+            outstandingIRR: correctedOutstandingIRR,
+            outstandingEUR: correctedOutstandingEUR,
+            totalInvoiceEquivalentIRR: totalInvoiceEquiv,
+            totalReceivedEquivalentIRR: totalReceivedEquiv,
+            totalOutstandingEquivalentIRR: totalOutstandingEquiv,
             advancePaymentIRR: validAdv,
             advancePaymentPercentage: Number(((validAdv / base) * 100).toFixed(2)),
             advancePaymentItems: advItems,
@@ -197,8 +244,8 @@ export class ProjectDataStore {
             financialProgress: expectedFinProg,
             approvedFinancialProgress: expectedFinProg,
             receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
-            collectionRatio: totalInvoiceEquiv > 0 ? Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 92.14,
-            outstandingRatio: totalInvoiceEquiv > 0 ? Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 7.86,
+            collectionRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100,
+            outstandingRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0,
             traceability: {
               ...(fin.traceability || initialFinancialSummary.traceability!),
               financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
@@ -571,19 +618,37 @@ export class ProjectDataStore {
       const fin = this.currentIpc.financialSummary;
       const base = this.financialSettings.calculationBaseIRR;
       const eurRate = this.financialSettings.eurToIrrRate;
+
+      const isReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '') &&
+        !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '');
+
+      const finalReceivedIRR = isReceived ? (fin.invoiceCumulativeIRR ?? fin.receivedIRR) : fin.receivedIRR;
+      const finalReceivedEUR = isReceived ? (fin.invoiceCumulativeEUR ?? fin.receivedEUR) : fin.receivedEUR;
+      const finalOutstandingIRR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeIRR ?? 0) - (finalReceivedIRR ?? 0));
+      const finalOutstandingEUR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeEUR ?? 0) - (finalReceivedEUR ?? 0));
+
       const totalInvoiceEquiv = (fin.invoiceCumulativeIRR ?? 0) + ((fin.invoiceCumulativeEUR ?? 0) * eurRate);
-      const totalReceivedEquiv = (fin.receivedIRR ?? 0) + ((fin.receivedEUR ?? 0) * eurRate);
-      const totalOutstandingEquiv = (fin.outstandingIRR ?? 0) + ((fin.outstandingEUR ?? 0) * eurRate);
+      const totalReceivedEquiv = (finalReceivedIRR ?? 0) + ((finalReceivedEUR ?? 0) * eurRate);
+      const totalOutstandingEquiv = (finalOutstandingIRR ?? 0) + ((finalOutstandingEUR ?? 0) * eurRate);
 
       const calculatedFinProgress = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
-      const calculatedColRatio = totalInvoiceEquiv > 0 ? Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 92.14;
-      const calculatedOutRatio = totalInvoiceEquiv > 0 ? Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 7.86;
+      const calculatedColRatio = totalInvoiceEquiv > 0 ? (isReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100;
+      const calculatedOutRatio = totalInvoiceEquiv > 0 ? (isReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0;
 
       this.currentIpc = {
         ...this.currentIpc,
+        paidAmount: finalReceivedIRR ?? this.currentIpc.paidAmount,
+        outstandingAmount: finalOutstandingIRR,
         financialSummary: {
           ...fin,
           financialCalculationBaseIRR: base,
+          receivedIRR: finalReceivedIRR,
+          receivedEUR: finalReceivedEUR,
+          outstandingIRR: finalOutstandingIRR,
+          outstandingEUR: finalOutstandingEUR,
+          totalInvoiceEquivalentIRR: totalInvoiceEquiv,
+          totalReceivedEquivalentIRR: totalReceivedEquiv,
+          totalOutstandingEquivalentIRR: totalOutstandingEquiv,
           financialProgress: calculatedFinProgress,
           approvedFinancialProgress: calculatedFinProgress,
           receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
@@ -699,14 +764,14 @@ export class ProjectDataStore {
       id: 'master-proj-imported',
       projectNameFa: result.projectNameFa || 'تکمیل وتجهیز اسکله P1 بندر پتروشیمی ماهشهر',
       projectNameEn: 'N/A',
-      clientNameFa: result.clientNameFa || 'شركت ملي صنايع پتروشيمي',
-      clientNameEn: 'N/A',
+      clientNameFa: result.clientNameFa || 'شرکت ملی صنایع پتروشیمی',
+      clientNameEn: 'NPC',
+      projectManagerFa: result.projectManagerFa || 'مهندسان مشاور ستیران',
+      projectManagerEn: 'Scetiran',
+      consultantNameFa: result.consultantNameFa || 'مهندسین مشاور تدبیر ساحل پارس',
+      consultantNameEn: 'Tadbir Sahel Pars',
       contractorNameFa: result.contractorNameFa || 'شرکت نواندیشان فراساحل لیان',
-      contractorNameEn: 'N/A',
-      consultantNameFa: result.consultantNameFa || 'شرکت مهندسين مشاور تدبیر ساحل پارس',
-      consultantNameEn: 'N/A',
-      projectManagerFa: result.projectManagerFa || 'شرکت مهندسان مشاور ستیران',
-      projectManagerEn: 'N/A',
+      contractorNameEn: 'Lian',
       contractNotificationDate: result.contractNotificationDate || '1403/12/14',
       startDate: result.startDate || '1403/12/21',
       contractDurationText: result.contractDurationText || '18 ماه شمسي',
@@ -739,7 +804,7 @@ export class ProjectDataStore {
       source: `Master Sheet: ${result.sheetName}`,
       user,
       status: 'active',
-      recordSummary: `Project: ${this.masterData.projectNameFa} | Client: ${this.masterData.clientNameFa} | Contractor: ${this.masterData.contractorNameFa}`
+      recordSummary: `Project: ${this.masterData.projectNameFa} | Client: ${this.masterData.clientNameFa} | MC: ${this.masterData.projectManagerFa || 'مهندسان مشاور ستیران'} | Consultant: ${this.masterData.consultantNameFa} | Contractor: ${this.masterData.contractorNameFa}`
     });
 
     this.notify();
@@ -1003,13 +1068,21 @@ export class ProjectDataStore {
       const base = this.financialSettings?.calculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR;
       const eurRate = this.financialSettings?.eurToIrrRate || EUR_TO_IRR;
       const fin = result.financialSummary;
+      const isReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || '') &&
+        !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || '');
+
+      const finalReceivedIRR = isReceived ? (fin.invoiceCumulativeIRR ?? fin.receivedIRR) : fin.receivedIRR;
+      const finalReceivedEUR = isReceived ? (fin.invoiceCumulativeEUR ?? fin.receivedEUR) : fin.receivedEUR;
+      const finalOutstandingIRR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeIRR ?? 0) - (finalReceivedIRR ?? 0));
+      const finalOutstandingEUR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeEUR ?? 0) - (finalReceivedEUR ?? 0));
+
       const totalInvoiceEquiv = (fin.invoiceCumulativeIRR ?? 0) + ((fin.invoiceCumulativeEUR ?? 0) * eurRate);
-      const totalReceivedEquiv = (fin.receivedIRR ?? 0) + ((fin.receivedEUR ?? 0) * eurRate);
-      const totalOutstandingEquiv = (fin.outstandingIRR ?? 0) + ((fin.outstandingEUR ?? 0) * eurRate);
+      const totalReceivedEquiv = (finalReceivedIRR ?? 0) + ((finalReceivedEUR ?? 0) * eurRate);
+      const totalOutstandingEquiv = (finalOutstandingIRR ?? 0) + ((finalOutstandingEUR ?? 0) * eurRate);
 
       const calculatedFinProgress = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
-      const calculatedColRatio = totalInvoiceEquiv > 0 ? Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 92.14;
-      const calculatedOutRatio = totalInvoiceEquiv > 0 ? Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2)) : 7.86;
+      const calculatedColRatio = totalInvoiceEquiv > 0 ? (isReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100;
+      const calculatedOutRatio = totalInvoiceEquiv > 0 ? (isReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0;
 
       const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
         ? 1154139060582
@@ -1027,6 +1100,13 @@ export class ProjectDataStore {
       const normalizedFinSummary = {
         ...fin,
         financialCalculationBaseIRR: base,
+        receivedIRR: finalReceivedIRR,
+        receivedEUR: finalReceivedEUR,
+        outstandingIRR: finalOutstandingIRR,
+        outstandingEUR: finalOutstandingEUR,
+        totalInvoiceEquivalentIRR: totalInvoiceEquiv,
+        totalReceivedEquivalentIRR: totalReceivedEquiv,
+        totalOutstandingEquivalentIRR: totalOutstandingEquiv,
         advancePaymentIRR: validAdv,
         advancePaymentPercentage: Number(((validAdv / base) * 100).toFixed(2)),
         advancePaymentItems: advItems,
@@ -1055,10 +1135,12 @@ export class ProjectDataStore {
           ? `صورت‌وضعیت موقت شماره ${result.financialSummary.latestInvoiceNumber} (IPC-${result.financialSummary.latestInvoiceNumber})`
           : this.currentIpc?.latestIpcNo,
         period: result.financialSummary.latestInvoicePeriod || this.currentIpc?.period || 'تیرماه 1405',
-        status: (result.financialSummary.latestInvoiceStatus as any) || 'تایید شده',
+        status: (isReceived ? 'دریافت شده' : ((result.financialSummary.latestInvoiceStatus as any) || 'تایید شده')),
+        paymentStatus: isReceived ? 'paid' : 'partially_paid',
         submittedAmount: result.financialSummary.invoiceCumulativeIRR,
         approvedAmount: result.financialSummary.invoiceCumulativeIRR,
-        paidAmount: result.financialSummary.receivedIRR,
+        paidAmount: finalReceivedIRR,
+        outstandingAmount: finalOutstandingIRR,
         advancePaymentAmount: validAdv,
         currency: 'IRR',
         financialSummary: normalizedFinSummary

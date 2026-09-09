@@ -140,30 +140,30 @@ export const AdvanceAdjustmentModal: React.FC<AdvanceAdjustmentModalProps> = ({
             </div>
 
             <div className="border border-slate-200 rounded-lg overflow-hidden">
-              <table className="w-full text-right text-xs">
+              <table className="advance-table w-full text-right text-xs">
                 <thead className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 text-[11px]">
                   <tr>
-                    <th className="py-2 px-3 text-center w-12">#</th>
+                    <th className="py-2 px-3 text-center w-12 col-num">#</th>
                     <th className="py-2 px-3">{isFa ? 'ردیف / مرحله قسط' : 'Installment'}</th>
                     <th className="py-2 px-3">{isFa ? 'شرح و موعد پرداخت' : 'Description / Period'}</th>
-                    <th className="py-2 px-3 text-left font-mono">{isFa ? 'مبلغ قسط (ریال)' : 'Amount (IRR)'}</th>
-                    <th className="py-2 px-3 text-center">{isFa ? 'درصد از کل قرارداد' : '% of Base'}</th>
+                    <th className="py-2 px-3 text-right col-financial">{isFa ? 'مبلغ قسط (ریال)' : 'Amount (IRR)'}</th>
+                    <th className="py-2 px-3 text-center col-percent">{isFa ? 'درصد از کل قرارداد' : '% of Base'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-mono text-[11.5px]">
+                <tbody className="divide-y divide-slate-100 text-[11.5px]">
                   {advanceItems.map((item, idx) => {
                     const itemPct = Number(((item.amountIRR / base) * 100).toFixed(2));
                     return (
                       <tr key={item.id || idx} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-2 px-3 text-center text-slate-500 font-sans">{idx + 1}</td>
+                        <td className="py-2 px-3 text-center text-slate-500 font-tabular tabular-nums col-num">{idx + 1}</td>
                         <td className="py-2 px-3 font-semibold text-slate-800 font-sans">
                           {typeof item.itemNo === 'number' ? `${isFa ? 'قسط شماره' : 'Installment'} ${item.itemNo}` : item.itemNo}
                         </td>
                         <td className="py-2 px-3 text-slate-700 font-sans">{item.month}</td>
-                        <td className="py-2 px-3 text-left font-bold text-slate-900">
+                        <td className="py-2 px-3 text-right font-bold text-slate-900 col-financial font-tabular tabular-nums">
                           {item.amountIRR.toLocaleString()}
                         </td>
-                        <td className="py-2 px-3 text-center text-emerald-700 font-semibold">
+                        <td className="py-2 px-3 text-center text-emerald-700 font-semibold col-percent font-tabular tabular-nums">
                           {itemPct}%
                         </td>
                       </tr>
@@ -173,10 +173,10 @@ export const AdvanceAdjustmentModal: React.FC<AdvanceAdjustmentModalProps> = ({
                     <td colSpan={3} className="py-2 px-3 text-slate-900 font-sans font-bold">
                       {isFa ? 'مجموع کل پیش‌پرداخت (ریال):' : 'Total Advance Payment (IRR):'}
                     </td>
-                    <td className="py-2 px-3 text-left font-black text-blue-900 text-xs">
+                    <td className="py-2 px-3 text-right font-black text-blue-900 text-xs col-financial font-tabular tabular-nums">
                       {totalAdv.toLocaleString()}
                     </td>
-                    <td className="py-2 px-3 text-center font-black text-emerald-800 text-xs">
+                    <td className="py-2 px-3 text-center font-black text-emerald-800 text-xs col-percent font-tabular tabular-nums">
                       {advPercentage}%
                     </td>
                   </tr>
@@ -200,23 +200,23 @@ export const AdvanceAdjustmentModal: React.FC<AdvanceAdjustmentModalProps> = ({
             </div>
 
             <div className="border border-slate-200 rounded-lg overflow-hidden">
-              <table className="w-full text-right text-xs">
+              <table className="advance-table w-full text-right text-xs">
                 <thead className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 text-[11px]">
                   <tr>
-                    <th className="py-2 px-3 text-center w-12">#</th>
+                    <th className="py-2 px-3 text-center w-12 col-num">#</th>
                     <th className="py-2 px-3">{isFa ? 'عنوان صورت‌وضعیت تعدیل' : 'Adjustment Invoice'}</th>
                     <th className="py-2 px-3 text-center">{isFa ? 'وضعیت تسویه' : 'Status'}</th>
-                    <th className="py-2 px-3 text-left font-mono">{isFa ? 'مبلغ تعدیل (ریال)' : 'Amount (IRR)'}</th>
-                    <th className="py-2 px-3 text-center">{isFa ? 'درصد از کل قرارداد' : '% of Base'}</th>
+                    <th className="py-2 px-3 text-right col-financial">{isFa ? 'مبلغ تعدیل (ریال)' : 'Amount (IRR)'}</th>
+                    <th className="py-2 px-3 text-center col-percent">{isFa ? 'درصد از کل قرارداد' : '% of Base'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 font-mono text-[11.5px]">
+                <tbody className="divide-y divide-slate-100 text-[11.5px]">
                   {adjustmentItems.map((item, idx) => {
                     const itemPct = Number(((item.amountIRR / base) * 100).toFixed(2));
                     const isReceived = item.status.includes('دریافت');
                     return (
                       <tr key={item.id || idx} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-2 px-3 text-center text-slate-500 font-sans">{idx + 1}</td>
+                        <td className="py-2 px-3 text-center text-slate-500 font-tabular tabular-nums col-num">{idx + 1}</td>
                         <td className="py-2 px-3 font-semibold text-slate-800 font-sans">
                           {item.invoiceTitle}
                         </td>
@@ -229,10 +229,10 @@ export const AdvanceAdjustmentModal: React.FC<AdvanceAdjustmentModalProps> = ({
                             {item.status}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-left font-bold text-slate-900">
+                        <td className="py-2 px-3 text-right font-bold text-slate-900 col-financial font-tabular tabular-nums">
                           {item.amountIRR.toLocaleString()}
                         </td>
-                        <td className="py-2 px-3 text-center text-indigo-700 font-semibold">
+                        <td className="py-2 px-3 text-center text-indigo-700 font-semibold col-percent font-tabular tabular-nums">
                           {itemPct}%
                         </td>
                       </tr>
@@ -242,10 +242,10 @@ export const AdvanceAdjustmentModal: React.FC<AdvanceAdjustmentModalProps> = ({
                     <td colSpan={3} className="py-2 px-3 text-slate-900 font-sans font-bold">
                       {isFa ? 'مجموع کل صورت‌وضعیت‌های تعدیل (ریال):' : 'Total Price Adjustment (IRR):'}
                     </td>
-                    <td className="py-2 px-3 text-left font-black text-indigo-900 text-xs">
+                    <td className="py-2 px-3 text-right font-black text-indigo-900 text-xs col-financial font-tabular tabular-nums">
                       {totalAdj.toLocaleString()}
                     </td>
-                    <td className="py-2 px-3 text-center font-black text-indigo-800 text-xs">
+                    <td className="py-2 px-3 text-center font-black text-indigo-800 text-xs col-percent font-tabular tabular-nums">
                       {adjPercentage}%
                     </td>
                   </tr>

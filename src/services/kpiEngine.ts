@@ -201,15 +201,21 @@ export function calculateExecutiveKPIs(
 
   // 4. IPC & Financial Status
   const finSummary = ipc?.financialSummary;
+  const isIpcReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(finSummary?.latestInvoiceStatus || ipc?.status || '') &&
+    !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(finSummary?.latestInvoiceStatus || ipc?.status || '');
   const ipcSubmitted = ipc ? ipc.submittedAmount : null;
   const ipcApproved = ipc ? ipc.approvedAmount : null;
-  const ipcPaid = ipc ? ipc.paidAmount : null;
-  const ipcOutstanding = (ipcApproved !== null && ipcPaid !== null)
-    ? Math.max(0, ipcApproved - ipcPaid)
-    : null;
-  const ipcCachedRatio = (ipcApproved !== null && ipcApproved > 0 && ipcPaid !== null)
-    ? Number(((ipcPaid / ipcApproved) * 100).toFixed(1))
-    : null;
+  const ipcPaid = isIpcReceived ? (ipcApproved ?? ipc?.paidAmount ?? null) : (ipc ? ipc.paidAmount : null);
+  const ipcOutstanding = isIpcReceived
+    ? 0
+    : (finSummary?.outstandingIRR !== undefined
+      ? finSummary.outstandingIRR
+      : ((ipcApproved !== null && ipcPaid !== null) ? Math.max(0, ipcApproved - ipcPaid) : null));
+  const ipcCachedRatio = isIpcReceived
+    ? 100
+    : ((ipcApproved !== null && ipcApproved > 0 && ipcPaid !== null)
+      ? Number(((ipcPaid / ipcApproved) * 100).toFixed(1))
+      : null);
 
   // 5. Site Resources & Manpower
   const activeManpower = daily ? (daily.siteManpower?.total ?? daily.manpower?.total ?? null) : null;
