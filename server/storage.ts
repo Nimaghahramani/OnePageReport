@@ -299,6 +299,30 @@ function normalizeStoredReport(report: PublishedReport | null): PublishedReport 
         report.kpis.financialSummary.totalOutstandingEquivalentIRR = 0;
       }
     }
+    if (Array.isArray(report.kpis.executiveSummaryLinesFa)) {
+      report.kpis.executiveSummaryLinesFa = report.kpis.executiveSummaryLinesFa.map((line) => {
+        if (typeof line === 'string' && line.includes('در بخش نصب تجهیزات')) {
+          return line
+            .replace(/ و \d+ آیتم تایید نهایی شده است نصب شده است\./g, ' نصب نهایی شده است.')
+            .replace(/نصب شده است\./g, 'نصب نهایی شده است.');
+        }
+        if (typeof line === 'string' && line.includes('وضعیت مالی:')) {
+          return line
+            .replace(/نسبت وصول مطالبات به (?!\s*کل)/g, 'نسبت وصول مطالبات به کل مطالبات به ');
+        }
+        return line;
+      });
+    }
+    if (Array.isArray(report.kpis.executiveSummaryLinesEn)) {
+      report.kpis.executiveSummaryLinesEn = report.kpis.executiveSummaryLinesEn.map((line) => {
+        if (typeof line === 'string' && line.includes('equipment installation')) {
+          return line
+            .replace(/, with \d+ accepted are installed\./g, ' are installed and finalized.')
+            .replace(/are installed\./g, 'are installed and finalized.');
+        }
+        return line;
+      });
+    }
   }
 
   return report;

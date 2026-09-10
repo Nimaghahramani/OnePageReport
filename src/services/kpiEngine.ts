@@ -384,16 +384,25 @@ export function calculateExecutiveKPIs(
     const numInstalled = Number(equipmentInstalled);
     const numPerc = isValidNumericValue(equipment.installationPercentage)
       ? Number(equipment.installationPercentage)
-      : (numTotal > 0 ? Number(((numInstalled / numTotal) * 100).toFixed(1)) : null);
+      : (numTotal > 0 ? Number(((numInstalled / numTotal) * 100).toFixed(2)) : null);
     const percText = numPerc !== null ? ` (${numPerc}%)` : '';
-    const acceptedPart = isValidNumericValue(equipment.accepted) ? ` و ${equipment.accepted} آیتم تایید نهایی شده است` : '';
-    const acceptedPartEn = isValidNumericValue(equipment.accepted) ? `, with ${equipment.accepted} accepted` : '';
-    summaryFa.push(
-      `در بخش نصب تجهیزات، از مجموع ${numTotal} آیتم، تعداد ${numInstalled} آیتم${percText}${acceptedPart} نصب شده است.`
-    );
-    summaryEn.push(
-      `In equipment installation, ${numInstalled} out of ${numTotal} units${percText}${acceptedPartEn} are installed.`
-    );
+    const numAccepted = isValidNumericValue(equipment.accepted) ? Number(equipment.accepted) : null;
+
+    if (numAccepted !== null && numAccepted !== numInstalled) {
+      summaryFa.push(
+        `در بخش نصب تجهیزات، از مجموع ${numTotal} آیتم، تعداد ${numInstalled} آیتم${percText} نصب شده و ${numAccepted} آیتم تایید نهایی شده است.`
+      );
+      summaryEn.push(
+        `In equipment installation, ${numInstalled} out of ${numTotal} units${percText} are installed, with ${numAccepted} units accepted.`
+      );
+    } else {
+      summaryFa.push(
+        `در بخش نصب تجهیزات، از مجموع ${numTotal} آیتم، تعداد ${numInstalled} آیتم${percText} نصب نهایی شده است.`
+      );
+      summaryEn.push(
+        `In equipment installation, ${numInstalled} out of ${numTotal} units${percText} are installed and finalized.`
+      );
+    }
   }
 
   // Line 4: Dual-Currency Financial Status
@@ -405,10 +414,10 @@ export function calculateExecutiveKPIs(
 
     if (finProg && colRatio) {
       summaryFa.push(
-        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، پیشرفت مالی تجمعی به ${finProg} و نسبت وصول مطالبات به ${colRatio} رسیده است.`
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، پیشرفت مالی تجمعی به ${finProg} و نسبت وصول مطالبات به کل مطالبات به ${colRatio} رسیده است.`
       );
       summaryEn.push(
-        `Financial status: Cumulative financial progress is ${finProg} with a collection ratio of ${colRatio} for ${ipcLabelEn}.`
+        `Financial status: Cumulative financial progress is ${finProg} with a collection ratio to total claims of ${colRatio} for ${ipcLabelEn}.`
       );
     } else if (finProg) {
       summaryFa.push(
@@ -419,10 +428,10 @@ export function calculateExecutiveKPIs(
       );
     } else if (colRatio) {
       summaryFa.push(
-        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، نسبت وصول مطالبات به ${colRatio} رسیده است.`
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، نسبت وصول مطالبات به کل مطالبات به ${colRatio} رسیده است.`
       );
       summaryEn.push(
-        `Financial status: Collection ratio reached ${colRatio} for ${ipcLabelEn}.`
+        `Financial status: Collection ratio to total claims reached ${colRatio} for ${ipcLabelEn}.`
       );
     }
   } else if (ipc && isValidNumericValue(ipcApproved) && isValidNumericValue(ipcPaid)) {
