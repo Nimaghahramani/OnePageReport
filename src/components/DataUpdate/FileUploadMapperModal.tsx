@@ -581,6 +581,60 @@ export const FileUploadMapperModal: React.FC<FileUploadMapperModalProps> = ({
                 )}
               </div>
 
+              {/* Detected Construction Progress Items from Construction (2) */}
+              {workbookResult.constructionItems && workbookResult.constructionItems.length > 0 && (
+                <div className="border border-slate-250 rounded-lg overflow-hidden bg-white">
+                  <div className="bg-indigo-50/80 px-3 py-1.5 text-xs font-bold text-indigo-950 border-b border-indigo-200 flex items-center justify-between">
+                    <span>{isFa ? 'احجام و پیشرفت فعالیت‌های اجرایی استخراج‌شده از برگه Construction (2)' : 'Construction Progress Items from Construction (2)'}</span>
+                    <span className="text-[10px] text-indigo-800 font-mono font-bold">
+                      {isFa ? `تعداد فعالیت‌ها: ${workbookResult.constructionItems.length}` : `Activities: ${workbookResult.constructionItems.length}`}
+                    </span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-right rtl:text-right ltr:text-left">
+                      <thead className="bg-slate-50 text-[10px] text-slate-600 border-b border-slate-200 font-semibold">
+                        <tr>
+                          <th className="py-1 px-2.5 w-8">#</th>
+                          <th className="py-1 px-2.5">{isFa ? 'شرح فعالیت' : 'Activity'}</th>
+                          <th className="py-1 px-2.5 text-center w-12">{isFa ? 'واحد' : 'Unit'}</th>
+                          <th className="py-1 px-2.5 text-center w-20">{isFa ? 'مقدار کل' : 'Total'}</th>
+                          <th className="py-1 px-2.5 text-center w-20 text-emerald-800">{isFa ? 'اقدام‌شده' : 'Done'}</th>
+                          <th className="py-1 px-2.5 text-center w-20 text-slate-600">{isFa ? 'باقیمانده' : 'Remaining'}</th>
+                          <th className="py-1 px-2.5 text-center w-16">{isFa ? 'پیشرفت' : 'Progress'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-150">
+                        {workbookResult.constructionItems.map((item, idx) => {
+                          const pct = item.progressPercent !== null && item.progressPercent !== undefined
+                            ? item.progressPercent
+                            : (item.total > 0 ? Number(((item.completed / item.total) * 100).toFixed(1)) : 0);
+
+                          let badgeClass = 'bg-slate-100 text-slate-600';
+                          if (pct >= 40) badgeClass = 'bg-emerald-100 text-emerald-800 font-bold';
+                          else if (pct > 0) badgeClass = 'bg-blue-100 text-blue-800 font-bold';
+
+                          return (
+                            <tr key={item.id || idx} className="hover:bg-slate-50 font-medium">
+                              <td className="py-1 px-2.5 font-mono text-slate-400 text-[11px]">{idx + 1}</td>
+                              <td className="py-1 px-2.5 font-bold text-slate-900 text-[11px]">{item.activity}</td>
+                              <td className="py-1 px-2.5 text-center font-bold text-slate-600 text-[11px]">{item.unit}</td>
+                              <td className="py-1 px-2.5 text-center font-mono text-slate-700 text-[11px]">{item.total.toLocaleString(isFa ? 'fa-IR' : 'en-US')}</td>
+                              <td className="py-1 px-2.5 text-center font-mono font-bold text-emerald-700 text-[11px]">{item.completed.toLocaleString(isFa ? 'fa-IR' : 'en-US')}</td>
+                              <td className="py-1 px-2.5 text-center font-mono text-slate-600 text-[11px]">{item.remaining.toLocaleString(isFa ? 'fa-IR' : 'en-US')}</td>
+                              <td className="py-1 px-2.5 text-center font-mono text-[11px]">
+                                <span className={`px-1.5 py-0.2 rounded text-[9.5px] ${badgeClass}`}>
+                                  {pct}%
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {/* Detected Financial / Invoice Summary */}
               {workbookResult.financialSummary && (
                 <div className="border border-slate-250 rounded-lg overflow-hidden bg-white">
@@ -691,7 +745,7 @@ export const FileUploadMapperModal: React.FC<FileUploadMapperModalProps> = ({
               {/* Detected Important Activities from Daily Report */}
               <div className="border border-slate-250 rounded-lg overflow-hidden bg-white">
                 <div className="bg-emerald-50/80 px-3 py-1.5 text-xs font-bold text-emerald-950 border-b border-emerald-200 flex items-center justify-between">
-                  <span>{isFa ? 'فعالیت‌های مهم انجام‌شده استخراج‌شده از گزارش روزانه' : 'Important Activities Extracted from Daily Report'}</span>
+                  <span>{isFa ? 'فعالیت مهم انجام شده در ماه اخیر (استخراج‌شده از فایل اکسل)' : 'Key Work Completed in Past Month (Extracted from Excel)'}</span>
                   <span className="text-[10px] text-emerald-800 font-mono font-bold">
                     {isFa ? `تعداد فعالیت‌ها: ${workbookResult.importantActivities?.length || 0}` : `Activities Detected: ${workbookResult.importantActivities?.length || 0}`}
                   </span>

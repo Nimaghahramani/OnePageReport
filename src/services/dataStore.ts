@@ -303,6 +303,7 @@ export class ProjectDataStore {
     if (this.currentDaily) {
       let needsDailySave = false;
       if (!this.currentDaily.importantActivities || this.currentDaily.importantActivities.length === 0 ||
+          !this.currentDaily.importantActivities.some((act: any) => act.description && act.description.includes('انجام فیتاپ و جوش پایپینگ')) ||
           this.currentDaily.importantActivities.some((act: any) => act.description && (act.description.includes('تست هیدرواستاتیک') || act.description.includes('مدول‌های ۵ و ۶') || act.description.includes('تعویض پمپ')))) {
         this.currentDaily = {
           ...this.currentDaily,
@@ -356,6 +357,13 @@ export class ProjectDataStore {
         this.currentDaily = {
           ...this.currentDaily,
           manpower: { ...initialDailyReportRecord.manpower }
+        };
+        needsDailySave = true;
+      }
+      if (!this.currentDaily.constructionItems || this.currentDaily.constructionItems.length === 0) {
+        this.currentDaily = {
+          ...this.currentDaily,
+          constructionItems: initialDailyReportRecord.constructionItems || []
         };
         needsDailySave = true;
       }
@@ -944,7 +952,10 @@ export class ProjectDataStore {
         active: result.machineryActive ?? this.currentDaily?.machinery?.active ?? 0,
         total: result.machineryTotal ?? this.currentDaily?.machinery?.total ?? 0
       },
-      keyIssues: result.keyIssues || []
+      keyIssues: result.keyIssues || [],
+      constructionItems: (result.constructionItems && result.constructionItems.length > 0)
+        ? result.constructionItems
+        : (this.currentDaily?.constructionItems || initialDailyReportRecord.constructionItems || [])
     };
 
     this.currentDaily = dailyFull;

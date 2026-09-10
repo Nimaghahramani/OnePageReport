@@ -236,6 +236,19 @@ export interface SiteManpowerKPI {
   attendanceRatio: number | null;
 }
 
+export interface ConstructionProgressItem {
+  id?: string | number;
+  activity: string;
+  activityEn?: string;
+  unit: string;
+  total: number;
+  completed: number;
+  remaining: number;
+  progressPercent?: number | null;
+  sourceSheet?: string;
+  sourceRow?: number;
+}
+
 export interface DailyReportRecord {
   id: string;
   version: number;
@@ -249,6 +262,7 @@ export interface DailyReportRecord {
   fileName: string;
   source: string;
   importantActivities: DailyImportantActivity[];
+  constructionItems?: ConstructionProgressItem[];
   workPerformedToday?: {
     id: string;
     textFa: string;

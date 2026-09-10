@@ -26,7 +26,7 @@ export const MobileActivitiesSection: React.FC<MobileActivitiesSectionProps> = (
   const displayedActivities = rawActivities
     .filter(item => item.description?.trim())
     .sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
-    .slice(0, 4);
+    .slice(0, 6);
 
   const decisions = daily.managementDecisionsRequired || [];
 
@@ -52,7 +52,7 @@ export const MobileActivitiesSection: React.FC<MobileActivitiesSectionProps> = (
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-[8.5px] font-bold text-emerald-800 uppercase block">
-                {isFa ? 'فعالیت‌های مهم انجام‌شده (امروز):' : 'Key Work Completed (Today):'}
+                {isFa ? 'فعالیت مهم انجام شده در ماه اخیر:' : 'Key Work Completed (Past Month):'}
               </span>
               <span className="text-[8px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
                 {displayedActivities.length} {isFa ? 'فعالیت' : 'items'}

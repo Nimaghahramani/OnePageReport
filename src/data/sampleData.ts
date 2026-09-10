@@ -3,6 +3,7 @@ import {
   MasterSCurveRecord,
   PmsRecord,
   DailyReportRecord,
+  ConstructionProgressItem,
   IpcRecord,
   EquipmentRecord,
   EquipmentProgressItem,
@@ -308,42 +309,100 @@ export const initialDailyReportRecord: DailyReportRecord = {
     {
       id: 'act-1',
       sequence: 1,
-      description: 'انجام فیتاپ (Fit Up) پایپینگ',
-      sourceFile: 'Daily_Report_Workbook.xlsx',
-      sourceSheet: 'Construction (1)',
-      sourceRow: 5
+      description: 'انجام فیتاپ و جوش پایپینگ',
+      sourceFile: 'LOICO-DR-P1-1405.06.18.xlsx',
+      sourceSheet: 'Construction (2)',
+      sourceRow: 33
     },
     {
       id: 'act-2',
       sequence: 2,
-      description: 'رنگ ساپورت برق و پایپینگ',
-      sourceFile: 'Daily_Report_Workbook.xlsx',
-      sourceSheet: 'Construction (1)',
-      sourceRow: 6
+      description: 'شروع عملیات هیدروتست',
+      sourceFile: 'LOICO-DR-P1-1405.06.18.xlsx',
+      sourceSheet: 'Construction (2)',
+      sourceRow: 34
     },
     {
       id: 'act-3',
       sequence: 3,
-      description: 'جابجایی ساپورت سینی برق بین P1,P2',
-      sourceFile: 'Daily_Report_Workbook.xlsx',
-      sourceSheet: 'Construction (1)',
-      sourceRow: 7
+      description: 'نصب سینی برق P1 به P2 و روی پایپ رک',
+      sourceFile: 'LOICO-DR-P1-1405.06.18.xlsx',
+      sourceSheet: 'Construction (2)',
+      sourceRow: 35
     },
     {
       id: 'act-4',
       sequence: 4,
-      description: 'آرماتور بندی رویه گذاری جهت بتن ریزی فوم پکیج',
-      sourceFile: 'Daily_Report_Workbook.xlsx',
-      sourceSheet: 'Construction (1)',
-      sourceRow: 8
+      description: 'رنگ ساپورت برق',
+      sourceFile: 'LOICO-DR-P1-1405.06.18.xlsx',
+      sourceSheet: 'Construction (2)',
+      sourceRow: 36
     },
     {
       id: 'act-5',
       sequence: 5,
-      description: 'انجام جوش (WELD) پایپینگ',
-      sourceFile: 'Daily_Report_Workbook.xlsx',
-      sourceSheet: 'Construction (1)',
-      sourceRow: 9
+      description: 'نصب ولو و شیرآلات پایپینگ',
+      sourceFile: 'LOICO-DR-P1-1405.06.18.xlsx',
+      sourceSheet: 'Construction (2)',
+      sourceRow: 37
+    },
+    {
+      id: 'act-6',
+      sequence: 6,
+      description: 'نصب پنلهای HVAC اتاقهای کنترل روم',
+      sourceFile: 'LOICO-DR-P1-1405.06.18.xlsx',
+      sourceSheet: 'Construction (2)',
+      sourceRow: 38
+    }
+  ],
+  constructionItems: [
+    {
+      id: 1,
+      activity: 'انجام فیت‌اپ (Fit Up) پایپینگ',
+      activityEn: 'Piping Fit-Up (Fit Up)',
+      unit: 'ID',
+      total: 14585,
+      completed: 7333,
+      remaining: 7252,
+      progressPercent: 50.28,
+      sourceSheet: 'Construction (2)',
+      sourceRow: 14
+    },
+    {
+      id: 2,
+      activity: 'انجام جوش (WELD) پایپینگ',
+      activityEn: 'Piping Welding (WELD)',
+      unit: 'ID',
+      total: 13479,
+      completed: 5859,
+      remaining: 7620,
+      progressPercent: 43.47,
+      sourceSheet: 'Construction (2)',
+      sourceRow: 20
+    },
+    {
+      id: 3,
+      activity: 'عملیات Cabling',
+      activityEn: 'Cabling Works',
+      unit: 'M',
+      total: 36165,
+      completed: 0,
+      remaining: 36165,
+      progressPercent: 0,
+      sourceSheet: 'Construction (2)',
+      sourceRow: 26
+    },
+    {
+      id: 4,
+      activity: 'عملیات هیدروتست پایپینگ',
+      activityEn: 'Piping Hydrotest',
+      unit: 'IM',
+      total: 12638,
+      completed: 900,
+      remaining: 11738,
+      progressPercent: 7.12,
+      sourceSheet: 'Construction (2)',
+      sourceRow: 27
     }
   ],
   workPerformedToday: [],

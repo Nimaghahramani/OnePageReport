@@ -30,7 +30,7 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
   const displayedActivities = rawActivities
     .filter(item => item.description?.trim())
     .sort((a, b) => (a.sequence || 0) - (b.sequence || 0))
-    .slice(0, 4);
+    .slice(0, 6);
 
   const decisions = daily.managementDecisionsRequired || [];
 
@@ -96,7 +96,7 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
           <div>
             <div className="flex items-center justify-between mb-0.5">
               <span className="activities-heading text-[8px] font-bold text-emerald-800 uppercase block">
-                {isFa ? 'فعالیت‌های مهم انجام‌شده (TODAY):' : 'Key Work Completed (TODAY):'}
+                {isFa ? 'فعالیت مهم انجام شده در ماه اخیر:' : 'Key Work Completed (Past Month):'}
               </span>
               {displayedActivities.length > 0 && (
                 <span className="activities-count-badge text-[7.5px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">
