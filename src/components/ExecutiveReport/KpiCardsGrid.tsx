@@ -154,7 +154,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
         <div className="mt-0.5 flex items-baseline justify-between">
           <span className="kpi-value text-base font-extrabold text-slate-900 tracking-tight">
             {kpis.financialSummary?.financialProgress !== undefined && kpis.financialSummary?.financialProgress !== null
-              ? `${kpis.financialSummary.financialProgress.toFixed(1)}%`
+              ? `${kpis.financialSummary.financialProgress.toFixed(2)}%`
               : (kpis.ipcCachedRatio !== null ? `${kpis.ipcCachedRatio}%` : 'N/A')}
           </span>
           <span className="kpi-sub text-[8.5px] text-emerald-700 font-bold">

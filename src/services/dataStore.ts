@@ -79,6 +79,97 @@ export class ProjectDataStore {
 
   private listeners: (() => void)[] = [];
 
+  public static normalizeIpcRecord(rawIpc: IpcRecord, settings?: FinancialSettings): IpcRecord {
+    const base = (settings?.calculationBaseIRR && settings.calculationBaseIRR >= 5_000_000_000_000)
+      ? settings.calculationBaseIRR
+      : FINANCIAL_CALCULATION_BASE_IRR;
+    const eurRate = (settings?.eurToIrrRate && settings.eurToIrrRate > 0)
+      ? settings.eurToIrrRate
+      : EUR_TO_IRR;
+
+    const fin = rawIpc.financialSummary || initialFinancialSummary;
+
+    const isFinReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || rawIpc.status || rawIpc.paymentStatus || '') &&
+      !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || rawIpc.status || rawIpc.paymentStatus || '');
+    
+    const isInvoice16Received = fin.latestInvoiceNumber === 16 || rawIpc.version === 16;
+    const shouldBeReceived = isFinReceived || isInvoice16Received;
+
+    const correctedLatestStatus = shouldBeReceived ? 'دریافت شده' : (fin.latestInvoiceStatus || 'تایید شده');
+    const correctedInvIRR = (fin.invoiceCumulativeIRR && fin.invoiceCumulativeIRR > 1000000)
+      ? (fin.invoiceCumulativeIRR === 2484501777490 ? 2484314854716 : fin.invoiceCumulativeIRR)
+      : (rawIpc.approvedAmount || 2484314854716);
+    const correctedInvEUR = (fin.invoiceCumulativeEUR && fin.invoiceCumulativeEUR > 100)
+      ? (fin.invoiceCumulativeEUR === 848082.51 ? 746822 : fin.invoiceCumulativeEUR)
+      : 746822;
+
+    const correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? rawIpc.paidAmount ?? 2439778972025);
+    const correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 510550.41);
+
+    const correctedOutstandingIRR = shouldBeReceived ? 0 : Math.max(0, correctedInvIRR - correctedReceivedIRR);
+    const correctedOutstandingEUR = shouldBeReceived ? 0 : Math.max(0, correctedInvEUR - correctedReceivedEUR);
+
+    const totalInvoiceEquiv = correctedInvIRR + (correctedInvEUR * eurRate);
+    const totalReceivedEquiv = correctedReceivedIRR + (correctedReceivedEUR * eurRate);
+    const totalOutstandingEquiv = correctedOutstandingIRR + (correctedOutstandingEUR * eurRate);
+
+    const expectedFinProg = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
+    const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
+      ? 1154139060582
+      : fin.advancePaymentIRR;
+    const validAdj = (!fin.adjustmentIRR || fin.adjustmentIRR < 500_000_000_000)
+      ? 1073741658385
+      : fin.adjustmentIRR;
+    const advItems = fin.advancePaymentItems && fin.advancePaymentItems.length > 0
+      ? fin.advancePaymentItems
+      : initialFinancialSummary.advancePaymentItems;
+    const adjItems = fin.adjustmentItems && fin.adjustmentItems.length > 0
+      ? fin.adjustmentItems
+      : initialFinancialSummary.adjustmentItems;
+
+    return {
+      ...rawIpc,
+      status: (shouldBeReceived ? 'دریافت شده' : rawIpc.status) as any,
+      paymentStatus: (shouldBeReceived ? 'paid' : rawIpc.paymentStatus) as any,
+      paidAmount: correctedReceivedIRR,
+      outstandingAmount: correctedOutstandingIRR,
+      advancePaymentAmount: validAdv,
+      financialSummary: {
+        ...fin,
+        financialCalculationBaseIRR: base,
+        latestInvoiceStatus: correctedLatestStatus,
+        invoiceCumulativeIRR: correctedInvIRR,
+        invoiceCumulativeEUR: correctedInvEUR,
+        receivedIRR: correctedReceivedIRR,
+        receivedEUR: correctedReceivedEUR,
+        outstandingIRR: correctedOutstandingIRR,
+        outstandingEUR: correctedOutstandingEUR,
+        totalInvoiceEquivalentIRR: totalInvoiceEquiv,
+        totalReceivedEquivalentIRR: totalReceivedEquiv,
+        totalOutstandingEquivalentIRR: totalOutstandingEquiv,
+        advancePaymentIRR: validAdv,
+        advancePaymentPercentage: Number(((validAdv / base) * 100).toFixed(2)),
+        advancePaymentItems: advItems,
+        adjustmentIRR: validAdj,
+        adjustmentPercentage: Number(((validAdj / base) * 100).toFixed(2)),
+        adjustmentItems: adjItems,
+        adjustmentReceivedIRR: fin.adjustmentReceivedIRR || 925447234863,
+        adjustmentApprovedIRR: fin.adjustmentApprovedIRR || 148294423522,
+        financialProgress: expectedFinProg,
+        approvedFinancialProgress: expectedFinProg,
+        receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
+        collectionRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100,
+        outstandingRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0,
+        traceability: {
+          ...(fin.traceability || initialFinancialSummary.traceability!),
+          financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
+          advancePaymentSource: 'Worksheet "Invoice" (مبلغ پیش پرداخت - ۴ فقره)',
+          adjustmentSource: 'Worksheet "Invoice" (تعدیل(ریال) - ۱۱ صورت‌وضعیت)'
+        }
+      }
+    };
+  }
+
   constructor() {
     this.masterData = this.loadFromStorage(STORAGE_KEYS.MASTER, initialProjectMasterData);
     // Project Master Data migration: ensure contract number, subject, and contract values match
@@ -146,10 +237,11 @@ export class ProjectDataStore {
     this.currentEquipment = this.loadFromStorage(STORAGE_KEYS.EQUIPMENT, initialEquipmentRecord);
     this.financialSettings = this.loadFromStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, defaultFinancialSettings);
     // Financial Storage Migration: migrate from previous 4,230,000,000,000 to default 5,230,000,000,000 IRR (total contract base)
-    if (this.financialSettings?.calculationBaseIRR === 4230000000000) {
+    if (!this.financialSettings?.calculationBaseIRR || this.financialSettings.calculationBaseIRR < 5_000_000_000_000) {
       this.financialSettings = {
         ...this.financialSettings,
-        calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR
+        calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR,
+        eurToIrrRate: this.financialSettings?.eurToIrrRate || EUR_TO_IRR
       };
       this.saveToStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, this.financialSettings);
     }
@@ -163,99 +255,9 @@ export class ProjectDataStore {
     // Financial Storage Migration: ensure current IPC financialSummary uses financialCalculationBaseIRR (5,230,000,000,000)
     // and accurate totals for Advance Payment (1,154,139,060,582 IRR) and Adjustment (1,073,741,658,385 IRR)
     // Rule: When claim is received (دریافت شده), it must NOT be in outstanding claims (مطالبات باز).
-    if (this.currentIpc?.financialSummary) {
-      const fin = this.currentIpc.financialSummary;
-      const base = this.financialSettings?.calculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR;
-      const eurRate = this.financialSettings?.eurToIrrRate || EUR_TO_IRR;
-
-      const isFinReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '') &&
-        !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '');
-      
-      const isInvoice16Received = fin.latestInvoiceNumber === 16;
-      const shouldBeReceived = isFinReceived || isInvoice16Received;
-
-      const correctedLatestStatus = shouldBeReceived ? 'دریافت شده' : (fin.latestInvoiceStatus || 'تایید شده');
-      const correctedInvIRR = (fin.invoiceCumulativeIRR && fin.invoiceCumulativeIRR > 1000000) ? (fin.invoiceCumulativeIRR === 2484501777490 ? 2484314854716 : fin.invoiceCumulativeIRR) : 2484314854716;
-      const correctedInvEUR = (fin.invoiceCumulativeEUR && fin.invoiceCumulativeEUR > 100) ? (fin.invoiceCumulativeEUR === 848082.51 ? 746822 : fin.invoiceCumulativeEUR) : 746822;
-
-      const correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? 2439778972025);
-      const correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 510550.41);
-
-      const correctedOutstandingIRR = shouldBeReceived ? 0 : Math.max(0, correctedInvIRR - correctedReceivedIRR);
-      const correctedOutstandingEUR = shouldBeReceived ? 0 : Math.max(0, correctedInvEUR - correctedReceivedEUR);
-
-      const totalInvoiceEquiv = correctedInvIRR + (correctedInvEUR * eurRate);
-      const totalReceivedEquiv = correctedReceivedIRR + (correctedReceivedEUR * eurRate);
-      const totalOutstandingEquiv = correctedOutstandingIRR + (correctedOutstandingEUR * eurRate);
-
-      const expectedFinProg = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
-      const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
-        ? 1154139060582
-        : fin.advancePaymentIRR;
-      const validAdj = (!fin.adjustmentIRR || fin.adjustmentIRR < 500_000_000_000)
-        ? 1073741658385
-        : fin.adjustmentIRR;
-      const advItems = fin.advancePaymentItems && fin.advancePaymentItems.length > 0
-        ? fin.advancePaymentItems
-        : initialFinancialSummary.advancePaymentItems;
-      const adjItems = fin.adjustmentItems && fin.adjustmentItems.length > 0
-        ? fin.adjustmentItems
-        : initialFinancialSummary.adjustmentItems;
-
-      if (
-        fin.financialCalculationBaseIRR !== base ||
-        fin.financialProgress !== expectedFinProg ||
-        fin.advancePaymentIRR !== validAdv ||
-        fin.adjustmentIRR !== validAdj ||
-        fin.outstandingIRR !== correctedOutstandingIRR ||
-        fin.receivedIRR !== correctedReceivedIRR ||
-        fin.latestInvoiceStatus !== correctedLatestStatus ||
-        !fin.advancePaymentItems ||
-        !fin.adjustmentItems
-      ) {
-        this.currentIpc = {
-          ...this.currentIpc,
-          status: (shouldBeReceived ? 'دریافت شده' : this.currentIpc.status) as any,
-          paymentStatus: (shouldBeReceived ? 'paid' : this.currentIpc.paymentStatus) as any,
-          paidAmount: correctedReceivedIRR,
-          outstandingAmount: correctedOutstandingIRR,
-          advancePaymentAmount: validAdv,
-          financialSummary: {
-            ...fin,
-            financialCalculationBaseIRR: base,
-            latestInvoiceStatus: correctedLatestStatus,
-            invoiceCumulativeIRR: correctedInvIRR,
-            invoiceCumulativeEUR: correctedInvEUR,
-            receivedIRR: correctedReceivedIRR,
-            receivedEUR: correctedReceivedEUR,
-            outstandingIRR: correctedOutstandingIRR,
-            outstandingEUR: correctedOutstandingEUR,
-            totalInvoiceEquivalentIRR: totalInvoiceEquiv,
-            totalReceivedEquivalentIRR: totalReceivedEquiv,
-            totalOutstandingEquivalentIRR: totalOutstandingEquiv,
-            advancePaymentIRR: validAdv,
-            advancePaymentPercentage: Number(((validAdv / base) * 100).toFixed(2)),
-            advancePaymentItems: advItems,
-            adjustmentIRR: validAdj,
-            adjustmentPercentage: Number(((validAdj / base) * 100).toFixed(2)),
-            adjustmentItems: adjItems,
-            adjustmentReceivedIRR: fin.adjustmentReceivedIRR || 925447234863,
-            adjustmentApprovedIRR: fin.adjustmentApprovedIRR || 148294423522,
-            financialProgress: expectedFinProg,
-            approvedFinancialProgress: expectedFinProg,
-            receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
-            collectionRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100,
-            outstandingRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0,
-            traceability: {
-              ...(fin.traceability || initialFinancialSummary.traceability!),
-              financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
-              advancePaymentSource: 'Worksheet "Invoice" (مبلغ پیش پرداخت - ۴ فقره)',
-              adjustmentSource: 'Worksheet "Invoice" (تعدیل(ریال) - ۱۱ صورت‌وضعیت)'
-            }
-          }
-        };
-        this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
-      }
+    if (this.currentIpc) {
+      this.currentIpc = ProjectDataStore.normalizeIpcRecord(this.currentIpc, this.financialSettings);
+      this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
     }
 
     // Storage migration: ensure current PMS plannedProgress uses PMS Plan Cumulative (98.4078%) rather than stale S-Curve override (78.03% or 78.40%)
@@ -513,7 +515,20 @@ export class ProjectDataStore {
         workPlannedTomorrow: report.daily.workPlannedTomorrow || []
       };
     }
-    if (report.ipc) this.currentIpc = { ...initialIpcRecord, ...report.ipc };
+    if (report.financialSettings) {
+      this.financialSettings = {
+        ...report.financialSettings,
+        calculationBaseIRR: (report.financialSettings.calculationBaseIRR && report.financialSettings.calculationBaseIRR >= 5_000_000_000_000)
+          ? report.financialSettings.calculationBaseIRR
+          : FINANCIAL_CALCULATION_BASE_IRR,
+        eurToIrrRate: report.financialSettings.eurToIrrRate || EUR_TO_IRR
+      };
+      this.saveToStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, this.financialSettings);
+    }
+    if (report.ipc) {
+      this.currentIpc = ProjectDataStore.normalizeIpcRecord({ ...initialIpcRecord, ...report.ipc }, this.financialSettings);
+      this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
+    }
     if (report.equipment) {
       this.currentEquipment = {
         ...initialEquipmentRecord,
@@ -523,7 +538,6 @@ export class ProjectDataStore {
           : (this.currentEquipment?.items || initialEquipmentRecord.items || initialEquipmentItems)
       };
     }
-    if (report.financialSettings) this.financialSettings = report.financialSettings;
 
     this.publishedReportMetadata = {
       id: report.id,
@@ -609,55 +623,16 @@ export class ProjectDataStore {
   public updateFinancialSettings(settings: Partial<FinancialSettings>) {
     this.financialSettings = {
       ...this.getFinancialSettings(),
-      ...settings
+      ...settings,
+      calculationBaseIRR: (settings.calculationBaseIRR && settings.calculationBaseIRR >= 5_000_000_000_000)
+        ? settings.calculationBaseIRR
+        : (this.financialSettings?.calculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)
     };
     this.saveToStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, this.financialSettings);
 
-    // Recalculate currentIpc.financialSummary percentages with the new base
-    if (this.currentIpc?.financialSummary) {
-      const fin = this.currentIpc.financialSummary;
-      const base = this.financialSettings.calculationBaseIRR;
-      const eurRate = this.financialSettings.eurToIrrRate;
-
-      const isReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '') &&
-        !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || this.currentIpc.status || '');
-
-      const finalReceivedIRR = isReceived ? (fin.invoiceCumulativeIRR ?? fin.receivedIRR) : fin.receivedIRR;
-      const finalReceivedEUR = isReceived ? (fin.invoiceCumulativeEUR ?? fin.receivedEUR) : fin.receivedEUR;
-      const finalOutstandingIRR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeIRR ?? 0) - (finalReceivedIRR ?? 0));
-      const finalOutstandingEUR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeEUR ?? 0) - (finalReceivedEUR ?? 0));
-
-      const totalInvoiceEquiv = (fin.invoiceCumulativeIRR ?? 0) + ((fin.invoiceCumulativeEUR ?? 0) * eurRate);
-      const totalReceivedEquiv = (finalReceivedIRR ?? 0) + ((finalReceivedEUR ?? 0) * eurRate);
-      const totalOutstandingEquiv = (finalOutstandingIRR ?? 0) + ((finalOutstandingEUR ?? 0) * eurRate);
-
-      const calculatedFinProgress = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
-      const calculatedColRatio = totalInvoiceEquiv > 0 ? (isReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100;
-      const calculatedOutRatio = totalInvoiceEquiv > 0 ? (isReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0;
-
-      this.currentIpc = {
-        ...this.currentIpc,
-        paidAmount: finalReceivedIRR ?? this.currentIpc.paidAmount,
-        outstandingAmount: finalOutstandingIRR,
-        financialSummary: {
-          ...fin,
-          financialCalculationBaseIRR: base,
-          receivedIRR: finalReceivedIRR,
-          receivedEUR: finalReceivedEUR,
-          outstandingIRR: finalOutstandingIRR,
-          outstandingEUR: finalOutstandingEUR,
-          totalInvoiceEquivalentIRR: totalInvoiceEquiv,
-          totalReceivedEquivalentIRR: totalReceivedEquiv,
-          totalOutstandingEquivalentIRR: totalOutstandingEquiv,
-          financialProgress: calculatedFinProgress,
-          approvedFinancialProgress: calculatedFinProgress,
-          receivedFinancialProgress: Number(((totalReceivedEquiv / base) * 100).toFixed(2)),
-          collectionRatio: calculatedColRatio,
-          outstandingRatio: calculatedOutRatio,
-          advancePaymentPercentage: fin.advancePaymentIRR ? Number(((fin.advancePaymentIRR / base) * 100).toFixed(2)) : 22.07,
-          adjustmentPercentage: fin.adjustmentIRR ? Number(((fin.adjustmentIRR / base) * 100).toFixed(2)) : 20.53
-        }
-      };
+    // Recalculate currentIpc with the new settings
+    if (this.currentIpc) {
+      this.currentIpc = ProjectDataStore.normalizeIpcRecord(this.currentIpc, this.financialSettings);
       this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
     }
     this.notify();
@@ -1262,7 +1237,7 @@ export class ProjectDataStore {
       };
     }
 
-    const ipcFull: IpcRecord = {
+    const ipcFull: IpcRecord = ProjectDataStore.normalizeIpcRecord({
       ...this.currentIpc,
       ...newRecord,
       financialSummary: updatedFinSummary,
@@ -1270,7 +1245,7 @@ export class ProjectDataStore {
       version: nextVersion,
       dataDate: incomingDate,
       uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16)
-    } as IpcRecord;
+    } as IpcRecord, this.financialSettings);
 
     this.currentIpc = ipcFull;
     this.ipcHistory = [ipcFull, ...this.ipcHistory];

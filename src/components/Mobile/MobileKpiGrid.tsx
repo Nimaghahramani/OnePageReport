@@ -17,7 +17,7 @@ export const MobileKpiGrid: React.FC<MobileKpiGridProps> = ({ kpis, lang }) => {
 
   const elapsedStr = kpis.timeElapsedPercentage !== null ? `${kpis.timeElapsedPercentage}%` : '—';
   const equipmentStr = kpis.equipmentInstallationPercentage !== null ? `${kpis.equipmentInstallationPercentage.toFixed(1)}%` : '—';
-  const financialStr = kpis.financialProgress !== null ? `${kpis.financialProgress.toFixed(1)}%` : '—';
+  const financialStr = kpis.financialProgress !== null ? `${kpis.financialProgress.toFixed(2)}%` : '—';
 
   return (
     <div id="mobile-kpi-grid" className="grid grid-cols-2 gap-2 mb-2.5">

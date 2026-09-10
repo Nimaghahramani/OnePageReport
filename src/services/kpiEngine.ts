@@ -7,7 +7,8 @@ import {
   EquipmentRecord,
   CalculatedReportKPIs,
   SiteManpowerKPI,
-  FINANCIAL_CALCULATION_BASE_IRR
+  FINANCIAL_CALCULATION_BASE_IRR,
+  EUR_TO_IRR
 } from '../types';
 import { getPlannedAtDate, calculateScheduleDelayFromPlannedCurve } from './scurveEngine';
 import {
@@ -217,6 +218,40 @@ export function calculateExecutiveKPIs(
       ? Number(((ipcPaid / ipcApproved) * 100).toFixed(1))
       : null);
 
+  const finCalculationBase = (finSummary?.financialCalculationBaseIRR && finSummary.financialCalculationBaseIRR >= 5_000_000_000_000)
+    ? finSummary.financialCalculationBaseIRR
+    : FINANCIAL_CALCULATION_BASE_IRR;
+
+  const totalInvoiceEquiv = finSummary?.totalInvoiceEquivalentIRR ??
+    ((finSummary?.invoiceCumulativeIRR ?? ipcApproved ?? 0) + ((finSummary?.invoiceCumulativeEUR ?? 0) * (finSummary?.exchangeRateEURtoIRR || EUR_TO_IRR)));
+
+  const calculatedFinProgress = totalInvoiceEquiv > 0
+    ? Number(((totalInvoiceEquiv / finCalculationBase) * 100).toFixed(2))
+    : (finSummary?.financialProgress ?? (ipcApproved ? Number(((ipcApproved / finCalculationBase) * 100).toFixed(2)) : null));
+
+  const finalColRatio = isIpcReceived
+    ? 100
+    : (finSummary?.collectionRatio ?? ipcCachedRatio ?? 100);
+
+  const finalOutRatio = isIpcReceived
+    ? 0
+    : (finSummary?.outstandingRatio ?? (ipcCachedRatio !== null ? Number((100 - ipcCachedRatio).toFixed(2)) : 0));
+
+  const normalizedFinSummary = finSummary ? {
+    ...finSummary,
+    financialCalculationBaseIRR: finCalculationBase,
+    financialProgress: calculatedFinProgress ?? finSummary.financialProgress,
+    approvedFinancialProgress: calculatedFinProgress ?? finSummary.approvedFinancialProgress,
+    latestInvoiceStatus: isIpcReceived ? 'دریافت شده' : (finSummary.latestInvoiceStatus || 'تایید شده'),
+    receivedIRR: isIpcReceived ? (finSummary.invoiceCumulativeIRR ?? finSummary.receivedIRR) : finSummary.receivedIRR,
+    receivedEUR: isIpcReceived ? (finSummary.invoiceCumulativeEUR ?? finSummary.receivedEUR) : finSummary.receivedEUR,
+    outstandingIRR: isIpcReceived ? 0 : finSummary.outstandingIRR,
+    outstandingEUR: isIpcReceived ? 0 : finSummary.outstandingEUR,
+    totalOutstandingEquivalentIRR: isIpcReceived ? 0 : finSummary.totalOutstandingEquivalentIRR,
+    collectionRatio: finalColRatio,
+    outstandingRatio: finalOutRatio
+  } : undefined;
+
   // 5. Site Resources & Manpower
   const activeManpower = daily ? (daily.siteManpower?.total ?? daily.manpower?.total ?? null) : null;
   const activeMachinery = daily?.machinery?.active ?? null;
@@ -362,11 +397,11 @@ export function calculateExecutiveKPIs(
   }
 
   // Line 4: Dual-Currency Financial Status
-  if (finSummary && (isValidNumericValue(finSummary.financialProgress) || isValidNumericValue(finSummary.collectionRatio))) {
-    const finProg = isValidNumericValue(finSummary.financialProgress) ? `${finSummary.financialProgress}%` : null;
-    const colRatio = isValidNumericValue(finSummary.collectionRatio) ? `${finSummary.collectionRatio}%` : null;
-    const ipcLabelFa = finSummary.latestInvoiceNumber ? `IPC-${finSummary.latestInvoiceNumber}` : (ipc?.latestIpcNo || 'جاری');
-    const ipcLabelEn = finSummary.latestInvoiceNumber ? `IPC #${finSummary.latestInvoiceNumber}` : (ipc?.latestIpcNo || 'latest IPC');
+  if (normalizedFinSummary && (isValidNumericValue(normalizedFinSummary.financialProgress) || isValidNumericValue(normalizedFinSummary.collectionRatio))) {
+    const finProg = isValidNumericValue(normalizedFinSummary.financialProgress) ? `${Number(normalizedFinSummary.financialProgress).toFixed(2)}%` : null;
+    const colRatio = isValidNumericValue(normalizedFinSummary.collectionRatio) ? `${Number(normalizedFinSummary.collectionRatio).toFixed(1)}%` : null;
+    const ipcLabelFa = normalizedFinSummary.latestInvoiceNumber ? `IPC-${normalizedFinSummary.latestInvoiceNumber}` : (ipc?.latestIpcNo || 'جاری');
+    const ipcLabelEn = normalizedFinSummary.latestInvoiceNumber ? `IPC #${normalizedFinSummary.latestInvoiceNumber}` : (ipc?.latestIpcNo || 'latest IPC');
 
     if (finProg && colRatio) {
       summaryFa.push(
@@ -445,11 +480,11 @@ export function calculateExecutiveKPIs(
     ipcPaid,
     ipcOutstanding,
     ipcCachedRatio,
-    financialProgress: finSummary?.financialProgress ?? (ipcApproved ? Number(((ipcApproved / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(1)) : null),
-    financialCalculationBaseIRR: finSummary?.financialCalculationBaseIRR ?? FINANCIAL_CALCULATION_BASE_IRR,
-    collectionRatio: finSummary?.collectionRatio ?? ipcCachedRatio,
-    outstandingRatio: finSummary?.outstandingRatio ?? (ipcCachedRatio !== null ? Number((100 - ipcCachedRatio).toFixed(1)) : null),
-    financialSummary: finSummary,
+    financialProgress: calculatedFinProgress,
+    financialCalculationBaseIRR: finCalculationBase,
+    collectionRatio: finalColRatio,
+    outstandingRatio: finalOutRatio,
+    financialSummary: normalizedFinSummary,
     activeManpower,
     siteManpower,
     activeMachinery,
