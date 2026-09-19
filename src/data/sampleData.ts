@@ -535,24 +535,24 @@ export const initialFinancialSummary: FinancialSummary = {
     { id: 4, itemNo: 'خرید کالا', month: 'پیش پرداخت خرید کالا', amountIRR: 81253803955 }
   ],
 
-  latestInvoiceNumber: 16,
-  latestInvoicePeriod: 'تیرماه 1405',
-  latestInvoiceStatus: 'دریافت شده',
+  latestInvoiceNumber: 17,
+  latestInvoicePeriod: 'مرداد 1405',
+  latestInvoiceStatus: 'تایید شده',
 
-  invoiceCumulativeIRR: 2484314854716,
-  invoiceCumulativeEUR: 746822,
-  invoiceEUREquivalentIRR: 746822 * EUR_TO_IRR,
-  totalInvoiceEquivalentIRR: 2484314854716 + (746822 * EUR_TO_IRR),
+  invoiceCumulativeIRR: 2579805154591,
+  invoiceCumulativeEUR: 836400,
+  invoiceEUREquivalentIRR: 836400 * EUR_TO_IRR,
+  totalInvoiceEquivalentIRR: 2579805154591 + (836400 * EUR_TO_IRR),
 
   receivedIRR: 2484314854716,
   receivedEUR: 746822,
   receivedEUREquivalentIRR: 746822 * EUR_TO_IRR,
   totalReceivedEquivalentIRR: 2484314854716 + (746822 * EUR_TO_IRR),
 
-  outstandingIRR: 0,
-  outstandingEUR: 0,
-  outstandingEUREquivalentIRR: 0,
-  totalOutstandingEquivalentIRR: 0,
+  outstandingIRR: 95490299875,
+  outstandingEUR: 89578,
+  outstandingEUREquivalentIRR: 89578 * EUR_TO_IRR,
+  totalOutstandingEquivalentIRR: 95490299875 + (89578 * EUR_TO_IRR),
 
   adjustmentIRR: 1073741658385,
   adjustmentPercentage: Number(((1073741658385 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 20.53%
@@ -573,47 +573,48 @@ export const initialFinancialSummary: FinancialSummary = {
   adjustmentApprovedIRR: 148294423522,
 
   // Progress Percentages (against 5,230,000,000,000 IRR)
-  financialProgress: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 55.44%
-  approvedFinancialProgress: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 55.44%
+  financialProgress: Number((((2579805154591 + (836400 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 58.22%
+  approvedFinancialProgress: Number((((2579805154591 + (836400 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 58.22%
   receivedFinancialProgress: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 55.44%
 
   // Operational Ratios (against total invoice equivalent)
-  collectionRatio: 100, // 100.0%
-  outstandingRatio: 0, // 0.0%
+  collectionRatio: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / (2579805154591 + (836400 * EUR_TO_IRR))) * 100).toFixed(2)), // 95.23%
+  outstandingRatio: Number((((95490299875 + (89578 * EUR_TO_IRR)) / (2579805154591 + (836400 * EUR_TO_IRR))) * 100).toFixed(2)), // 4.77%
 
   traceability: {
     exchangeRateFormula: 'EUR Amount × 556,286 IRR',
     financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
-    latestInvoiceSource: 'Worksheet "Invoice" Row 16',
-    cumulativeIRRSource: 'Worksheet "Invoice" (مبلغ تجمعی ریالی)',
-    cumulativeEURSource: 'Worksheet "Invoice" (مبلغ تجمعی ارزی)',
-    receivedIRRSource: 'Worksheet "Invoice" (دریافتی ریالی)',
-    receivedEURSource: 'Worksheet "Invoice" (دریافتی ارزی)',
+    latestInvoiceSource: 'Worksheet "Invoice" Row 17 (مرداد 1405)',
+    cumulativeIRRSource: 'Worksheet "Invoice" (مبلغ تجمعی ریالی: ۲,۵۷۹,۸۰۵,۱۵۴,۵۹۱ ریال)',
+    cumulativeEURSource: 'Worksheet "Invoice" (مبلغ تجمعی ارزی: ۸۳۶,۴۰۰ یورو)',
+    receivedIRRSource: 'Worksheet "Invoice" (دریافتی ریالی: ۲,۴۸۴,۳۱۴,۸۵۴,۷۱۶ ریال)',
+    receivedEURSource: 'Worksheet "Invoice" (دریافتی ارزی: ۷۴۶,۸۲۲ یورو)',
     advancePaymentSource: 'Worksheet "Invoice" (مبلغ پیش پرداخت)',
     adjustmentSource: 'Worksheet "Invoice" (تعدیل(ریال))'
   }
 };
 
 export const initialIpcRecord: IpcRecord = {
-  id: 'ipc-no16',
-  version: 16,
+  id: 'ipc-no17',
+  version: 17,
   dataDate: '2026-08-29',
   uploadDate: '2026-08-29 17:00',
   fileName: 'Daily_Report_Workbook.xlsx',
   source: 'Worksheet: Invoice (Daily Report Workbook)',
-  latestIpcNo: 'صورت‌وضعیت موقت شماره ۱۶ (IPC-16)',
-  ipcPeriod: 'تیرماه 1405',
-  submittedAmount: 2484314854716,
-  approvedAmount: 2484314854716,
+  latestIpcNo: 'صورت‌وضعیت موقت شماره ۱۷ (IPC-17)',
+  ipcPeriod: 'مرداد 1405',
+  submittedAmount: 2579805154591,
+  approvedAmount: 2579805154591,
   paidAmount: 2484314854716,
-  outstandingAmount: 0,
-  retainedAmount: 124225088874,
-  cumulativeSubmitted: 2484314854716,
-  cumulativeApproved: 2484314854716,
+  outstandingAmount: 95490299875,
+  retainedAmount: 128990257730,
+  cumulativeSubmitted: 2579805154591,
+  cumulativeApproved: 2579805154591,
   cumulativePaid: 2484314854716,
-  submissionDate: '1405/04/31',
-  approvalDate: '1405/05/15',
-  paymentStatus: 'paid',
+  submissionDate: '1405/05/31',
+  approvalDate: '1405/06/15',
+  status: 'تایید شده',
+  paymentStatus: 'partially_paid',
   currency: 'IRR / EUR',
   financialSummary: initialFinancialSummary
 };

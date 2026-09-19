@@ -414,10 +414,10 @@ export function calculateExecutiveKPIs(
 
     if (finProg && colRatio) {
       summaryFa.push(
-        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، پیشرفت مالی تجمعی به ${finProg} و نسبت وصول مطالبات به کل مطالبات به ${colRatio} رسیده است.`
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، پیشرفت مالی تجمعی به ${finProg} و نسبت وصول مطالبات به ${colRatio} رسیده است.`
       );
       summaryEn.push(
-        `Financial status: Cumulative financial progress is ${finProg} with a collection ratio to total claims of ${colRatio} for ${ipcLabelEn}.`
+        `Financial status: Cumulative financial progress is ${finProg} with a collection ratio of ${colRatio} for ${ipcLabelEn}.`
       );
     } else if (finProg) {
       summaryFa.push(
@@ -428,10 +428,10 @@ export function calculateExecutiveKPIs(
       );
     } else if (colRatio) {
       summaryFa.push(
-        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، نسبت وصول مطالبات به کل مطالبات به ${colRatio} رسیده است.`
+        `وضعیت مالی: در آخرین صورت‌وضعیت (${ipcLabelFa})، نسبت وصول مطالبات به ${colRatio} رسیده است.`
       );
       summaryEn.push(
-        `Financial status: Collection ratio to total claims reached ${colRatio} for ${ipcLabelEn}.`
+        `Financial status: Collection ratio reached ${colRatio} for ${ipcLabelEn}.`
       );
     }
   } else if (ipc && isValidNumericValue(ipcApproved) && isValidNumericValue(ipcPaid)) {

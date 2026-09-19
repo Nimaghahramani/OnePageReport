@@ -92,19 +92,19 @@ export class ProjectDataStore {
     const isFinReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || rawIpc.status || rawIpc.paymentStatus || '') &&
       !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || rawIpc.status || rawIpc.paymentStatus || '');
     
-    const isInvoice16Received = fin.latestInvoiceNumber === 16 || rawIpc.version === 16;
-    const shouldBeReceived = isFinReceived || isInvoice16Received;
+    // Status is determined by actual invoice status from the Excel file
+    const shouldBeReceived = isFinReceived;
 
     const correctedLatestStatus = shouldBeReceived ? 'دریافت شده' : (fin.latestInvoiceStatus || 'تایید شده');
     const correctedInvIRR = (fin.invoiceCumulativeIRR && fin.invoiceCumulativeIRR > 1000000)
-      ? (fin.invoiceCumulativeIRR === 2484501777490 ? 2484314854716 : fin.invoiceCumulativeIRR)
-      : (rawIpc.approvedAmount || 2484314854716);
+      ? fin.invoiceCumulativeIRR
+      : (rawIpc.approvedAmount || 2579805154591);
     const correctedInvEUR = (fin.invoiceCumulativeEUR && fin.invoiceCumulativeEUR > 100)
-      ? (fin.invoiceCumulativeEUR === 848082.51 ? 746822 : fin.invoiceCumulativeEUR)
-      : 746822;
+      ? fin.invoiceCumulativeEUR
+      : 836400;
 
-    const correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? rawIpc.paidAmount ?? 2439778972025);
-    const correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 510550.41);
+    const correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? rawIpc.paidAmount ?? 2484314854716);
+    const correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 746822);
 
     const correctedOutstandingIRR = shouldBeReceived ? 0 : Math.max(0, correctedInvIRR - correctedReceivedIRR);
     const correctedOutstandingEUR = shouldBeReceived ? 0 : Math.max(0, correctedInvEUR - correctedReceivedEUR);
@@ -129,8 +129,10 @@ export class ProjectDataStore {
 
     return {
       ...rawIpc,
-      status: (shouldBeReceived ? 'دریافت شده' : rawIpc.status) as any,
-      paymentStatus: (shouldBeReceived ? 'paid' : rawIpc.paymentStatus) as any,
+      status: (shouldBeReceived ? 'دریافت شده' : (fin.latestInvoiceStatus || rawIpc.status || 'تایید شده')) as any,
+      paymentStatus: (shouldBeReceived ? 'paid' : (rawIpc.paymentStatus || 'partially_paid')) as any,
+      approvedAmount: correctedInvIRR,
+      submittedAmount: correctedInvIRR,
       paidAmount: correctedReceivedIRR,
       outstandingAmount: correctedOutstandingIRR,
       advancePaymentAmount: validAdv,
@@ -252,11 +254,15 @@ export class ProjectDataStore {
     this.ipcHistory = this.loadFromStorage(STORAGE_KEYS.IPC_HISTORY, [initialIpcRecord]);
     this.equipmentHistory = this.loadFromStorage(STORAGE_KEYS.EQUIPMENT_HISTORY, [initialEquipmentRecord]);
 
-    // Financial Storage Migration: ensure current IPC financialSummary uses financialCalculationBaseIRR (5,230,000,000,000)
+    // Financial Storage Migration: ensure current IPC financialSummary uses latest factual data (IPC 17)
     // and accurate totals for Advance Payment (1,154,139,060,582 IRR) and Adjustment (1,073,741,658,385 IRR)
     // Rule: When claim is received (دریافت شده), it must NOT be in outstanding claims (مطالبات باز).
     if (this.currentIpc) {
-      this.currentIpc = ProjectDataStore.normalizeIpcRecord(this.currentIpc, this.financialSettings);
+      if (this.currentIpc.version <= 16 || this.currentIpc.financialSummary?.latestInvoiceNumber === 16 || this.currentIpc.approvedAmount === 2484314854716) {
+        this.currentIpc = initialIpcRecord;
+      } else {
+        this.currentIpc = ProjectDataStore.normalizeIpcRecord(this.currentIpc, this.financialSettings);
+      }
       this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
     }
 
