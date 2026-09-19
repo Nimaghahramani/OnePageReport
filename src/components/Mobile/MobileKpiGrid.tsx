@@ -15,7 +15,7 @@ export const MobileKpiGrid: React.FC<MobileKpiGridProps> = ({ kpis, lang }) => {
   const variance = kpis.progressVariance !== null ? kpis.progressVariance : null;
   const isPositiveVariance = variance !== null && variance >= 0;
 
-  const elapsedStr = kpis.timeElapsedPercentage !== null ? `${kpis.timeElapsedPercentage}%` : '—';
+  const elapsedStr = kpis.timeElapsedPercentage !== null ? `${Math.min(100, Math.max(0, kpis.timeElapsedPercentage))}%` : '—';
   const equipmentStr = kpis.equipmentInstallationPercentage !== null ? `${kpis.equipmentInstallationPercentage.toFixed(1)}%` : '—';
   const financialStr = kpis.financialProgress !== null ? `${kpis.financialProgress.toFixed(2)}%` : '—';
 

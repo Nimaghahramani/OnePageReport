@@ -103,8 +103,20 @@ export class ProjectDataStore {
       ? fin.invoiceCumulativeEUR
       : 836400;
 
-    const correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? rawIpc.paidAmount ?? 2484314854716);
-    const correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 746822);
+    let correctedReceivedIRR = shouldBeReceived ? correctedInvIRR : (fin.receivedIRR ?? rawIpc.paidAmount ?? 2484314854716);
+    let correctedReceivedEUR = shouldBeReceived ? correctedInvEUR : (fin.receivedEUR ?? 746822);
+
+    // If IPC is not marked as received, and is IPC 17:
+    // Received amount is IPC 16 (2,484,314,854,716 IRR) and outstanding is 95,490,299,875 IRR (~9.55 billion Tomans)
+    // If it was wrongly holding 2,247,938,204,279 (IPC 14), automatically correct it!
+    if (!shouldBeReceived && (correctedInvIRR === 2579805154591 || fin.latestInvoiceNumber === 17 || rawIpc.version === 17)) {
+      if (!correctedReceivedIRR || correctedReceivedIRR < 2400000000000 || correctedReceivedIRR === 2247938204279) {
+        correctedReceivedIRR = 2484314854716;
+      }
+      if (!correctedReceivedEUR || correctedReceivedEUR < 700000) {
+        correctedReceivedEUR = 746822;
+      }
+    }
 
     const correctedOutstandingIRR = shouldBeReceived ? 0 : Math.max(0, correctedInvIRR - correctedReceivedIRR);
     const correctedOutstandingEUR = shouldBeReceived ? 0 : Math.max(0, correctedInvEUR - correctedReceivedEUR);
@@ -207,6 +219,23 @@ export class ProjectDataStore {
         updatedMaster.clientNameFa = 'شرکت ملی صنایع پتروشیمی';
         masterUpdated = true;
       }
+      if (!updatedMaster.startDate || updatedMaster.startDate !== '1403/12/21') {
+        updatedMaster.startDate = '1403/12/21';
+        masterUpdated = true;
+      }
+      if (!updatedMaster.contractualEndDate || updatedMaster.contractualEndDate !== '1405/06/21') {
+        updatedMaster.contractualEndDate = '1405/06/21';
+        updatedMaster.contractualFinishDate = '1405/06/21';
+        masterUpdated = true;
+      }
+      if (!updatedMaster.temporaryExtendedEndDate || updatedMaster.temporaryExtendedEndDate !== '1405/10/30') {
+        updatedMaster.temporaryExtendedEndDate = '1405/10/30';
+        masterUpdated = true;
+      }
+      if (!updatedMaster.durationDays || updatedMaster.durationDays !== 550) {
+        updatedMaster.durationDays = 550;
+        masterUpdated = true;
+      }
       if (masterUpdated) {
         this.masterData = updatedMaster;
         this.saveToStorage(STORAGE_KEYS.MASTER, this.masterData);
@@ -258,7 +287,10 @@ export class ProjectDataStore {
     // and accurate totals for Advance Payment (1,154,139,060,582 IRR) and Adjustment (1,073,741,658,385 IRR)
     // Rule: When claim is received (دریافت شده), it must NOT be in outstanding claims (مطالبات باز).
     if (this.currentIpc) {
-      if (this.currentIpc.version <= 16 || this.currentIpc.financialSummary?.latestInvoiceNumber === 16 || this.currentIpc.approvedAmount === 2484314854716) {
+      const fin = this.currentIpc.financialSummary;
+      const isStaleReceived = fin?.receivedIRR === 2247938204279 || (fin?.outstandingIRR && fin.outstandingIRR > 200000000000);
+      const isStaleVersion = this.currentIpc.version <= 16 || fin?.latestInvoiceNumber === 16 || this.currentIpc.approvedAmount === 2484314854716;
+      if (isStaleVersion || isStaleReceived) {
         this.currentIpc = initialIpcRecord;
       } else {
         this.currentIpc = ProjectDataStore.normalizeIpcRecord(this.currentIpc, this.financialSettings);
@@ -1063,8 +1095,18 @@ export class ProjectDataStore {
       const isReceived = /دریافت|وصول|paid|received|پرداخت\s*شده/i.test(fin.latestInvoiceStatus || '') &&
         !/دریافت\s*نشده|پرداخت\s*نشده|unpaid/i.test(fin.latestInvoiceStatus || '');
 
-      const finalReceivedIRR = isReceived ? (fin.invoiceCumulativeIRR ?? fin.receivedIRR) : fin.receivedIRR;
-      const finalReceivedEUR = isReceived ? (fin.invoiceCumulativeEUR ?? fin.receivedEUR) : fin.receivedEUR;
+      let finalReceivedIRR = isReceived ? (fin.invoiceCumulativeIRR ?? fin.receivedIRR) : fin.receivedIRR;
+      let finalReceivedEUR = isReceived ? (fin.invoiceCumulativeEUR ?? fin.receivedEUR) : fin.receivedEUR;
+
+      if (!isReceived && (fin.latestInvoiceNumber === 17 || fin.invoiceCumulativeIRR === 2579805154591)) {
+        if (!finalReceivedIRR || finalReceivedIRR < 2400000000000 || finalReceivedIRR === 2247938204279) {
+          finalReceivedIRR = 2484314854716;
+        }
+        if (!finalReceivedEUR || finalReceivedEUR < 700000) {
+          finalReceivedEUR = 746822;
+        }
+      }
+
       const finalOutstandingIRR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeIRR ?? 0) - (finalReceivedIRR ?? 0));
       const finalOutstandingEUR = isReceived ? 0 : Math.max(0, (fin.invoiceCumulativeEUR ?? 0) - (finalReceivedEUR ?? 0));
 

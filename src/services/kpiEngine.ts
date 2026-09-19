@@ -124,7 +124,8 @@ export function calculateExecutiveKPIs(
     const elapsed = differenceInCalendarDays(parsedReportDate.jalaliString, parsedStartDate.jalaliString);
     if (elapsed !== null && elapsed >= 0) {
       timeElapsedDays = elapsed;
-      timeElapsedPercentage = Number(((timeElapsedDays / totalDurationDays) * 100).toFixed(1));
+      // Cap timeElapsedPercentage at 100% maximum per project rules
+      timeElapsedPercentage = Number(Math.min(100, Math.max(0, (timeElapsedDays / totalDurationDays) * 100)).toFixed(1));
     }
   }
 

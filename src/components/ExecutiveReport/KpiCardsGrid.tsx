@@ -105,7 +105,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, lang }) => {
         </div>
         <div className="mt-0.5 flex items-baseline justify-between">
           <span className="kpi-value text-base font-extrabold text-slate-900 tracking-tight">
-            {kpis.timeElapsedPercentage !== null ? `${kpis.timeElapsedPercentage}%` : 'N/A'}
+            {kpis.timeElapsedPercentage !== null ? `${Math.min(100, Math.max(0, kpis.timeElapsedPercentage))}%` : 'N/A'}
           </span>
           <span className="kpi-sub text-[8.5px] text-slate-500 font-semibold">
             {kpis.timeElapsedDays !== null ? `${kpis.timeElapsedDays}/${kpis.totalDurationDays}d` : `${kpis.totalDurationDays}d`}
