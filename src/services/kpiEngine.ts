@@ -82,11 +82,8 @@ export function calculateExecutiveKPIs(
   if (parsedApprovedExtendedEndDate) {
     effectiveEndDateParsed = parsedApprovedExtendedEndDate;
     effectiveEndType = 'approved_extended';
-  } else if (parsedReportDate && parsedContractualEndDate && parsedReportDate.utcMidnightMs > parsedContractualEndDate.utcMidnightMs) {
-    // If Daily Report Date passes contractual end date and no approved extension exists -> Temporary Extension 1405/10/30
-    effectiveEndDateParsed = parsedTemporaryEndDate;
-    effectiveEndType = 'temporary_extended';
   } else {
+    // Contractual end date (1405/06/21) is the official contract reference
     effectiveEndDateParsed = parsedContractualEndDate;
     effectiveEndType = 'contractual';
   }
@@ -103,12 +100,9 @@ export function calculateExecutiveKPIs(
   if (effectiveEndType === 'approved_extended' && effectiveEndDate) {
     effectiveEndLabelFa = `پایان مصوب تمدیدی: ${effectiveEndDate}`;
     effectiveEndLabelEn = `Approved Extension: ${effectiveEndDate}`;
-  } else if (effectiveEndType === 'temporary_extended' && effectiveEndDate) {
-    effectiveEndLabelFa = `پایان موقت تمدیدی: ${effectiveEndDate}`;
-    effectiveEndLabelEn = `Temp Extension: ${effectiveEndDate}`;
   } else if (effectiveEndDate) {
-    effectiveEndLabelFa = `پایان مبنا: ${effectiveEndDate}`;
-    effectiveEndLabelEn = `Baseline Finish: ${effectiveEndDate}`;
+    effectiveEndLabelFa = `پایان قرارداد: ${effectiveEndDate}`;
+    effectiveEndLabelEn = `Contract Finish: ${effectiveEndDate}`;
   }
 
   // Calculate Total Duration Days from Date Difference: Effective End - Project Start
@@ -123,9 +117,16 @@ export function calculateExecutiveKPIs(
   if (parsedStartDate && parsedReportDate && totalDurationDays > 0) {
     const elapsed = differenceInCalendarDays(parsedReportDate.jalaliString, parsedStartDate.jalaliString);
     if (elapsed !== null && elapsed >= 0) {
-      timeElapsedDays = elapsed;
-      // Cap timeElapsedPercentage at 100% maximum per project rules
-      timeElapsedPercentage = Number(Math.min(100, Math.max(0, (timeElapsedDays / totalDurationDays) * 100)).toFixed(1));
+      // Check if report date has reached or passed the contractual end date
+      const isPastContractEnd = parsedContractualEndDate && parsedReportDate.utcMidnightMs >= parsedContractualEndDate.utcMidnightMs;
+      if (isPastContractEnd || elapsed >= totalDurationDays) {
+        // Contract period has fully elapsed -> 100%
+        timeElapsedPercentage = 100.0;
+        timeElapsedDays = totalDurationDays;
+      } else {
+        timeElapsedDays = elapsed;
+        timeElapsedPercentage = Number(((timeElapsedDays / totalDurationDays) * 100).toFixed(1));
+      }
     }
   }
 

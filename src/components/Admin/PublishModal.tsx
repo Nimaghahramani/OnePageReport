@@ -74,10 +74,11 @@ export const PublishModal: React.FC<PublishModalProps> = ({
         projectDataStore.hydratePublishedReport(result.report);
         onPublished(result.report);
       } else {
-        setErrorMsg('پاسخ معتبر از سرور دریافت نشد.');
+        const detailMsg = result.message || result.error || (result.errors && result.errors.join(' | ')) || 'خطا در برقراری ارتباط با سرویس ابری یا انقضای نشست مدیریت.';
+        setErrorMsg(detailMsg);
       }
     } catch (err: any) {
-      setErrorMsg(err?.message || 'خطا در انتشار گزارش بر روی سرور مرکزی.');
+      setErrorMsg(err?.message || 'خطا در برقراری ارتباط با سرور مرکزی.');
     } finally {
       setIsPublishing(false);
     }
