@@ -71,7 +71,7 @@ export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
 
         {/* Section 2: Top KPI Cards */}
         <div className="print:break-inside-avoid">
-          <KpiCardsGrid kpis={kpis} lang={lang} />
+          <KpiCardsGrid kpis={kpis} pms={pms} masterSCurve={masterSCurve} lang={lang} />
         </div>
 
         {/* Section 3: Executive Summary & Construction Progress Table */}

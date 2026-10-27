@@ -832,6 +832,9 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 [data-theme="loico-blue"] #executive-report-sheet .kpi-elapsed-meta {
   color: #fde68a !important;
 }
+[data-theme="loico-blue"] #executive-report-sheet .kpi-sparkline-delta {
+  color: #bae6fd !important;
+}
 
 /* Progress bar tracks */
 [data-theme="loico-blue"] #executive-report-sheet .bg-slate-100,
@@ -1453,6 +1456,18 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   }
   .report-header .report-contract-values-grid {
     border-color: #e2e8f0 !important;
+  }
+
+  /* Ensure 7-day KPI sparklines render with full vector crispness in print & PDF export */
+  .kpi-sparkline-wrap {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  .kpi-sparkline-svg {
+    display: block !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   #executive-report-sheet .text-slate-950,
