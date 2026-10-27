@@ -170,25 +170,34 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
   });
 
   return (
-    <div id="scurve-section" className="progress-chart-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full print:break-inside-avoid">
+    <div
+      id="scurve-section"
+      className="progress-chart-card relative overflow-hidden border border-indigo-300/90 rounded-lg bg-linear-to-br from-blue-50/50 via-white to-indigo-50/40 p-2 pt-2.5 shadow-2xs flex flex-col justify-between h-full print:break-inside-avoid print:border-indigo-300"
+    >
+      {/* Top Signature Accent Bar (Blue -> Indigo -> Cyan) */}
+      <div
+        className="absolute top-0 inset-x-0 h-1 bg-linear-to-l from-blue-700 via-indigo-600 to-sky-500 pointer-events-none select-none z-10"
+        aria-hidden="true"
+      />
+
       {/* Title */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1.5">
+      <div className="flex items-center justify-between bg-linear-to-l from-blue-100/80 via-indigo-50/50 to-sky-50/35 -mx-2 -mt-2 px-2.5 pt-2 pb-1.5 mb-2 border-b border-indigo-200/80 rounded-t-lg">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-          <h2 className="text-[10.5px] font-bold text-slate-900 uppercase tracking-tight">
+          <h2 className="text-[10.5px] font-extrabold text-blue-950 uppercase tracking-tight">
             {isFa ? (
               <>
-                منحنی پیشرفت پروژه <span className="ltr-inline text-[9.5px] font-semibold text-slate-500">(Master S-Curve vs Actual)</span>
+                منحنی پیشرفت پروژه <span className="ltr-inline text-[9.5px] font-semibold text-blue-700">(Master S-Curve vs Actual)</span>
               </>
             ) : (
               'MASTER S-CURVE VS ACTUAL TREND'
             )}
           </h2>
         </div>
-        <span className="scurve-cutoff-label text-[9px] text-slate-500 font-medium">
+        <span className="scurve-cutoff-label text-[8.5px] text-blue-950 bg-blue-100/90 border border-blue-300/80 px-1.5 py-0.2 rounded font-bold shadow-2xs">
           {isFa ? (
             <>
-              تاریخ داده: <span className="ltr-inline font-bold">{pms.dataDate}</span>
+              تاریخ داده: <span className="ltr-inline font-extrabold font-mono">{pms.dataDate}</span>
             </>
           ) : (
             `Cut-off: ${pms.dataDate}`
@@ -198,7 +207,7 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
 
       <div className="grid grid-cols-12 gap-2 flex-1 items-stretch">
         {/* Left: Recharts Line / S-Curve Chart */}
-        <div className="col-span-6 h-48 min-h-[180px] relative">
+        <div className="col-span-6 h-52 min-h-[190px] relative bg-white/80 rounded-md border border-blue-100/80 p-1">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="2 2" stroke="var(--chart-grid, #f1f5f9)" />
@@ -238,13 +247,13 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
         </div>
 
         {/* Right: PMS WBS Progress (Section A: Top-Level 1,2,3 & Section B: Details 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.9) */}
-        <div className="col-span-6 flex flex-col justify-start text-[8.5px] border-l rtl:border-l-0 rtl:border-r border-slate-200 pl-2 rtl:pl-0 rtl:pr-2 overflow-y-auto max-h-52">
+        <div className="col-span-6 flex flex-col justify-between text-[8.5px] border-l rtl:border-l-0 rtl:border-r border-indigo-200/80 pl-2 rtl:pl-0 rtl:pr-2 overflow-visible">
           
           {/* SECTION A: Top-Level PMS Items (1, 2, 3) */}
           <div id="pms-top-level-section" className="pms-top-level-section mb-1.5">
-            <div className="pms-header-row bg-slate-100/90 px-1.5 py-0.5 rounded flex items-center justify-between border-b border-slate-200">
-              <span className="pms-header-title font-extrabold text-[8.5px] text-slate-800">{isFa ? 'پیشرفت کلان PMS' : 'Top-Level PMS'}</span>
-              <span className="pms-header-sub text-[7.5px] text-slate-500 font-mono">Plan / Act / Var</span>
+            <div className="pms-header-row bg-indigo-50/90 px-1.5 py-0.5 rounded flex items-center justify-between border border-indigo-200/80">
+              <span className="pms-header-title font-extrabold text-[8.5px] text-indigo-950">{isFa ? 'پیشرفت کلان PMS' : 'Top-Level PMS'}</span>
+              <span className="pms-header-sub text-[7.5px] text-indigo-700 font-mono font-semibold">Plan / Act / Var</span>
             </div>
 
             <div className="space-y-1 mt-1">
@@ -253,13 +262,13 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
                 const badge = getVarianceBadge(item.variance);
 
                 return (
-                  <div key={item.wbsCode} className="pms-discipline-row space-y-0.5 bg-slate-50/70 p-1 rounded border border-slate-150">
+                  <div key={item.wbsCode} className="pms-discipline-row space-y-0.5 bg-blue-50/45 p-1 rounded border border-blue-200/75">
                     <div className="flex items-center justify-between font-medium text-slate-800">
                       <div className="flex items-center gap-1 min-w-0 max-w-[130px]">
                         <span className="pms-wbs-tag px-1 py-0.2 bg-blue-900 text-white rounded font-mono font-bold text-[7.5px] shrink-0">
                           {item.wbsCode}
                         </span>
-                        <span className="pms-wbs-name truncate text-[8px] font-bold text-slate-800" title={item.wbsName}>
+                        <span className="pms-wbs-name truncate text-[8px] font-bold text-slate-900" title={item.wbsName}>
                           {item.wbsName}
                         </span>
                       </div>
@@ -272,7 +281,7 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
                       </div>
                     </div>
                     {/* Progress Bar */}
-                    <div className="pms-progress-track w-full bg-slate-200 h-1.5 rounded-full overflow-hidden flex">
+                    <div className="pms-progress-track w-full bg-blue-200/60 h-1.5 rounded-full overflow-hidden flex">
                       <div
                         className="pms-progress-fill bg-blue-600 h-full rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(100, Math.max(0, actVal))}%` }}
@@ -286,7 +295,7 @@ export const ProgressChartSection: React.FC<ProgressChartSectionProps> = ({ pms,
 
           {/* SECTION B: Selected Details under WBS 2 (2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.9) */}
           <div id="pms-details-section" className="pms-details-section">
-            <div className="pms-header-row bg-slate-100/90 px-1.5 py-0.5 rounded flex items-center justify-between border-b border-slate-200">
+            <div className="pms-header-row bg-slate-100 px-1.5 py-0.5 rounded flex items-center justify-between border border-slate-200">
               <span className="pms-header-title font-extrabold text-[8.5px] text-slate-800">{isFa ? 'جزئیات منتخب WBS 2' : 'Selected WBS 2 Details'}</span>
               <span className="pms-header-sub text-[7.5px] text-slate-500 font-mono">Plan / Act / Var</span>
             </div>

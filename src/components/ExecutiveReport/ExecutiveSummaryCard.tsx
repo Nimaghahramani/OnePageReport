@@ -82,15 +82,27 @@ export const ExecutiveSummaryCard: React.FC<ExecutiveSummaryCardProps> = ({ kpis
   }
 
   return (
-    <div id="executive-summary-section" className="executive-summary-card border border-blue-200 bg-blue-50/50 rounded p-2 shadow-2xs mb-2 print:break-inside-avoid print:bg-blue-50/70 print:border-blue-200">
+    <div
+      id="executive-summary-section"
+      className="executive-summary-card relative overflow-hidden border border-blue-300/90 bg-linear-to-r from-blue-50/65 via-indigo-50/40 to-blue-50/65 rounded-lg p-2 pt-2.5 shadow-2xs mb-2 print:break-inside-avoid print:border-blue-300"
+    >
+      {/* Top Signature Accent Bar (Indigo -> Blue -> Sky) */}
+      <div
+        className="absolute top-0 inset-x-0 h-1 bg-linear-to-l from-indigo-700 via-blue-600 to-sky-500 pointer-events-none select-none z-10"
+        aria-hidden="true"
+      />
+
       {/* Card Header */}
       <div className="flex items-center justify-between border-b border-blue-200/80 pb-1 mb-1.5">
         <div className="flex items-center gap-1.5">
-          <FileText className="w-3.5 h-3.5 text-blue-700" />
-          <h2 className="executive-summary-title text-[11px] font-bold text-blue-950 uppercase tracking-tight">
+          <span className="p-0.5 rounded bg-blue-100/90 text-blue-700 border border-blue-200/80">
+            <FileText className="w-3.5 h-3.5" />
+          </span>
+          <h2 className="executive-summary-title text-[11px] font-extrabold text-blue-950 uppercase tracking-tight">
             {isFa ? (
               <>
-                خلاصه مدیریتی و احجام اجرایی کارگاه <span className="ltr-inline text-[9.5px] font-semibold text-blue-800">(Executive Summary & Construction Data)</span>
+                خلاصه مدیریتی و احجام اجرایی کارگاه{' '}
+                <span className="ltr-inline text-[9.5px] font-semibold text-blue-700">(Executive Summary & Construction Data)</span>
               </>
             ) : (
               'EXECUTIVE MANAGEMENT SUMMARY & CONSTRUCTION DATA'
@@ -98,50 +110,50 @@ export const ExecutiveSummaryCard: React.FC<ExecutiveSummaryCardProps> = ({ kpis
           </h2>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-[8px] font-mono font-semibold text-blue-800 bg-blue-100/90 px-1.5 py-0.2 rounded">
+          <span className="text-[8px] font-mono font-bold text-indigo-900 bg-indigo-100/90 border border-indigo-200/80 px-1.5 py-0.2 rounded">
             {isFa ? 'برگه مرجع: Construction (2)' : 'Ref Sheet: Construction (2)'}
           </span>
-          <span className="executive-summary-badge text-[8.5px] font-bold text-blue-800 bg-blue-100/80 px-1.5 py-0.2 rounded">
+          <span className="executive-summary-badge text-[8.5px] font-bold text-blue-900 bg-blue-100/90 border border-blue-200/80 px-1.5 py-0.2 rounded">
             {isFa ? 'تحلیل داده‌های پروژه' : 'Data-Driven Synthesis'}
           </span>
         </div>
       </div>
 
       {/* Card Body: 2-Column Split (Executive Bullets + Construction Quantities Table) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 print:grid print:grid-cols-12 print:gap-2 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2.5 print:grid print:grid-cols-12 print:gap-2 items-stretch">
         {/* Column 1: Executive Management Bullets */}
-        <div className="lg:col-span-5 print:col-span-5 space-y-1.5 text-[9.5px] text-slate-800 leading-relaxed font-normal">
+        <div className="lg:col-span-5 print:col-span-5 space-y-1.5 text-[9.5px] text-slate-800 leading-relaxed font-normal bg-white/90 border border-blue-200/80 rounded-md p-2 flex flex-col justify-center">
           {lines.map((line, idx) => (
             <div key={idx} className="flex items-start gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-              <p className="flex-1 font-medium">{line}</p>
+              <p className="flex-1 font-medium text-slate-900">{line}</p>
             </div>
           ))}
         </div>
 
         {/* Column 2: Construction (2) Specified Items Table - Full Visibility with Zero Scrollbars */}
-        <div className="lg:col-span-7 print:col-span-7 bg-white/95 border border-blue-200/90 rounded-md p-2 shadow-2xs">
-          <div className="flex items-center justify-between border-b border-slate-200/90 pb-1.5 mb-1.5">
+        <div className="lg:col-span-7 print:col-span-7 bg-white/95 border border-indigo-200/90 rounded-md p-2 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between border-b border-indigo-100 pb-1 mb-1">
             <div className="flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-              <h3 className="text-[10px] font-bold text-slate-900">
+              <TrendingUp className="w-3.5 h-3.5 text-indigo-700 shrink-0" />
+              <h3 className="text-[10px] font-extrabold text-indigo-950">
                 {isFa ? 'احجام و پیشرفت فعالیت‌های اجرایی کارگاه' : 'Key Construction Progress & Quantities'}
               </h3>
             </div>
-            <span className="text-[8.5px] font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
+            <span className="text-[8px] font-mono font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-1.5 py-0.2 rounded">
               {isFa ? 'برگه Construction (2)' : 'Construction (2)'}
             </span>
           </div>
 
-          <div className="w-full overflow-x-auto lg:overflow-visible">
-            <table className="w-full text-right rtl:text-right ltr:text-left border-collapse text-[9px]">
+          <div className="w-full overflow-visible">
+            <table className="w-full text-right rtl:text-right ltr:text-left border-collapse text-[9px] rounded overflow-hidden">
               <thead>
-                <tr className="border-b border-slate-200 text-slate-600 font-bold bg-slate-50/90">
+                <tr className="border-b border-indigo-200/80 text-indigo-950 font-extrabold bg-indigo-50/75">
                   <th className="py-1 px-1.5 whitespace-nowrap">{isFa ? 'شرح فعالیت' : 'Activity'}</th>
                   <th className="py-1 px-1.5 text-center w-10 whitespace-nowrap">{isFa ? 'واحد' : 'Unit'}</th>
                   <th className="py-1 px-1.5 text-center w-16 whitespace-nowrap">{isFa ? 'کل' : 'Total'}</th>
                   <th className="py-1 px-1.5 text-center w-16 text-emerald-800 whitespace-nowrap">{isFa ? 'اقدام‌شده' : 'Done'}</th>
-                  <th className="py-1 px-1.5 text-center w-16 text-slate-600 whitespace-nowrap">{isFa ? 'باقیمانده' : 'Remain'}</th>
+                  <th className="py-1 px-1.5 text-center w-16 text-amber-800 whitespace-nowrap">{isFa ? 'باقیمانده' : 'Remain'}</th>
                   <th className="py-1 px-1.5 text-center w-16 whitespace-nowrap">{isFa ? 'پیشرفت' : 'Progress'}</th>
                 </tr>
               </thead>
@@ -150,34 +162,38 @@ export const ExecutiveSummaryCard: React.FC<ExecutiveSummaryCardProps> = ({ kpis
                   const pct =
                     item.progressPercent !== null && item.progressPercent !== undefined
                       ? item.progressPercent
-                      : (item.total > 0 ? Number(((item.completed / item.total) * 100).toFixed(1)) : 0);
+                      : item.total > 0
+                      ? Number(((item.completed / item.total) * 100).toFixed(1))
+                      : 0;
 
                   const displayPct = pct % 1 === 0 ? `${pct}%` : `${pct.toFixed(1)}%`;
 
-                  let badgeStyle = 'bg-slate-100 text-slate-700 border-slate-200';
+                  let badgeStyle = 'bg-slate-100 text-slate-700 border-slate-300';
                   if (pct >= 40) {
-                    badgeStyle = 'bg-emerald-50 text-emerald-800 border-emerald-200 font-bold';
+                    badgeStyle = 'bg-emerald-100/80 text-emerald-900 border-emerald-300 font-bold';
                   } else if (pct > 0) {
-                    badgeStyle = 'bg-blue-50 text-blue-800 border-blue-200 font-bold';
+                    badgeStyle = 'bg-blue-100/80 text-blue-900 border-blue-300 font-bold';
                   }
 
                   return (
-                    <tr key={item.id || idx} className="hover:bg-blue-50/40">
+                    <tr key={item.id || idx} className="even:bg-slate-50/70 hover:bg-blue-50/40">
                       <td className="py-1 px-1.5 font-sans text-slate-900 font-bold text-[9px] whitespace-nowrap">
-                        {isFa ? item.activity : (item.activityEn || item.activity)}
+                        {isFa ? item.activity : item.activityEn || item.activity}
                       </td>
                       <td className="py-1 px-1.5 text-center font-bold text-slate-600 whitespace-nowrap">{item.unit}</td>
-                      <td className="py-1 px-1.5 text-center text-slate-700 whitespace-nowrap">
+                      <td className="py-1 px-1.5 text-center font-semibold text-slate-800 whitespace-nowrap">
                         {item.total.toLocaleString(isFa ? 'fa-IR' : 'en-US')}
                       </td>
-                      <td className="py-1 px-1.5 text-center font-bold text-emerald-700 whitespace-nowrap">
+                      <td className="py-1 px-1.5 text-center font-extrabold text-emerald-700 whitespace-nowrap">
                         {item.completed.toLocaleString(isFa ? 'fa-IR' : 'en-US')}
                       </td>
-                      <td className="py-1 px-1.5 text-center text-slate-600 whitespace-nowrap">
+                      <td className="py-1 px-1.5 text-center font-semibold text-amber-800 whitespace-nowrap">
                         {item.remaining.toLocaleString(isFa ? 'fa-IR' : 'en-US')}
                       </td>
                       <td className="py-1 px-1.5 text-center whitespace-nowrap">
-                        <span className={`inline-flex items-center justify-center min-w-[46px] px-1.5 py-0.5 rounded border text-[8.5px] font-bold font-mono tracking-tight whitespace-nowrap ${badgeStyle}`}>
+                        <span
+                          className={`inline-flex items-center justify-center min-w-[46px] px-1.5 py-0.2 rounded border text-[8.5px] font-bold font-mono tracking-tight whitespace-nowrap ${badgeStyle}`}
+                        >
                           {displayPct}
                         </span>
                       </td>

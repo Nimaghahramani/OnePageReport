@@ -57,7 +57,7 @@ export const ExecutiveReportView: React.FC<ExecutiveReportViewProps> = ({
       */}
       <div
         id={sheetId}
-        className="print-canvas print:break-inside-avoid print:w-full print:flex print:flex-col print:justify-between w-full max-w-[1140px] bg-white text-slate-900 rounded-lg shadow-sm border border-slate-250 p-3 md:p-3.5 flex flex-col justify-between select-text"
+        className="print-canvas print:break-inside-avoid print:w-full print:max-w-none print:flex print:flex-col print:justify-between w-full max-w-[1480px] bg-white text-slate-900 rounded-lg shadow-sm border border-slate-300/90 p-3 md:p-3.5 flex flex-col justify-between select-text"
         style={{
           minHeight: '740px'
         }}

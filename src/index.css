@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "./theme/tokens.css";
 
+@theme {
+  --color-slate-150: #edf2f7;
+  --color-slate-250: #cbd5e1;
+  --color-slate-750: #293548;
+  --color-slate-850: #162032;
+}
+
 @layer base {
   html,
   body,
@@ -634,58 +641,69 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 /* ======================================================== */
 /* 2.2 TOP REPORT HEADER (LOICO EXECUTIVE BLUE UNIFIED)     */
 /* ======================================================== */
-[data-theme="loico-blue"] #report-header-card,
-[data-theme="loico-blue"] .report-header,
-[data-theme="loico-blue"] .project-header,
-[data-theme="loico-blue"] .report-header-container,
-[data-theme="loico-blue"] #report-header-banner {
+[data-theme="loico-blue"] #executive-report-sheet #report-header-card,
+[data-theme="loico-blue"] #executive-report-sheet .report-header,
+[data-theme="loico-blue"] #executive-report-sheet .project-header,
+[data-theme="loico-blue"] #executive-report-sheet .report-header-container,
+[data-theme="loico-blue"] #executive-report-sheet #report-header-banner {
   background: linear-gradient(135deg, #06224A 0%, #0A3268 55%, #0C4C92 100%) !important;
   border: 1px solid rgba(125, 211, 252, 0.28) !important;
   box-shadow: 0 4px 18px rgba(0, 30, 80, 0.22) !important;
   color: #ffffff !important;
 }
 
+[data-theme="loico-blue"] #executive-report-sheet .report-header-inner-frame {
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+
+[data-theme="loico-blue"] #executive-report-sheet .report-header-watermark svg g {
+  stroke: #7dd3fc !important;
+}
+
 /* Header Logo Container (Subtle Halo) */
-[data-theme="loico-blue"] .report-header-logo-container {
-  background: rgba(255, 255, 255, 0.04) !important;
+[data-theme="loico-blue"] #executive-report-sheet .report-header-logo-container {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(125, 211, 252, 0.30) !important;
   border-radius: 10px !important;
 }
 
 /* Main Project Title: #FFFFFF, 800 */
-[data-theme="loico-blue"] .report-project-title {
+[data-theme="loico-blue"] #executive-report-sheet .report-project-title {
   color: #FFFFFF !important;
   font-weight: 800 !important;
 }
 
 /* Subtitle & Location */
-[data-theme="loico-blue"] .report-project-subtitle {
+[data-theme="loico-blue"] #executive-report-sheet .report-project-subtitle {
   color: #BFDBFE !important;
   font-weight: 500 !important;
 }
-[data-theme="loico-blue"] .report-subtitle-badge {
+[data-theme="loico-blue"] #executive-report-sheet .report-subtitle-badge {
   background: rgba(2, 132, 199, 0.35) !important;
   border: 1px solid rgba(56, 189, 248, 0.40) !important;
   color: #E0F2FE !important;
 }
-[data-theme="loico-blue"] .report-subtitle-divider {
+[data-theme="loico-blue"] #executive-report-sheet .report-subtitle-divider {
   color: rgba(147, 197, 253, 0.40) !important;
 }
-[data-theme="loico-blue"] .report-location-text {
+[data-theme="loico-blue"] #executive-report-sheet .report-location-text {
+  background: rgba(15, 42, 90, 0.65) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
   color: #BFDBFE !important;
 }
 
 /* Date Area: dark-blue internal surfaces */
-[data-theme="loico-blue"] .report-date-row {
+[data-theme="loico-blue"] #executive-report-sheet .report-date-row {
   background: rgba(255, 255, 255, 0.06) !important;
   border: 1px solid rgba(147, 197, 253, 0.18) !important;
 }
-[data-theme="loico-blue"] .report-meta-label,
-[data-theme="loico-blue"] .report-data-date-label {
+[data-theme="loico-blue"] #executive-report-sheet .report-meta-label,
+[data-theme="loico-blue"] #executive-report-sheet .report-data-date-label {
   color: #93C5FD !important;
   font-weight: 500 !important;
 }
-[data-theme="loico-blue"] .report-meta-date,
-[data-theme="loico-blue"] .report-data-date-badge {
+[data-theme="loico-blue"] #executive-report-sheet .report-meta-date,
+[data-theme="loico-blue"] #executive-report-sheet .report-data-date-badge {
   color: #FFFFFF !important;
   font-weight: 700 !important;
   background: transparent !important;
@@ -693,27 +711,31 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 }
 
 /* Project Information Row & Stakeholders Grid */
-[data-theme="loico-blue"] .report-stakeholders-grid,
-[data-theme="loico-blue"] .report-contract-values-grid {
+[data-theme="loico-blue"] #executive-report-sheet .report-stakeholders-grid,
+[data-theme="loico-blue"] #executive-report-sheet .report-contract-values-grid {
   border-top: 1px solid rgba(147, 197, 253, 0.16) !important;
 }
-[data-theme="loico-blue"] .report-info-label {
+[data-theme="loico-blue"] #executive-report-sheet .report-stakeholder-item {
+  background: rgba(12, 42, 92, 0.65) !important;
+  border-color: rgba(125, 211, 252, 0.22) !important;
+}
+[data-theme="loico-blue"] #executive-report-sheet .report-info-label {
   color: #93C5FD !important;
   font-weight: 500 !important;
 }
-[data-theme="loico-blue"] .report-info-value {
+[data-theme="loico-blue"] #executive-report-sheet .report-info-value {
   color: #FFFFFF !important;
   font-weight: 700 !important;
 }
-[data-theme="loico-blue"] .report-info-icon,
-[data-theme="loico-blue"] .report-stakeholder-item svg {
+[data-theme="loico-blue"] #executive-report-sheet .report-info-icon,
+[data-theme="loico-blue"] #executive-report-sheet .report-stakeholder-item svg {
   color: #38BDF8 !important;
 }
-[data-theme="loico-blue"] .report-contract-badge-irr {
+[data-theme="loico-blue"] #executive-report-sheet .report-contract-badge-irr {
   background: rgba(6, 78, 59, 0.35) !important;
   border-color: rgba(52, 211, 153, 0.3) !important;
 }
-[data-theme="loico-blue"] .report-contract-badge-eur {
+[data-theme="loico-blue"] #executive-report-sheet .report-contract-badge-eur {
   background: rgba(30, 58, 138, 0.35) !important;
   border-color: rgba(96, 165, 250, 0.3) !important;
 }
@@ -766,57 +788,49 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 }
 
 /* ======================================================== */
-/* 2.3 KPI CARDS GRID                                       */
+/* 2.3 KPI CARDS GRID (SCOPED TO SCREEN REPORT SHEET)       */
 /* ======================================================== */
-[data-theme="loico-blue"] .kpi-card {
+[data-theme="loico-blue"] #executive-report-sheet .kpi-card {
   background: rgba(10, 35, 78, 0.85) !important;
   border-color: rgba(125, 211, 252, 0.28) !important;
 }
-[data-theme="loico-blue"] .kpi-title {
+[data-theme="loico-blue"] #executive-report-sheet .kpi-title {
   color: #93c5fd !important;
 }
-[data-theme="loico-blue"] .kpi-value {
+[data-theme="loico-blue"] #executive-report-sheet .kpi-value {
   color: #ffffff !important;
 }
-[data-theme="loico-blue"] .kpi-sub {
+[data-theme="loico-blue"] #executive-report-sheet .kpi-sub {
+  background: rgba(6, 24, 56, 0.65) !important;
+  border-color: rgba(125, 211, 252, 0.25) !important;
   color: #7dd3fc !important;
 }
 
 /* Actual Progress Card */
-[data-theme="loico-blue"] #kpi-card-actual {
+[data-theme="loico-blue"] #executive-report-sheet #kpi-card-actual {
   background: rgba(14, 55, 120, 0.85) !important;
   border-color: rgba(56, 189, 248, 0.50) !important;
 }
-[data-theme="loico-blue"] #kpi-card-actual .kpi-title {
+[data-theme="loico-blue"] #executive-report-sheet #kpi-card-actual .kpi-title {
   color: #7dd3fc !important;
 }
-[data-theme="loico-blue"] #kpi-card-actual .kpi-value {
+[data-theme="loico-blue"] #executive-report-sheet #kpi-card-actual .kpi-value {
   color: #38bdf8 !important;
 }
-[data-theme="loico-blue"] #kpi-card-actual .kpi-sub {
+[data-theme="loico-blue"] #executive-report-sheet #kpi-card-actual .kpi-sub {
   color: #bae6fd !important;
 }
 
 /* Variance Card */
-[data-theme="loico-blue"] #kpi-card-variance {
-  background: rgba(10, 35, 78, 0.85) !important;
-}
-[data-theme="loico-blue"] #kpi-card-variance.bg-rose-50\/80 {
+[data-theme="loico-blue"] #executive-report-sheet #kpi-card-variance {
   background: rgba(76, 12, 28, 0.55) !important;
   border-color: rgba(244, 63, 94, 0.45) !important;
 }
-[data-theme="loico-blue"] #kpi-card-variance.bg-emerald-50\/70 {
-  background: rgba(6, 60, 48, 0.55) !important;
-  border-color: rgba(52, 211, 153, 0.45) !important;
+[data-theme="loico-blue"] #executive-report-sheet .kpi-delay-text {
+  color: #fda4af !important;
 }
-[data-theme="loico-blue"] .kpi-delay-text {
-  color: #93c5fd !important;
-}
-[data-theme="loico-blue"] .kpi-elapsed-meta {
-  color: #93c5fd !important;
-}
-[data-theme="loico-blue"] .kpi-elapsed-meta span.text-slate-700 {
-  color: #f1f5f9 !important;
+[data-theme="loico-blue"] #executive-report-sheet .kpi-elapsed-meta {
+  color: #fde68a !important;
 }
 
 /* Progress bar tracks */
@@ -1191,9 +1205,9 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     position: fixed !important;
     top: 0 !important;
     left: -99999px !important;
-    width: 1140px !important;
-    min-width: 1140px !important;
-    max-width: 1140px !important;
+    width: 1480px !important;
+    min-width: 1480px !important;
+    max-width: 1480px !important;
     background: #ffffff !important;
     color: #0f172a !important;
     pointer-events: none !important;
@@ -1208,13 +1222,13 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 }
 
 @media print {
-  /* 1. PHYSICAL CANVAS SETUP: A3 Landscape with 10mm standard margins */
+  /* 1. PHYSICAL CANVAS SETUP: Full-Page Landscape with minimal 3mm safe margins */
   @page {
-    size: A3 landscape;
-    margin: 10mm;
+    size: landscape;
+    margin: 3mm;
   }
 
-  /* 2. UNIVERSAL COLOR FIDELITY: Guarantee background colors, blue headers and logo branding */
+  /* 2. UNIVERSAL COLOR FIDELITY: Guarantee background colors, gradients, headers and logo branding */
   *,
   *::before,
   *::after,
@@ -1233,8 +1247,8 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
 
   html,
   body {
-    width: 420mm !important;
-    height: 297mm !important;
+    width: 100% !important;
+    height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
@@ -1248,6 +1262,8 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   .no-print,
   .app-sidebar,
   .app-screen-container,
+  .admin-desktop-application,
+  .public-mobile-app,
   nav,
   header.app-top-header,
   aside,
@@ -1259,55 +1275,51 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     display: none !important;
   }
 
-  /* 3. DEDICATED PRINT ROOT: Occupies the 400mm x 277mm A3 printable canvas */
+  /* 3. DEDICATED PRINT ROOT: Occupies 100% of the physical landscape printable canvas */
   #print-report-root {
     display: block !important;
-    position: absolute !important;
+    position: relative !important;
     top: 0 !important;
     left: 0 !important;
-    right: auto !important;
-    width: 400mm !important;
-    height: 277mm !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     z-index: 99999 !important;
   }
 
-  /* 4. GEOMETRIC SCALING WRAPPER (A4 to A3):
-     Ratio of A4 to A3 is exact √2 ≈ 1.4142.
-     Base A4 sheet (282mm x 195mm) scales with mathematical precision to fill A3 (400mm x 277mm)
-     Transform origin is strictly anchored to 'top left' to eliminate clipping. */
-  .print-a3-wrapper {
+  /* 4. FULL-WIDTH LANDSCAPE WRAPPER: Fills 100% of page width without 282mm side margins */
+  .print-a3-wrapper,
+  #print-report-root #executive-report {
     display: block !important;
-    width: 282mm !important;
-    max-width: 282mm !important;
-    height: 195mm !important;
-    max-height: 195mm !important;
-    transform: scale(1.414) !important;
-    transform-origin: top left !important;
-    -webkit-transform: scale(1.414) !important;
-    -webkit-transform-origin: top left !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    transform: none !important;
+    -webkit-transform: none !important;
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
   }
 
-  /* High-density base sheet container */
-  .print-canvas {
+  /* High-density full-page sheet container */
+  .print-canvas,
+  #print-report-sheet {
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
-    width: 282mm !important;
-    max-width: 282mm !important;
-    height: 195mm !important;
-    max-height: 195mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 98vh !important;
     margin: 0 !important;
-    padding: 3mm 4mm !important;
+    padding: 2.5mm 3mm !important;
     border: 1px solid #94a3b8 !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
     background-color: #ffffff !important;
     color: #0f172a !important;
     box-shadow: none !important;
@@ -1328,6 +1340,7 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
   .progress-chart-card,
   .equipment-section-card,
   .key-issues-card,
+  .activities-decisions-card,
   .ipc-section-card,
   .report-footer,
   table,
@@ -1338,7 +1351,7 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     page-break-inside: avoid !important;
   }
 
-  /* Force print elements to have dark text & crisp borders */
+  /* Force print elements to have crisp borders without blur artifacts */
   #executive-report-sheet *,
   #print-report-root * {
     backdrop-filter: none !important;
@@ -1399,58 +1412,44 @@ body, header, nav, main, section, div, button, input, select, textarea, table, t
     background-color: #ffffff !important;
   }
 
-  #executive-report-sheet .bg-white,
-  #print-report-root .bg-white {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #e2e8f0 !important;
-  }
-
-  /* Force print light styling for report header */
+  /* Preserve executive light-tinted styling and Persian geometric watermark/border for report header in print */
   .report-header,
   .project-header,
   #report-header-card {
-    background: #ffffff !important;
+    background: linear-gradient(to left, #f8fafc, #eff6ff 50%, #f8fafc) !important;
     color: #0f172a !important;
     box-shadow: none !important;
-    border-color: #cbd5e1 !important;
+    border-color: rgba(30, 58, 138, 0.35) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .report-header-geometric-border,
+  .report-header-geometric-bottom-border,
+  .report-header-watermark,
+  .report-header-inner-frame {
+    display: block !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .report-header-inner-frame {
+    border-color: rgba(30, 58, 138, 0.18) !important;
   }
   .report-header .report-project-title,
   #report-header-card .report-project-title {
     color: #0f172a !important;
   }
-  .report-header .report-project-subtitle,
-  #report-header-card .report-project-subtitle {
-    color: #1e3a8a !important;
-  }
-  .report-header .report-location-text {
-    color: #475569 !important;
-  }
   .report-header .report-date-row {
-    background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-  }
-  .report-header .report-meta-label,
-  .report-header .report-data-date-label,
-  .report-header .report-info-label {
-    color: #64748b !important;
-  }
-  .report-header .report-meta-date,
-  .report-header .report-data-date-badge,
-  .report-header .report-info-value {
-    color: #0f172a !important;
-  }
-  .report-header .report-info-icon,
-  .report-header .report-stakeholder-item svg {
-    color: #475569 !important;
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
   }
   .report-header .report-contract-badge-irr {
     background: #ecfdf5 !important;
-    border-color: #a7f3d0 !important;
+    border-color: #6ee7b7 !important;
   }
   .report-header .report-contract-badge-eur {
     background: #eff6ff !important;
-    border-color: #bfdbfe !important;
+    border-color: #93c5fd !important;
   }
   .report-header .report-contract-values-grid {
     border-color: #e2e8f0 !important;

@@ -35,50 +35,61 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
     (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment?.installationPercentage ?? 0));
 
   return (
-    <div id="equipment-section" className="equipment-section-card border border-slate-250 rounded bg-white p-2 shadow-2xs flex flex-col justify-between h-full relative print:break-inside-avoid">
+    <div
+      id="equipment-section"
+      className="equipment-section-card relative overflow-hidden border border-teal-300/90 rounded-lg bg-linear-to-br from-teal-50/50 via-white to-cyan-50/40 p-2 pt-2.5 shadow-2xs flex flex-col justify-between h-full print:break-inside-avoid print:border-teal-300"
+    >
+      {/* Top Signature Accent Bar (Teal -> Cyan -> Emerald) */}
+      <div
+        className="absolute top-0 inset-x-0 h-1 bg-linear-to-l from-teal-600 via-cyan-600 to-emerald-500 pointer-events-none select-none z-10"
+        aria-hidden="true"
+      />
+
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-1 mb-1">
+      <div className="flex items-center justify-between bg-linear-to-l from-teal-100/80 via-teal-50/55 to-cyan-50/35 -mx-2 -mt-2 px-2.5 pt-2 pb-1.5 mb-2 border-b border-teal-200/90 rounded-t-lg">
         <div className="flex items-center gap-1.5">
-          <Wrench className="w-3.5 h-3.5 text-teal-600" />
-          <h2 className="text-[10px] font-bold text-slate-900 uppercase tracking-tight">
+          <span className="p-0.5 rounded bg-teal-100 border border-teal-300/80 text-teal-700 shadow-2xs">
+            <Wrench className="w-3.5 h-3.5" />
+          </span>
+          <h2 className="text-[10px] font-extrabold text-teal-950 uppercase tracking-tight">
             {isFa ? (
               <>
-                وضعیت نصب تجهیزات <span className="ltr-inline text-[9px] font-semibold text-slate-500">(Equipment Sheet)</span>
+                وضعیت نصب تجهیزات <span className="ltr-inline text-[9px] font-semibold text-teal-700">(Equipment Sheet)</span>
               </>
             ) : (
               'EQUIPMENT INSTALLATION STATUS'
             )}
           </h2>
         </div>
-        <span className="equipment-overall-badge text-[8.5px] text-teal-800 font-bold bg-teal-50 border border-teal-200 px-1.5 py-0.2 rounded">
+        <span className="equipment-overall-badge text-[8.5px] text-teal-950 font-extrabold bg-teal-100 border border-teal-300 px-1.5 py-0.2 rounded shadow-2xs">
           <span className="ltr-inline">{weightedProgress}%</span> {isFa ? 'پیشرفت کل' : 'Progress'}
         </span>
       </div>
 
       {/* Top 4 Summary Metrics */}
       <div className="grid grid-cols-4 gap-1 mb-1.5 text-center">
-        <div className="equipment-metric-box equipment-total-box bg-slate-50 border border-slate-200 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-slate-500 block leading-tight">{isFa ? 'کل آیتم‌ها' : 'Total'}</span>
-          <span className="equipment-metric-val text-[11px] font-bold text-slate-800">{totalCount}</span>
+        <div className="equipment-metric-box equipment-total-box bg-indigo-50/60 border border-indigo-200/80 rounded p-0.5">
+          <span className="equipment-metric-label text-[7.5px] text-indigo-800 font-semibold block leading-tight">{isFa ? 'کل آیتم‌ها' : 'Total'}</span>
+          <span className="equipment-metric-val text-[11px] font-extrabold text-indigo-950">{totalCount}</span>
         </div>
-        <div className="equipment-metric-box equipment-installed-box bg-teal-50/70 border border-teal-200 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-teal-700 block leading-tight">{isFa ? 'انجام‌شده' : 'Completed'}</span>
-          <span className="equipment-metric-val text-[11px] font-bold text-teal-900">{completedCount}</span>
+        <div className="equipment-metric-box equipment-installed-box bg-teal-50/85 border border-teal-200/90 rounded p-0.5">
+          <span className="equipment-metric-label text-[7.5px] text-teal-800 font-semibold block leading-tight">{isFa ? 'انجام‌شده' : 'Completed'}</span>
+          <span className="equipment-metric-val text-[11px] font-extrabold text-teal-950">{completedCount}</span>
         </div>
-        <div className="equipment-metric-box equipment-remaining-box bg-amber-50/70 border border-amber-200 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-amber-700 block leading-tight">{isFa ? 'باقیمانده' : 'Remaining'}</span>
-          <span className="equipment-metric-val text-[11px] font-bold text-amber-900">{remainingCount}</span>
+        <div className="equipment-metric-box equipment-remaining-box bg-amber-50/85 border border-amber-200/90 rounded p-0.5">
+          <span className="equipment-metric-label text-[7.5px] text-amber-800 font-semibold block leading-tight">{isFa ? 'باقیمانده' : 'Remaining'}</span>
+          <span className="equipment-metric-val text-[11px] font-extrabold text-amber-950">{remainingCount}</span>
         </div>
-        <div className="equipment-metric-box equipment-progress-box bg-blue-50/70 border border-blue-200 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-blue-700 block leading-tight">{isFa ? 'پیشرفت کل' : 'Progress'}</span>
-          <span className="equipment-metric-val text-[11px] font-bold text-blue-900">{weightedProgress}%</span>
+        <div className="equipment-metric-box equipment-progress-box bg-blue-50/85 border border-blue-200/90 rounded p-0.5">
+          <span className="equipment-metric-label text-[7.5px] text-blue-800 font-semibold block leading-tight">{isFa ? 'پیشرفت کل' : 'Progress'}</span>
+          <span className="equipment-metric-val text-[11px] font-extrabold text-blue-950">{weightedProgress}%</span>
         </div>
       </div>
 
       {/* Dynamic Equipment Items Table from Equipment Sheet */}
-      <div className="border border-slate-200 rounded overflow-hidden text-[7.5px] flex-1 flex flex-col justify-start">
+      <div className="border border-slate-200/90 rounded overflow-hidden text-[7.5px] flex-1 flex flex-col justify-start">
         <table className="equipment-table w-full text-right rtl:text-right ltr:text-left border-collapse">
-          <thead className="bg-slate-100/90 text-slate-700 font-bold border-b border-slate-200 select-none">
+          <thead className="bg-teal-50/80 text-teal-950 font-extrabold border-b border-teal-200/90 select-none">
             <tr className="h-4">
               <th className="px-1 py-0.5 text-center w-5 col-num">{isFa ? '#' : 'No'}</th>
               <th className="px-1 py-0.5">{isFa ? 'تجهیز / شرح آیتم' : 'Equipment / Item'}</th>
@@ -101,8 +112,8 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
               return (
                 <tr
                   key={`${item.sequence}-${idx}`}
-                  className={`h-3.5 hover:bg-slate-50/90 transition-colors ${
-                    isComplete ? 'bg-emerald-50/20' : ''
+                  className={`h-3.5 transition-colors ${
+                    isComplete ? 'bg-emerald-50/40' : 'even:bg-slate-50/70 hover:bg-teal-50/30'
                   }`}
                 >
                   <td className="px-1 py-0.2 text-center text-slate-400 font-tabular tabular-nums text-[7px]">

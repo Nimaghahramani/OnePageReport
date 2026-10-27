@@ -78,6 +78,9 @@ export async function exportExecutiveReportToPdf(
     // 1. Locate the dedicated target report container element
     let element = document.getElementById(elementId);
     if (!element) {
+      element = document.getElementById('print-report-sheet');
+    }
+    if (!element) {
       element = document.getElementById('print-report-root');
     }
     if (!element) {
@@ -90,7 +93,7 @@ export async function exportExecutiveReportToPdf(
     // 2. CRITICAL: Wait for font engine & verify Vazirmatn before snapshotting
     await document.fonts.ready;
     const fontReady = await ensureVazirmatnFontLoaded();
-    
+
     console.log('Pre-export document.fonts.status:', document.fonts.status);
     console.log('Pre-export Vazirmatn check:', document.fonts.check('12px "Vazirmatn"'));
 
@@ -99,9 +102,10 @@ export async function exportExecutiveReportToPdf(
     }
 
     // 3. Render DOM to image data URL with high resolution (scale: 3 / pixelRatio: 3)
+    const targetCaptureWidth = Math.max(element.scrollWidth || 0, element.offsetWidth || 0, 1460);
+    const targetCaptureHeight = Math.max(element.scrollHeight || 0, element.offsetHeight || 0, 980);
+
     let imgDataUrl = '';
-    let canvasWidth = 1140 * 3;
-    let canvasHeight = 740 * 3;
 
     try {
       // html2canvas-pro natively supports oklch, oklab, color(display-p3), and modern Tailwind CSS
@@ -110,13 +114,11 @@ export async function exportExecutiveReportToPdf(
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
-        windowWidth: element.scrollWidth || 1140,
-        windowHeight: element.scrollHeight || 740,
+        windowWidth: targetCaptureWidth,
+        windowHeight: targetCaptureHeight,
         ignoreElements: (el) => el.classList?.contains('no-print')
       });
       imgDataUrl = canvas.toDataURL('image/png');
-      canvasWidth = canvas.width;
-      canvasHeight = canvas.height;
     } catch (renderError: any) {
       console.warn('html2canvas-pro capture fallback triggered:', renderError);
       // Fallback to htmlToImage if canvas renderer encounters an edge-case
@@ -124,18 +126,16 @@ export async function exportExecutiveReportToPdf(
         pixelRatio: 3,
         backgroundColor: '#ffffff',
         filter: (node: HTMLElement) => !node.classList?.contains('no-print'),
-        width: element.offsetWidth || 1140,
-        height: element.offsetHeight || 740
+        width: targetCaptureWidth,
+        height: targetCaptureHeight
       });
-      canvasWidth = (element.offsetWidth || 1140) * 3;
-      canvasHeight = (element.offsetHeight || 740) * 3;
     }
 
     if (!imgDataUrl || imgDataUrl.length < 50) {
       throw new Error('امکان تبدیل ساختار صفحه به تصویر جهت صدور PDF میسر نشد.');
     }
 
-    // 4. Create jsPDF document (A3 or A4 Landscape)
+    // 4. Create jsPDF document (A3 or A4 Landscape) and fill the full page
     const isA3 = format.toLowerCase() === 'a3';
     const pdf = new jsPDF({
       orientation: 'landscape',
@@ -144,29 +144,14 @@ export async function exportExecutiveReportToPdf(
       compress: true
     });
 
-    // A3 Landscape: 420mm x 297mm, margin: 10mm -> printableWidth: 400mm, printableHeight: 277mm
-    // A4 Landscape: 297mm x 210mm, margin: 5mm  -> printableWidth: 287mm, printableHeight: 200mm
+    // Full-page executive landscape layout with minimal 2mm safe border margin
     const pageWidth = isA3 ? 420 : 297;
     const pageHeight = isA3 ? 297 : 210;
-    const margin = isA3 ? 10 : 5;
-    const printableWidth = pageWidth - margin * 2;
-    const printableHeight = pageHeight - margin * 2;
+    const margin = 2;
+    const targetWidth = pageWidth - margin * 2;
+    const targetHeight = pageHeight - margin * 2;
 
-    const aspectRatio = canvasWidth / (canvasHeight || 1);
-
-    let targetWidth = printableWidth;
-    let targetHeight = targetWidth / aspectRatio;
-
-    if (targetHeight > printableHeight) {
-      targetHeight = printableHeight;
-      targetWidth = targetHeight * aspectRatio;
-    }
-
-    // Center horizontally and vertically within printable bounds
-    const posX = margin + (printableWidth - targetWidth) / 2;
-    const posY = margin + (printableHeight - targetHeight) / 2;
-
-    pdf.addImage(imgDataUrl, 'PNG', posX, posY, targetWidth, targetHeight, undefined, 'FAST');
+    pdf.addImage(imgDataUrl, 'PNG', margin, margin, targetWidth, targetHeight, undefined, 'FAST');
     pdf.save(fileName);
 
     return { success: true };

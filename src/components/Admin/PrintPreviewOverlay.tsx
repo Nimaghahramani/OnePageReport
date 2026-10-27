@@ -56,8 +56,8 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
   const isFa = lang === 'fa';
   const [showHeader, setShowHeader] = useState<boolean>(true);
   const [showFooter, setShowFooter] = useState<boolean>(true);
-  const [showMarginsGuide, setShowMarginsGuide] = useState<boolean>(true);
-  const [zoom, setZoom] = useState<number>(100);
+  const [showMarginsGuide, setShowMarginsGuide] = useState<boolean>(false);
+  const [zoom, setZoom] = useState<number>(85);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
   const stageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -133,7 +133,7 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
-                {isFa ? 'پیش‌نمایش چاپ استاندارد کاغذ A4 افقی' : 'A4 Landscape Paper Print Preview'}
+                {isFa ? 'پیش‌نمایش چاپ استاندارد کاغذ A4 افقی (تمام‌صفحه)' : 'A4 Landscape Full-Page Print Preview'}
               </h1>
               <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-950 text-cyan-300 border border-cyan-500/30">
                 297 × 210 mm (ISO 216)
@@ -141,8 +141,8 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
             </div>
             <p className="text-[10px] text-slate-400 truncate">
               {isFa
-                ? 'شبیه‌سازی دقیق صفحه روی کاغذ چاپ واقعی بدون المان‌های گرافیکی مرورگر'
-                : 'Exact physical paper layout simulation without UI elements'}
+                ? 'شبیه‌سازی دقیق تمام‌صفحه روی کاغذ چاپ واقعی بدون حاشیه‌های اضافی'
+                : 'Exact full-page physical paper layout simulation without extra side margins'}
             </p>
           </div>
         </div>
@@ -188,7 +188,7 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
                 ? 'bg-slate-800 text-amber-300 border-amber-500/40'
                 : 'bg-slate-850 text-slate-400 border-slate-700'
             }`}
-            title={isFa ? 'نمایش خطوط راهنمای حاشیه چاپ استاندارد ۵ میلی‌متر' : 'Toggle 5mm Margin Guides'}
+            title={isFa ? 'نمایش خطوط راهنمای حاشیه چاپ استاندارد' : 'Toggle Margin Guides'}
           >
             <Layers className="w-3.5 h-3.5" />
             <span>{isFa ? 'راهنمای کادر' : 'Margin Guides'}</span>
@@ -244,7 +244,7 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
             onClick={handleExportPdf}
             disabled={isExportingPdf}
             className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all cursor-pointer border border-emerald-400/40 disabled:opacity-50"
-            title={isFa ? 'تولید فایل PDF مستقل با اندازه A4 افقی' : 'Export A4 PDF'}
+            title={isFa ? 'تولید فایل PDF تمام‌صفحه استاندارد با اندازه A4 افقی' : 'Export Full-Page A4 PDF'}
           >
             <Download className={`w-3.5 h-3.5 ${isExportingPdf ? 'animate-bounce' : ''}`} />
             <span className="hidden sm:inline">{isExportingPdf ? (isFa ? 'در حال تولید...' : 'Exporting...') : (isFa ? 'فایل PDF' : 'PDF')}</span>
@@ -263,10 +263,10 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
         </div>
       </header>
 
-      {/* 2. DRAFTING BOARD STAGE (AUTHENTIC PAPER SIMULATION) */}
+      {/* 2. DRAFTING BOARD STAGE (AUTHENTIC FULL-PAGE PAPER SIMULATION) */}
       <div
         ref={stageContainerRef}
-        className="flex-1 overflow-auto p-4 sm:p-8 flex justify-center items-start bg-[#111827] relative"
+        className="flex-1 overflow-auto p-4 sm:p-6 flex justify-center items-start bg-[#111827] relative"
         style={{
           backgroundImage:
             'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)',
@@ -284,7 +284,7 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
           <div className="flex items-center justify-between text-[11px] text-slate-400 px-2 mb-2 font-mono">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{isFa ? 'کاغذ A4 افقی (Landscape)' : 'A4 Landscape Paper Sheet'}</span>
+              <span>{isFa ? 'کاغذ A4 افقی تمام‌صفحه (Full-Bleed Landscape)' : 'A4 Full-Bleed Landscape Sheet'}</span>
             </span>
             <span className="text-slate-500">
               {showHeader ? (isFa ? '✓ همراه با سربرگ' : '✓ With Header') : (isFa ? '✗ بدون سربرگ' : '✗ Without Header')} •{' '}
@@ -292,31 +292,31 @@ export const PrintPreviewOverlay: React.FC<PrintPreviewOverlayProps> = ({
             </span>
           </div>
 
-          {/* The Paper Physical Boundary: ISO 216 A4 Landscape (Aspect 297/210 ≈ 1.414) */}
+          {/* The Paper Physical Boundary: True 1460x1032 ISO 216 Landscape Ratio (297/210 ≈ 1.414) */}
           <div
             className="relative bg-white text-slate-900 rounded-sm shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border-2 border-slate-300 overflow-hidden select-text"
             style={{
-              width: '1122px', // Standard 96 DPI representation of 297mm
-              minHeight: '793px', // Standard 96 DPI representation of 210mm
+              width: '1460px',
+              minHeight: '1010px',
               boxSizing: 'border-box'
             }}
           >
-            {/* Optional 5mm Engineering Margin Guide Outline */}
+            {/* Optional 2mm Engineering Margin Guide Outline */}
             {showMarginsGuide && (
               <div
                 className="absolute inset-0 pointer-events-none border border-dashed border-amber-400/50 z-20"
                 style={{
-                  margin: '18px' // ~5mm margin guide
+                  margin: '8px'
                 }}
               >
                 <span className="absolute top-1 left-2 text-[8.5px] font-mono text-amber-600 bg-amber-50/90 px-1 rounded border border-amber-300">
-                  {isFa ? 'محدوده امن چاپ (5mm Printable Safe Area)' : '5mm Printable Safe Area'}
+                  {isFa ? 'محدوده امن چاپ تمام‌صفحه (Full-Page Printable Area)' : 'Full-Page Printable Safe Area'}
                 </span>
               </div>
             )}
 
             {/* The Actual Rendered Report with Toggles Applied */}
-            <div className="w-full h-full p-2.5">
+            <div className="w-full h-full p-1.5">
               <ExecutiveReportView
                 sheetId="a4-print-preview-sheet"
                 master={master}
