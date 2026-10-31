@@ -225,18 +225,18 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
         {/* Right Section (in RTL): Logo + Project Title & Subtitle */}
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="report-header-logo-container flex items-center justify-center p-1 bg-white border border-blue-200/90 rounded-lg shadow-2xs shrink-0 print:break-inside-avoid">
-            <LoicoLogo size={38} id={`report-header-loico-logo-${uid}`} />
+            <LoicoLogo size={40} id={`report-header-loico-logo-${uid}`} />
           </div>
           <div className="min-w-0">
-            <h1 className="report-project-title text-sm md:text-[15.5px] font-extrabold tracking-tight text-slate-900 leading-snug whitespace-nowrap truncate">
+            <h1 className="report-project-title text-[16px] md:text-[17.5px] font-extrabold tracking-tight text-slate-900 leading-snug whitespace-nowrap truncate">
               {isFa ? master.projectNameFa : master.projectNameEn}
             </h1>
-            <div className="report-project-subtitle text-[10px] font-medium text-slate-600 flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
-              <span className="report-subtitle-badge bg-blue-900 text-white border border-blue-800 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide shadow-2xs print:bg-blue-900 print:text-white">
+            <div className="report-project-subtitle text-[11px] font-bold text-slate-600 flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
+              <span className="report-subtitle-badge bg-blue-900 text-white border border-blue-800 px-2 py-0.5 rounded text-[10.5px] font-extrabold uppercase tracking-wide shadow-2xs print:bg-blue-900 print:text-white">
                 {isFa ? 'گزارش مدیریتی روزانه پروژه' : 'DAILY EXECUTIVE PROJECT REPORT'}
               </span>
               <span className="report-subtitle-divider text-slate-300 font-normal">|</span>
-              <span className="report-location-text text-slate-700 font-bold text-[10px] bg-white/90 border border-slate-200/90 px-2 py-0.5 rounded">
+              <span className="report-location-text text-slate-800 font-extrabold text-[11px] bg-white/90 border border-slate-200/90 px-2 py-0.5 rounded">
                 {isFa ? master.locationFa : master.locationEn}
               </span>
             </div>
@@ -246,18 +246,18 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
         {/* Left Section (in RTL): Neatly organized single-line metadata bar & QR button */}
         <div className="flex items-center gap-1.5 shrink-0 print:break-inside-avoid">
           {/* Metadata items grouped in a clean, unified container with zero line wrapping */}
-          <div className="report-date-row flex items-center gap-1.5 bg-white/95 border border-slate-300/90 rounded-lg p-1 shadow-2xs text-xs whitespace-nowrap">
+          <div className="report-date-row flex items-center gap-1.5 bg-white/95 border border-slate-300/90 rounded-lg p-1 shadow-2xs whitespace-nowrap">
             {/* 1. Report Date & Day */}
             <div className="flex items-center gap-1.5 bg-rose-50/80 border border-rose-200/80 rounded-md px-2 py-0.5 whitespace-nowrap">
               <Calendar className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span className="report-meta-label text-rose-950/80 font-semibold text-[9.5px] whitespace-nowrap">
+              <span className="report-meta-label text-rose-950 font-bold text-[11px] whitespace-nowrap">
                 {isFa ? 'تاریخ گزارش:' : 'Date:'}
               </span>
-              <span className="report-meta-date font-extrabold text-rose-700 font-mono text-[11px] ltr-inline whitespace-nowrap">
+              <span className="report-meta-date font-extrabold text-rose-700 font-tabular tabular-nums tracking-tight text-[13px] ltr-inline whitespace-nowrap">
                 {daily.reportDate}
               </span>
               {daily.reportDayOfWeek && (
-                <span className="text-rose-900 font-bold bg-white px-1.5 py-0.2 rounded text-[8.5px] border border-rose-200 whitespace-nowrap">
+                <span className="text-rose-950 font-extrabold bg-white px-1.5 py-0.5 rounded text-[10px] border border-rose-200 whitespace-nowrap">
                   {daily.reportDayOfWeek}
                 </span>
               )}
@@ -266,10 +266,10 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
             {/* 2. Report Number */}
             {daily.reportNumber && (
               <div className="flex items-center gap-1 bg-blue-50/90 border border-blue-200/90 rounded-md px-2 py-0.5 whitespace-nowrap">
-                <span className="report-meta-label text-blue-800 font-semibold text-[9.5px] whitespace-nowrap">
+                <span className="report-meta-label text-blue-900 font-bold text-[11px] whitespace-nowrap">
                   {isFa ? 'شماره:' : 'No:'}
                 </span>
-                <span className="font-black text-blue-950 font-mono text-[10.5px] whitespace-nowrap">
+                <span className="font-extrabold text-blue-950 font-tabular tabular-nums tracking-tight text-[13px] ltr-inline whitespace-nowrap">
                   {daily.reportNumber}
                 </span>
               </div>
@@ -278,16 +278,16 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
             {/* 3. Data Date */}
             {pms.dataDate && (
               <div className="flex items-center gap-1.5 bg-indigo-50/80 border border-indigo-200/80 rounded-md px-2 py-0.5 whitespace-nowrap">
-                <span className="report-data-date-label text-indigo-900 font-semibold text-[9.5px] whitespace-nowrap">
+                <span className="report-data-date-label text-indigo-950 font-bold text-[11px] whitespace-nowrap">
                   {isFa ? (
                     <>
-                      تاریخ داده <span className="ltr-inline text-[8.5px] text-indigo-600 font-bold">(Data Date)</span>:
+                      تاریخ داده <span className="ltr-inline text-[9.5px] text-indigo-700 font-extrabold">(Data Date)</span>:
                     </>
                   ) : (
                     'Data Date:'
                   )}
                 </span>
-                <span className="report-data-date-badge font-extrabold text-indigo-950 font-mono text-[11px] ltr-inline whitespace-nowrap">
+                <span className="report-data-date-badge font-extrabold text-indigo-950 font-tabular tabular-nums tracking-tight text-[12.5px] ltr-inline whitespace-nowrap">
                   {pms.dataDate}
                 </span>
               </div>
@@ -299,10 +299,10 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
             <button
               type="button"
               onClick={onOpenQrModal}
-              className="no-print inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-cyan-400/80 bg-cyan-50 hover:bg-cyan-100 text-cyan-950 font-bold text-[9.5px] transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
+              className="no-print inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-cyan-400/80 bg-cyan-50 hover:bg-cyan-100 text-cyan-950 font-extrabold text-[11px] transition-all cursor-pointer shadow-2xs shrink-0 whitespace-nowrap"
               title={isFa ? 'نمایش و دانلود کد QR جهت دسترسی سریع روی موبایل' : 'Share report via QR Code'}
             >
-              <QrCode className="w-3.5 h-3.5 text-cyan-700 shrink-0" />
+              <QrCode className="w-4 h-4 text-cyan-700 shrink-0" />
               <span>{isFa ? 'کد QR' : 'QR Code'}</span>
             </button>
           )}
@@ -310,92 +310,92 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({ master, pms, daily, 
       </div>
 
       {/* Contract & Stakeholders Compact Grid (ROW 2: Client + Project Manager + Consultant + Contractor) */}
-      <div className="report-stakeholders-grid relative z-10 grid grid-cols-2 md:grid-cols-4 gap-1.5 mt-1.5 pt-1.5 border-t border-slate-200/90 text-[9.5px] print:break-inside-avoid print:grid print:grid-cols-4">
+      <div className="report-stakeholders-grid relative z-10 grid grid-cols-2 md:grid-cols-4 gap-1.5 mt-1.5 pt-1.5 border-t border-slate-200/90 text-[11px] print:break-inside-avoid print:grid print:grid-cols-4">
         {/* 1. Client / کارفرما */}
-        <div className="report-stakeholder-item flex items-center gap-1.5 truncate bg-blue-50/75 border border-blue-200/85 rounded px-2 py-0.5">
-          <Building className="report-info-icon w-3 h-3 text-blue-700 shrink-0" />
-          <span className="report-info-label text-blue-800 shrink-0 font-semibold">{isFa ? 'کارفرما:' : 'Client:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 truncate" title={isFa ? (master.clientNameFa || 'شرکت ملی صنایع پتروشیمی') : (master.clientNameEn || 'NPC')}>
+        <div className="report-stakeholder-item flex items-center gap-1.5 min-w-0 truncate bg-blue-50/75 border border-blue-200/85 rounded px-2 py-1">
+          <Building className="report-info-icon w-3.5 h-3.5 text-blue-700 shrink-0" />
+          <span className="report-info-label text-blue-900 shrink-0 font-bold text-[11px]">{isFa ? 'کارفرما:' : 'Client:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 text-[11.5px] truncate" title={isFa ? (master.clientNameFa || 'شرکت ملی صنایع پتروشیمی') : (master.clientNameEn || 'NPC')}>
             {isFa ? (master.clientNameFa || 'شرکت ملی صنایع پتروشیمی') : (master.clientNameEn || 'NPC')}
           </span>
         </div>
 
         {/* 2. Project Manager (MC) / مدیریت طرح */}
-        <div className="report-stakeholder-item flex items-center gap-1.5 truncate bg-indigo-50/75 border border-indigo-200/85 rounded px-2 py-0.5">
-          <Building className="report-info-icon w-3 h-3 text-indigo-700 shrink-0" />
-          <span className="report-info-label text-indigo-800 shrink-0 font-semibold">{isFa ? 'مدیریت طرح:' : 'Project Manager:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 truncate" title={isFa ? (master.projectManagerFa || 'مهندسان مشاور ستیران') : (master.projectManagerEn || 'Scetiran')}>
+        <div className="report-stakeholder-item flex items-center gap-1.5 min-w-0 truncate bg-indigo-50/75 border border-indigo-200/85 rounded px-2 py-1">
+          <Building className="report-info-icon w-3.5 h-3.5 text-indigo-700 shrink-0" />
+          <span className="report-info-label text-indigo-900 shrink-0 font-bold text-[11px]">{isFa ? 'مدیریت طرح:' : 'Project Manager:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 text-[11.5px] truncate" title={isFa ? (master.projectManagerFa || 'مهندسان مشاور ستیران') : (master.projectManagerEn || 'Scetiran')}>
             {isFa ? (master.projectManagerFa || 'مهندسان مشاور ستیران') : (master.projectManagerEn || 'Scetiran')}
           </span>
         </div>
 
         {/* 3. Consultant / مشاور */}
-        <div className="report-stakeholder-item flex items-center gap-1.5 truncate bg-amber-50/75 border border-amber-200/85 rounded px-2 py-0.5">
-          <Building className="report-info-icon w-3 h-3 text-amber-700 shrink-0" />
-          <span className="report-info-label text-amber-900 shrink-0 font-semibold">{isFa ? 'مشاور:' : 'Consultant:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 truncate" title={isFa ? (master.consultantNameFa || 'مهندسین مشاور تدبیر ساحل پارس') : (master.consultantNameEn || 'Tadbir Sahel Pars')}>
+        <div className="report-stakeholder-item flex items-center gap-1.5 min-w-0 truncate bg-amber-50/75 border border-amber-200/85 rounded px-2 py-1">
+          <Building className="report-info-icon w-3.5 h-3.5 text-amber-700 shrink-0" />
+          <span className="report-info-label text-amber-900 shrink-0 font-bold text-[11px]">{isFa ? 'مشاور:' : 'Consultant:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 text-[11.5px] truncate" title={isFa ? (master.consultantNameFa || 'مهندسین مشاور تدبیر ساحل پارس') : (master.consultantNameEn || 'Tadbir Sahel Pars')}>
             {isFa ? (master.consultantNameFa || 'مهندسین مشاور تدبیر ساحل پارس') : (master.consultantNameEn || 'Tadbir Sahel Pars')}
           </span>
         </div>
 
         {/* 4. Contractor / پیمانکار */}
-        <div className="report-stakeholder-item flex items-center gap-1.5 truncate bg-teal-50/75 border border-teal-200/85 rounded px-2 py-0.5">
-          <Building className="report-info-icon w-3 h-3 text-teal-700 shrink-0" />
-          <span className="report-info-label text-teal-900 shrink-0 font-semibold">{isFa ? 'پیمانکار:' : 'Contractor:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 truncate" title={isFa ? (master.contractorNameFa || 'شرکت نواندیشان فراساحل لیان') : (master.contractorNameEn || 'Lian')}>
+        <div className="report-stakeholder-item flex items-center gap-1.5 min-w-0 truncate bg-teal-50/75 border border-teal-200/85 rounded px-2 py-1">
+          <Building className="report-info-icon w-3.5 h-3.5 text-teal-700 shrink-0" />
+          <span className="report-info-label text-teal-900 shrink-0 font-bold text-[11px]">{isFa ? 'پیمانکار:' : 'Contractor:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 text-[11.5px] truncate" title={isFa ? (master.contractorNameFa || 'شرکت نواندیشان فراساحل لیان') : (master.contractorNameEn || 'Lian')}>
             {isFa ? (master.contractorNameFa || 'شرکت نواندیشان فراساحل لیان') : (master.contractorNameEn || 'Lian')}
           </span>
         </div>
       </div>
 
       {/* Financial Values & Contract Timeline (ROW 3: Proportional 12-Col Grid so full IRR amount & Contract No never clip) */}
-      <div className="report-contract-values-grid relative z-10 grid grid-cols-2 sm:grid-cols-12 gap-1.5 mt-1 pt-1 border-t border-slate-200/80 text-[9px] print:break-inside-avoid print:grid print:grid-cols-12">
+      <div className="report-contract-values-grid relative z-10 grid grid-cols-2 sm:grid-cols-12 gap-1.5 mt-1 pt-1 border-t border-slate-200/80 text-[10.5px] print:break-inside-avoid print:grid print:grid-cols-12">
         {/* Contract Number (3 cols) */}
-        <div className="report-stakeholder-item sm:col-span-3 print:col-span-3 flex items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded px-2 py-0.5 whitespace-nowrap overflow-hidden">
-          <FileText className="report-info-icon w-3 h-3 text-indigo-600 shrink-0" />
-          <span className="report-info-label text-slate-500 shrink-0 font-semibold">{isFa ? 'شماره قرارداد:' : 'Contract No:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 font-mono text-[9.5px] whitespace-nowrap" title={contractNo}>
+        <div className="report-stakeholder-item sm:col-span-3 print:col-span-3 flex items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded px-2 py-1 min-w-0 whitespace-nowrap overflow-hidden">
+          <FileText className="report-info-icon w-3.5 h-3.5 text-indigo-600 shrink-0" />
+          <span className="report-info-label text-slate-600 shrink-0 font-bold text-[10.5px]">{isFa ? 'شماره قرارداد:' : 'Contract No:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 font-tabular tabular-nums tracking-tight text-[11.5px] truncate" title={contractNo}>
             {contractNo}
           </span>
         </div>
 
         {/* Project Start Date (2 cols) */}
-        <div className="report-stakeholder-item sm:col-span-2 print:col-span-2 flex items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded px-2 py-0.5 whitespace-nowrap">
-          <Calendar className="report-info-icon w-3 h-3 text-emerald-600 shrink-0" />
-          <span className="report-info-label text-slate-500 shrink-0 font-semibold">{isFa ? 'تاریخ شروع:' : 'Start Date:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 ltr-inline font-mono text-[9.5px]">{master.startDate || '1403/12/21'}</span>
+        <div className="report-stakeholder-item sm:col-span-2 print:col-span-2 flex items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded px-2 py-1 min-w-0 whitespace-nowrap overflow-hidden">
+          <Calendar className="report-info-icon w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span className="report-info-label text-slate-600 shrink-0 font-bold text-[10.5px]">{isFa ? 'تاریخ شروع:' : 'Start Date:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 ltr-inline font-tabular tabular-nums tracking-tight text-[12px]">{master.startDate || '1403/12/21'}</span>
         </div>
 
         {/* Duration (2 cols) */}
-        <div className="report-stakeholder-item sm:col-span-2 print:col-span-2 flex items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded px-2 py-0.5 whitespace-nowrap">
-          <Clock className="report-info-icon w-3 h-3 text-amber-600 shrink-0" />
-          <span className="report-info-label text-slate-500 shrink-0 font-semibold">{isFa ? 'مدت قرارداد:' : 'Duration:'}</span>
-          <span className="report-info-value font-extrabold text-slate-900 whitespace-nowrap">
+        <div className="report-stakeholder-item sm:col-span-2 print:col-span-2 flex items-center gap-1.5 bg-white/95 border border-slate-200/90 rounded px-2 py-1 min-w-0 whitespace-nowrap overflow-hidden">
+          <Clock className="report-info-icon w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <span className="report-info-label text-slate-600 shrink-0 font-bold text-[10.5px]">{isFa ? 'مدت قرارداد:' : 'Duration:'}</span>
+          <span className="report-info-value font-extrabold text-blue-950 text-[11.5px] whitespace-nowrap truncate">
             {master.contractDurationText || (master.durationDays ? `${master.durationDays} روز` : '18 ماه شمسی')}
           </span>
         </div>
 
         {/* Contract Value IRR (3 cols - wide enough to show full 4,653,170,392,630 ریال without truncation) */}
-        <div className="report-contract-badge-irr sm:col-span-3 print:col-span-3 flex items-center justify-between gap-1 bg-emerald-50/95 px-2 py-0.5 rounded border border-emerald-300/90 whitespace-nowrap">
+        <div className="report-contract-badge-irr sm:col-span-3 print:col-span-3 flex items-center justify-between gap-1 bg-emerald-50/95 px-2 py-1 rounded border border-emerald-300/90 min-w-0 whitespace-nowrap overflow-hidden">
           <div className="flex items-center gap-1 shrink-0">
-            <Coins className="report-info-icon w-3 h-3 text-emerald-700 shrink-0" />
-            <span className="report-info-label text-emerald-900 font-bold">{isFa ? 'مبلغ ریالی:' : 'IRR Value:'}</span>
+            <Coins className="report-info-icon w-3.5 h-3.5 text-emerald-700 shrink-0" />
+            <span className="report-info-label text-emerald-950 font-extrabold text-[10.5px]">{isFa ? 'مبلغ ریالی:' : 'IRR Value:'}</span>
           </div>
-          <span className="report-info-value font-extrabold text-emerald-950 font-mono text-[9.5px] whitespace-nowrap" title={`${Number(contractValIRR).toLocaleString()} ${isFa ? 'ریال' : 'IRR'}`}>
+          <span className="report-info-value font-extrabold text-emerald-950 font-tabular tabular-nums tracking-tight text-[12px] whitespace-nowrap" title={`${Number(contractValIRR).toLocaleString()} ${isFa ? 'ریال' : 'IRR'}`}>
             <span className="ltr-inline">{Number(contractValIRR).toLocaleString('en-US')}</span>{' '}
-            <span className="text-[8px] font-sans font-bold text-emerald-800">{isFa ? 'ریال' : 'IRR'}</span>
+            <span className="text-[9.5px] font-sans font-extrabold text-emerald-800">{isFa ? 'ریال' : 'IRR'}</span>
           </span>
         </div>
 
         {/* Contract Value EUR (2 cols) */}
-        <div className="report-contract-badge-eur sm:col-span-2 print:col-span-2 flex items-center justify-between gap-1 bg-blue-50/95 px-2 py-0.5 rounded border border-blue-300/90 whitespace-nowrap">
+        <div className="report-contract-badge-eur sm:col-span-2 print:col-span-2 flex items-center justify-between gap-1 bg-blue-50/95 px-2 py-1 rounded border border-blue-300/90 min-w-0 whitespace-nowrap overflow-hidden">
           <div className="flex items-center gap-1 shrink-0">
-            <Coins className="report-info-icon w-3 h-3 text-blue-700 shrink-0" />
-            <span className="report-info-label text-blue-900 font-bold">{isFa ? 'مبلغ ارزی:' : 'EUR Value:'}</span>
+            <Coins className="report-info-icon w-3.5 h-3.5 text-blue-700 shrink-0" />
+            <span className="report-info-label text-blue-950 font-extrabold text-[10.5px]">{isFa ? 'مبلغ ارزی:' : 'EUR Value:'}</span>
           </div>
-          <span className="report-info-value font-extrabold text-blue-950 font-mono text-[9.5px] whitespace-nowrap" title={`${Number(contractValEUR).toLocaleString()} EUR`}>
+          <span className="report-info-value font-extrabold text-blue-950 font-tabular tabular-nums tracking-tight text-[12px] whitespace-nowrap" title={`${Number(contractValEUR).toLocaleString()} EUR`}>
             <span className="ltr-inline">{Number(contractValEUR).toLocaleString('en-US')}</span>{' '}
-            <span className="text-[8px] font-sans font-bold text-blue-800">{isFa ? 'یورو' : 'EUR'}</span>
+            <span className="text-[9.5px] font-sans font-extrabold text-blue-800">{isFa ? 'یورو' : 'EUR'}</span>
           </span>
         </div>
       </div>

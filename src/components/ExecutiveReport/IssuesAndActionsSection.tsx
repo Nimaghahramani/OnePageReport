@@ -52,18 +52,18 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
             <span className="p-0.5 rounded bg-rose-100 border border-rose-300/80 text-rose-700 shadow-2xs">
               <AlertOctagon className="w-3.5 h-3.5" />
             </span>
-            <h2 className="text-[10.5px] font-extrabold text-rose-950 uppercase tracking-tight">
+            <h2 className="text-[11.5px] font-extrabold text-rose-950 uppercase tracking-tight">
               {isFa ? 'موانع، مشکلات و ریسک‌های کلیدی پروژه' : 'KEY ISSUES & CONSTRAINTS'}
             </h2>
           </div>
-          <span className="issues-active-badge text-[8px] font-extrabold text-rose-900 bg-rose-100 border border-rose-300 px-1.5 py-0.2 rounded shadow-2xs">
+          <span className="issues-active-badge text-[10px] font-extrabold font-tabular tabular-nums text-rose-950 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded shadow-2xs">
             {issues.length} {isFa ? 'مورد فعال' : 'Active Items'}
           </span>
         </div>
 
-        <div className="space-y-1.5 text-[8.5px] flex-1 flex flex-col justify-center">
+        <div className="space-y-1.5 text-[11px] flex-1 flex flex-col justify-center">
           {issues.length === 0 ? (
-            <div className="p-3 text-center text-slate-500 font-medium text-[8.5px] bg-white/80 rounded border border-rose-200">
+            <div className="p-3 text-center text-slate-600 font-bold text-[11px] bg-white/80 rounded border border-rose-200">
               {isFa ? 'موردی در گزارش روزانه ثبت نشده است' : 'No issues recorded in daily report'}
             </div>
           ) : (
@@ -72,16 +72,16 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
               return (
                 <div
                   key={item.id || idx}
-                  className={`issue-item-card p-1.5 px-2 rounded-md flex items-center justify-between gap-1.5 border shadow-2xs ${
+                  className={`issue-item-card p-1.5 px-2.5 rounded-md flex items-center justify-between gap-2 border shadow-2xs min-w-0 overflow-hidden ${
                     isEven
                       ? 'bg-linear-to-l from-amber-50/90 via-orange-50/45 to-white border-amber-300/85 border-r-3 border-r-amber-500'
                       : 'bg-linear-to-l from-rose-50/90 via-rose-50/45 to-white border-rose-300/85 border-r-3 border-r-rose-500'
                   }`}
                 >
                   {/* Clean Issue Presentation: Number + Description */}
-                  <div className="flex items-start gap-1.5 flex-1">
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
                     <span
-                      className={`issue-num px-1.5 py-0.2 rounded font-mono font-extrabold text-[7.5px] shrink-0 mt-0.2 border ${
+                      className={`issue-num px-1.5 py-0.5 rounded font-tabular tabular-nums font-extrabold text-[10.5px] shrink-0 mt-0.2 border ltr-inline ${
                         isEven
                           ? 'text-amber-950 bg-amber-100/95 border-amber-300'
                           : 'text-rose-950 bg-rose-100/95 border-rose-300'
@@ -89,13 +89,13 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
                     >
                       #{idx + 1}
                     </span>
-                    <span className="issue-text font-bold text-slate-900 leading-snug text-[8.5px]">
+                    <span className="issue-text font-extrabold text-blue-950 leading-snug text-[11.5px]">
                       {isFa ? item.issueFa : (item.issueEn || item.issueFa)}
                     </span>
                   </div>
                   {item.severity && (
                     <span
-                      className={`shrink-0 px-1.5 py-0.2 rounded text-[7.5px] font-bold uppercase ${
+                      className={`shrink-0 px-1.5 py-0.5 rounded text-[9.5px] font-extrabold uppercase ${
                         item.severity === 'critical'
                           ? 'bg-rose-100 text-rose-800 border border-rose-300'
                           : 'bg-amber-100 text-amber-800 border border-amber-300'
@@ -127,22 +127,22 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
             <span className="p-0.5 rounded bg-blue-100 border border-blue-300/80 text-blue-700 shadow-2xs">
               <CheckCircle2 className="w-3.5 h-3.5" />
             </span>
-            <h2 className="text-[10.5px] font-extrabold text-blue-950 uppercase tracking-tight">
+            <h2 className="text-[11.5px] font-extrabold text-blue-950 uppercase tracking-tight">
               {isFa ? 'فعالیت‌های مهم و تصمیمات مدیریتی' : 'KEY ACTIVITIES & DECISIONS'}
             </h2>
           </div>
           {displayedActivities.length > 0 && (
-            <span className="activities-count-badge text-[7.5px] font-extrabold text-emerald-900 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300 shadow-2xs">
+            <span className="activities-count-badge text-[10px] font-extrabold font-tabular tabular-nums text-emerald-950 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 shadow-2xs">
               {displayedActivities.length} {isFa ? 'فعالیت کلیدی' : 'Key Items'}
             </span>
           )}
         </div>
 
-        <div className="space-y-1.5 text-[8.5px] flex-1 flex flex-col justify-between">
+        <div className="space-y-1.5 text-[11px] flex-1 flex flex-col justify-between">
           {/* Completed Work Today */}
           <div>
             <div className="flex items-center justify-between mb-1.5 bg-teal-50/90 border border-teal-200/80 rounded px-2 py-0.5">
-              <span className="activities-heading text-[8px] font-extrabold text-teal-950 uppercase block">
+              <span className="activities-heading text-[10.5px] font-extrabold text-teal-950 uppercase block">
                 {isFa ? 'فعالیت‌های مهم انجام‌شده در ماه اخیر:' : 'Key Work Completed (Past Month):'}
               </span>
             </div>
@@ -151,12 +151,12 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
                 {displayedActivities.map((w, idx) => (
                   <li
                     key={w.id || idx}
-                    className="activity-item-card flex items-center gap-1.5 text-slate-900 bg-linear-to-l from-emerald-50/95 via-teal-50/50 to-white p-1 px-2 rounded-md border border-emerald-300/85 border-r-3 border-r-emerald-600 shadow-2xs"
+                    className="activity-item-card flex items-center gap-1.5 text-slate-900 bg-linear-to-l from-emerald-50/95 via-teal-50/50 to-white p-1 px-2 rounded-md border border-emerald-300/85 border-r-3 border-r-emerald-600 shadow-2xs min-w-0 overflow-hidden"
                   >
-                    <span className="activity-check-icon inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 font-black text-[7.5px] shrink-0">
+                    <span className="activity-check-icon inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 font-black text-[9px] shrink-0">
                       ✓
                     </span>
-                    <span className="activity-text leading-snug text-[8.5px] font-bold text-slate-900">{w.description}</span>
+                    <span className="activity-text leading-snug text-[11px] font-extrabold text-blue-950 truncate" title={w.description}>{w.description}</span>
                   </li>
                 ))}
               </ul>
@@ -166,20 +166,20 @@ export const IssuesAndActionsSection: React.FC<IssuesAndActionsSectionProps> = (
           {/* Urgent Management Decisions */}
           {decisions.length > 0 && (
             <div className="pt-1 border-t border-teal-200/80">
-              <span className="decisions-heading text-[8px] font-extrabold text-blue-950 uppercase block mb-0.5">
+              <span className="decisions-heading text-[10px] font-extrabold text-blue-950 uppercase block mb-0.5">
                 {isFa ? 'اقدامات و تصمیمات مورد نیاز مدیریت:' : 'Required Management Decisions:'}
               </span>
               <ul className="space-y-1">
                 {decisions.map((d, idx) => (
                   <li
                     key={d.id || idx}
-                    className="decision-item-card flex items-start gap-1 text-slate-900 bg-linear-to-l from-blue-50/90 to-white p-1 px-1.5 rounded-md border border-blue-300/85 border-r-3 border-r-blue-600 shadow-2xs"
+                    className="decision-item-card flex items-start gap-1.5 text-slate-900 bg-linear-to-l from-blue-50/90 to-white p-1 px-2 rounded-md border border-blue-300/85 border-r-3 border-r-blue-600 shadow-2xs min-w-0 overflow-hidden"
                   >
-                    <ArrowUpRight className="decision-arrow-icon w-3 h-3 text-blue-700 shrink-0 mt-0.5" />
-                    <div className="leading-tight">
-                      <span className="decision-text font-bold">{isFa ? d.titleFa : d.titleEn}</span>
+                    <ArrowUpRight className="decision-arrow-icon w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5" />
+                    <div className="leading-tight min-w-0">
+                      <span className="decision-text font-extrabold text-[11px] text-blue-950">{isFa ? d.titleFa : d.titleEn}</span>
                       {d.targetParty && (
-                        <span className="decision-meta text-slate-500 text-[7.5px] block">
+                        <span className="decision-meta text-slate-600 text-[9.5px] font-bold block">
                           {isFa ? `مرجع: ${d.targetParty} ${d.deadline ? `| مهلت: ${d.deadline}` : ''}` : `Target: ${d.targetParty} ${d.deadline ? `| Due: ${d.deadline}` : ''}`}
                         </span>
                       )}

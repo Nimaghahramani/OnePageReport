@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { EquipmentRecord, EquipmentProgressItem, Language } from '../../types';
+import {
+  EquipmentRecord,
+  EquipmentProgressItem,
+  getEquipmentItemWeightedProgress,
+  Language
+} from '../../types';
 import { initialEquipmentItems } from '../../data/sampleData';
 import { Wrench, Info } from 'lucide-react';
 
@@ -30,9 +35,16 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
     ((items || []).length > 0 ? (items || []).reduce((s, it) => s + (it.completed || 0), 0) : (equipment?.installed ?? 0));
 
   const remainingCount = Math.max(0, totalCount - completedCount);
+
+  const exactWeightedSum =
+    (items || []).length > 0
+      ? Number((items || []).reduce((s, it) => s + getEquipmentItemWeightedProgress(it), 0).toFixed(1))
+      : null;
+
   const weightedProgress =
-    equipment?.equipmentSummary?.weightedProgress ??
-    (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment?.installationPercentage ?? 0));
+    exactWeightedSum !== null
+      ? Math.round(exactWeightedSum)
+      : (equipment?.equipmentSummary?.weightedProgress ?? equipment?.installationPercentage ?? 84);
 
   return (
     <div
@@ -46,118 +58,134 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between bg-linear-to-l from-teal-100/80 via-teal-50/55 to-cyan-50/35 -mx-2 -mt-2 px-2.5 pt-2 pb-1.5 mb-2 border-b border-teal-200/90 rounded-t-lg">
+      <div className="flex items-center justify-between bg-linear-to-l from-teal-100/80 via-teal-50/55 to-cyan-50/35 -mx-2 -mt-2 px-2.5 pt-2 pb-1.5 mb-1.5 border-b border-teal-200/90 rounded-t-lg">
         <div className="flex items-center gap-1.5">
           <span className="p-0.5 rounded bg-teal-100 border border-teal-300/80 text-teal-700 shadow-2xs">
             <Wrench className="w-3.5 h-3.5" />
           </span>
-          <h2 className="text-[10px] font-extrabold text-teal-950 uppercase tracking-tight">
+          <h2 className="text-[11.5px] font-extrabold text-teal-950 uppercase tracking-tight">
             {isFa ? (
               <>
-                وضعیت نصب تجهیزات <span className="ltr-inline text-[9px] font-semibold text-teal-700">(Equipment Sheet)</span>
+                وضعیت نصب تجهیزات <span className="ltr-inline text-[10px] font-bold text-teal-700">(Equipment Sheet)</span>
               </>
             ) : (
               'EQUIPMENT INSTALLATION STATUS'
             )}
           </h2>
         </div>
-        <span className="equipment-overall-badge text-[8.5px] text-teal-950 font-extrabold bg-teal-100 border border-teal-300 px-1.5 py-0.2 rounded shadow-2xs">
-          <span className="ltr-inline">{weightedProgress}%</span> {isFa ? 'پیشرفت کل' : 'Progress'}
+        <span className="equipment-overall-badge text-[10px] text-teal-950 font-extrabold font-tabular tabular-nums bg-teal-100 border border-teal-300 px-2 py-0.5 rounded shadow-2xs">
+          <span className="ltr-inline">{weightedProgress}%</span> {isFa ? 'پیشرفت وزنی کل' : 'Weighted Progress'}
         </span>
       </div>
 
       {/* Top 4 Summary Metrics */}
-      <div className="grid grid-cols-4 gap-1 mb-1.5 text-center">
-        <div className="equipment-metric-box equipment-total-box bg-indigo-50/60 border border-indigo-200/80 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-indigo-800 font-semibold block leading-tight">{isFa ? 'کل آیتم‌ها' : 'Total'}</span>
-          <span className="equipment-metric-val text-[11px] font-extrabold text-indigo-950">{totalCount}</span>
+      <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center">
+        <div className="equipment-metric-box equipment-total-box bg-indigo-50/70 border border-indigo-200/90 rounded p-1 min-w-0 overflow-hidden">
+          <span className="equipment-metric-label text-[10.5px] text-indigo-950 font-extrabold block leading-tight truncate">{isFa ? 'کل آیتم‌ها' : 'Total'}</span>
+          <span className="equipment-metric-val text-[15px] font-extrabold text-indigo-950 font-tabular tabular-nums tracking-tight ltr-inline leading-tight block mt-0.5">{totalCount}</span>
         </div>
-        <div className="equipment-metric-box equipment-installed-box bg-teal-50/85 border border-teal-200/90 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-teal-800 font-semibold block leading-tight">{isFa ? 'انجام‌شده' : 'Completed'}</span>
-          <span className="equipment-metric-val text-[11px] font-extrabold text-teal-950">{completedCount}</span>
+        <div className="equipment-metric-box equipment-installed-box bg-teal-50/90 border border-teal-200/90 rounded p-1 min-w-0 overflow-hidden">
+          <span className="equipment-metric-label text-[10.5px] text-teal-950 font-extrabold block leading-tight truncate">{isFa ? 'انجام‌شده' : 'Completed'}</span>
+          <span className="equipment-metric-val text-[15px] font-extrabold text-teal-950 font-tabular tabular-nums tracking-tight ltr-inline leading-tight block mt-0.5">{completedCount}</span>
         </div>
-        <div className="equipment-metric-box equipment-remaining-box bg-amber-50/85 border border-amber-200/90 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-amber-800 font-semibold block leading-tight">{isFa ? 'باقیمانده' : 'Remaining'}</span>
-          <span className="equipment-metric-val text-[11px] font-extrabold text-amber-950">{remainingCount}</span>
+        <div className="equipment-metric-box equipment-remaining-box bg-amber-50/90 border border-amber-200/90 rounded p-1 min-w-0 overflow-hidden">
+          <span className="equipment-metric-label text-[10.5px] text-amber-950 font-extrabold block leading-tight truncate">{isFa ? 'باقیمانده' : 'Remaining'}</span>
+          <span className="equipment-metric-val text-[15px] font-extrabold text-amber-950 font-tabular tabular-nums tracking-tight ltr-inline leading-tight block mt-0.5">{remainingCount}</span>
         </div>
-        <div className="equipment-metric-box equipment-progress-box bg-blue-50/85 border border-blue-200/90 rounded p-0.5">
-          <span className="equipment-metric-label text-[7.5px] text-blue-800 font-semibold block leading-tight">{isFa ? 'پیشرفت کل' : 'Progress'}</span>
-          <span className="equipment-metric-val text-[11px] font-extrabold text-blue-950">{weightedProgress}%</span>
+        <div className="equipment-metric-box equipment-progress-box bg-blue-50/90 border border-blue-200/90 rounded p-1 min-w-0 overflow-hidden">
+          <span className="equipment-metric-label text-[10.5px] text-blue-950 font-extrabold block leading-tight truncate">{isFa ? 'پیشرفت وزنی' : 'Progress'}</span>
+          <span className="equipment-metric-val text-[15px] font-extrabold text-blue-950 font-tabular tabular-nums tracking-tight ltr-inline leading-tight block mt-0.5">{weightedProgress}%</span>
         </div>
       </div>
 
       {/* Dynamic Equipment Items Table from Equipment Sheet */}
-      <div className="border border-slate-200/90 rounded overflow-hidden text-[7.5px] flex-1 flex flex-col justify-start">
-        <table className="equipment-table w-full text-right rtl:text-right ltr:text-left border-collapse">
-          <thead className="bg-teal-50/80 text-teal-950 font-extrabold border-b border-teal-200/90 select-none">
-            <tr className="h-4">
-              <th className="px-1 py-0.5 text-center w-5 col-num">{isFa ? '#' : 'No'}</th>
-              <th className="px-1 py-0.5">{isFa ? 'تجهیز / شرح آیتم' : 'Equipment / Item'}</th>
-              <th className="px-0.5 py-0.5 text-center w-7">{isFa ? 'واحد' : 'Unit'}</th>
-              <th className="px-0.5 py-0.5 text-center w-8 col-qty">{isFa ? 'کل' : 'Total'}</th>
-              <th className="px-0.5 py-0.5 text-center w-8 col-qty">{isFa ? 'انجام' : 'Done'}</th>
-              <th className="px-0.5 py-0.5 text-center w-8 col-qty">{isFa ? 'مانده' : 'Rem.'}</th>
-              <th className="px-1 py-0.5 text-center w-14 col-percent">{isFa ? 'پیشرفت' : 'Progress'}</th>
+      <div className="border border-slate-200/90 rounded overflow-hidden flex-1 flex flex-col justify-between bg-white/95">
+        <table className="equipment-table w-full table-fixed text-right rtl:text-right ltr:text-left border-collapse">
+          <thead className="bg-teal-50/95 text-teal-950 font-extrabold border-b-2 border-teal-200/90 select-none text-[10.5px]">
+            <tr className="h-5">
+              <th className="px-1 py-0.5 text-center w-[6%] col-num whitespace-nowrap">{isFa ? 'ردیف' : 'No'}</th>
+              <th className="px-1.5 py-0.5 w-[33.5%] whitespace-nowrap">{isFa ? 'تجهیز / آیتم' : 'Equipment / Item'}</th>
+              <th className="px-1 py-0.5 text-center w-[9.5%] whitespace-nowrap">{isFa ? 'واحد' : 'Unit'}</th>
+              <th className="px-1 py-0.5 text-center w-[10.5%] col-qty whitespace-nowrap">{isFa ? 'تعداد کل' : 'Total'}</th>
+              <th className="px-1 py-0.5 text-center w-[10.5%] col-qty whitespace-nowrap">{isFa ? 'انجام شده' : 'Done'}</th>
+              <th className="px-1 py-0.5 text-center w-[10.5%] col-qty whitespace-nowrap">{isFa ? 'باقی مانده' : 'Rem.'}</th>
+              <th className="px-1 py-0.5 text-center w-[19.5%] col-percent whitespace-nowrap">{isFa ? 'پیشرفت' : 'Progress'}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-200/75">
             {items.map((item, idx) => {
               const itemTotal = Number(item.total) || 0;
               const itemCompleted = Number(item.completed) || 0;
               const itemRemaining = Math.max(0, itemTotal - itemCompleted);
-              const progress = itemTotal > 0 ? Number(((itemCompleted / itemTotal) * 100).toFixed(1)) : 0;
-              const isComplete = progress >= 100;
+              const weightedItemProg = getEquipmentItemWeightedProgress(item);
+              const isComplete = itemTotal > 0 && itemCompleted >= itemTotal;
+              const hasPositiveWeightedProg = weightedItemProg > 0;
+              const barFillPct = hasPositiveWeightedProg
+                ? Math.min(100, Math.max(18, itemTotal > 0 ? (itemCompleted / itemTotal) * 100 : weightedItemProg))
+                : 0;
               const hasRemarks = Boolean(item.remarks && item.remarks.trim().length > 0);
 
               return (
                 <tr
                   key={`${item.sequence}-${idx}`}
-                  className={`h-3.5 transition-colors ${
-                    isComplete ? 'bg-emerald-50/40' : 'even:bg-slate-50/70 hover:bg-teal-50/30'
+                  className={`h-[19.5px] transition-colors ${
+                    isComplete && hasPositiveWeightedProg ? 'bg-emerald-50/50' : 'even:bg-slate-50/75 hover:bg-teal-50/35'
                   }`}
                 >
-                  <td className="px-1 py-0.2 text-center text-slate-400 font-tabular tabular-nums text-[7px]">
+                  <td className="px-1 py-0.5 text-center text-slate-700 font-extrabold font-tabular tabular-nums text-[10.5px] col-num whitespace-nowrap">
                     {item.sequence || idx + 1}
                   </td>
-                  <td className="px-1 py-0.2 font-sans font-medium text-slate-800 truncate max-w-[100px]">
-                    <div className="flex items-center gap-1">
+                  <td className="px-1.5 py-0.5 font-sans font-extrabold text-blue-950 text-[11px] truncate">
+                    <div className="flex items-center gap-1 min-w-0">
                       <span className="truncate" title={item.name}>{item.name}</span>
                       {hasRemarks && (
                         <button
                           type="button"
                           onClick={() => setActiveRemark({ name: item.name, text: item.remarks! })}
                           title={item.remarks!}
-                          className="text-teal-600 hover:text-teal-800 transition-colors cursor-pointer inline-flex items-center"
+                          className="text-teal-600 hover:text-teal-800 transition-colors cursor-pointer inline-flex items-center shrink-0"
                         >
-                          <Info className="w-2.5 h-2.5 shrink-0" />
+                          <Info className="w-3 h-3 shrink-0" />
                         </button>
                       )}
                     </div>
                   </td>
-                  <td className="px-0.5 py-0.2 text-center font-sans text-slate-500 text-[7px] truncate max-w-[28px]">
+                  <td className="px-1 py-0.5 text-center font-sans font-bold text-slate-700 text-[10px] truncate whitespace-nowrap">
                     {item.unit || 'عدد'}
                   </td>
-                  <td className="px-0.5 py-0.2 text-center font-bold text-slate-700 font-tabular tabular-nums col-qty">{itemTotal}</td>
-                  <td className={`px-0.5 py-0.2 text-center font-black font-tabular tabular-nums col-qty ${itemCompleted > 0 ? 'text-teal-700' : 'text-slate-400'}`}>
-                    {itemCompleted}
+                  <td className="px-1 py-0.5 text-center font-extrabold text-blue-950 text-[11.5px] font-tabular tabular-nums tracking-tight col-qty whitespace-nowrap">
+                    <span className="ltr-inline">{itemTotal}</span>
                   </td>
-                  <td className="px-0.5 py-0.2 text-center text-slate-500 font-tabular tabular-nums col-qty">{itemRemaining}</td>
-                  <td className="px-1 py-0.2 text-center col-percent">
-                    <div className="flex items-center gap-1 justify-center">
-                      <div className="w-6 bg-slate-200 rounded-full h-1 overflow-hidden shrink-0">
+                  <td className={`px-1 py-0.5 text-center font-extrabold text-[11.5px] font-tabular tabular-nums tracking-tight col-qty whitespace-nowrap ${itemCompleted > 0 ? 'text-teal-800' : 'text-slate-400'}`}>
+                    <span className="ltr-inline">{itemCompleted}</span>
+                  </td>
+                  <td className={`px-1 py-0.5 text-center font-extrabold text-[11.5px] font-tabular tabular-nums tracking-tight col-qty whitespace-nowrap ${itemRemaining > 0 ? 'text-amber-800' : 'text-slate-400'}`}>
+                    <span className="ltr-inline">{itemRemaining}</span>
+                  </td>
+                  <td className="px-1 py-0.5 text-center col-percent whitespace-nowrap">
+                    <div className="flex items-center gap-1 justify-between px-0.5">
+                      <div className="w-6 bg-slate-200 rounded-full h-1.5 overflow-hidden shrink-0">
                         <div
                           className={`h-full rounded-full ${
-                            isComplete ? 'bg-emerald-500' : progress > 0 ? 'bg-teal-500' : 'bg-slate-300'
+                            isComplete && hasPositiveWeightedProg
+                              ? 'bg-emerald-600'
+                              : hasPositiveWeightedProg
+                              ? 'bg-teal-600'
+                              : 'bg-slate-300'
                           }`}
-                          style={{ width: `${Math.min(100, progress)}%` }}
+                          style={{ width: `${barFillPct}%` }}
                         />
                       </div>
                       <span
-                        className={`text-[7px] font-bold min-w-[22px] text-right font-tabular tabular-nums ${
-                          isComplete ? 'text-emerald-700' : progress > 0 ? 'text-teal-800' : 'text-slate-400'
+                        className={`text-[11px] font-extrabold min-w-[38px] text-left font-tabular tabular-nums tracking-tight ltr-inline whitespace-nowrap ${
+                          isComplete && hasPositiveWeightedProg
+                            ? 'text-emerald-800'
+                            : hasPositiveWeightedProg
+                            ? 'text-teal-900'
+                            : 'text-slate-500'
                         }`}
                       >
-                        {progress}%
+                        {weightedItemProg.toFixed(1)}%
                       </span>
                     </div>
                   </td>
@@ -165,6 +193,25 @@ export const EquipmentSection: React.FC<EquipmentSectionProps> = ({ equipment, l
               );
             })}
           </tbody>
+          <tfoot className="bg-blue-950 text-white font-extrabold border-t border-blue-900 select-none text-[11px]">
+            <tr className="h-[21px]">
+              <td colSpan={3} className="px-2 py-0.5 text-center font-extrabold tracking-tight whitespace-nowrap">
+                {isFa ? 'جمع' : 'Total'}
+              </td>
+              <td className="px-1 py-0.5 text-center font-tabular tabular-nums text-[12px] col-qty whitespace-nowrap">
+                <span className="ltr-inline">{totalCount}</span>
+              </td>
+              <td className="px-1 py-0.5 text-center font-tabular tabular-nums text-[12px] text-teal-200 col-qty whitespace-nowrap">
+                <span className="ltr-inline">{completedCount}</span>
+              </td>
+              <td className="px-1 py-0.5 text-center font-tabular tabular-nums text-[12px] text-amber-200 col-qty whitespace-nowrap">
+                <span className="ltr-inline">{remainingCount}</span>
+              </td>
+              <td className="px-1 py-0.5 text-center font-tabular tabular-nums text-[12px] text-emerald-300 col-percent whitespace-nowrap">
+                <span className="ltr-inline">{weightedProgress}%</span>
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 

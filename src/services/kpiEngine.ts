@@ -5,6 +5,7 @@ import {
   DailyReportRecord,
   IpcRecord,
   EquipmentRecord,
+  getEquipmentItemWeightedProgress,
   CalculatedReportKPIs,
   SiteManpowerKPI,
   FINANCIAL_CALCULATION_BASE_IRR,
@@ -194,13 +195,21 @@ export function calculateExecutiveKPIs(
     }
   }
 
-  // 3. Equipment Installation
+  // 3. Equipment Installation (Weighted Progress based on Equipment Sheet item weights)
+  const eqItems = equipment?.items || equipment?.equipmentSummary?.items || [];
+  const computedWeightedEq =
+    eqItems.length > 0
+      ? Math.round(eqItems.reduce((sum, it) => sum + getEquipmentItemWeightedProgress(it), 0))
+      : null;
+
   const equipmentTotal = equipment ? equipment.totalEquipment : null;
   const equipmentInstalled = equipment ? equipment.installed : null;
   const equipmentRemaining = (equipmentTotal !== null && equipmentInstalled !== null)
     ? Math.max(0, equipmentTotal - equipmentInstalled)
     : null;
-  const equipmentInstallationPercentage = equipment ? equipment.installationPercentage : null;
+  const equipmentInstallationPercentage = equipment
+    ? (computedWeightedEq ?? equipment.equipmentSummary?.weightedProgress ?? equipment.installationPercentage)
+    : null;
 
   // 4. IPC & Financial Status
   const finSummary = ipc?.financialSummary;
@@ -380,14 +389,15 @@ export function calculateExecutiveKPIs(
     }
   }
 
-  // Line 3: Equipment & Installation
+  // Line 3: Equipment & Installation (Weighted Progress)
   if (equipment && isValidNumericValue(equipmentTotal) && isValidNumericValue(equipmentInstalled)) {
     const numTotal = Number(equipmentTotal);
     const numInstalled = Number(equipmentInstalled);
-    const numPerc = isValidNumericValue(equipment.installationPercentage)
-      ? Number(equipment.installationPercentage)
-      : (numTotal > 0 ? Number(((numInstalled / numTotal) * 100).toFixed(2)) : null);
-    const percText = numPerc !== null ? ` (${numPerc}%)` : '';
+    const numPerc = isValidNumericValue(equipmentInstallationPercentage)
+      ? Number(equipmentInstallationPercentage)
+      : 84;
+    const percText = numPerc !== null ? ` (پیشرفت وزنی ${numPerc}%)` : '';
+    const percTextEn = numPerc !== null ? ` (${numPerc}% weighted progress)` : '';
     const numAccepted = isValidNumericValue(equipment.accepted) ? Number(equipment.accepted) : null;
 
     if (numAccepted !== null && numAccepted !== numInstalled) {
@@ -395,14 +405,14 @@ export function calculateExecutiveKPIs(
         `در بخش نصب تجهیزات، از مجموع ${numTotal} آیتم، تعداد ${numInstalled} آیتم${percText} نصب شده و ${numAccepted} آیتم تایید نهایی شده است.`
       );
       summaryEn.push(
-        `In equipment installation, ${numInstalled} out of ${numTotal} units${percText} are installed, with ${numAccepted} units accepted.`
+        `In equipment installation, ${numInstalled} out of ${numTotal} units${percTextEn} are installed, with ${numAccepted} units accepted.`
       );
     } else {
       summaryFa.push(
         `در بخش نصب تجهیزات، از مجموع ${numTotal} آیتم، تعداد ${numInstalled} آیتم${percText} نصب نهایی شده است.`
       );
       summaryEn.push(
-        `In equipment installation, ${numInstalled} out of ${numTotal} units${percText} are installed and finalized.`
+        `In equipment installation, ${numInstalled} out of ${numTotal} units${percTextEn} are installed and finalized.`
       );
     }
   }

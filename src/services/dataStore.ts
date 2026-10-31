@@ -7,6 +7,8 @@ import {
   DailyReportRecord,
   IpcRecord,
   EquipmentRecord,
+  getCanonicalEquipmentWeight,
+  getEquipmentItemWeightedProgress,
   DatasetVersionAudit,
   CalculatedReportKPIs,
   ValidationIssue,
@@ -180,6 +182,65 @@ export class ProjectDataStore {
           advancePaymentSource: 'Worksheet "Invoice" (مبلغ پیش پرداخت - ۴ فقره)',
           adjustmentSource: 'Worksheet "Invoice" (تعدیل(ریال) - ۱۱ صورت‌وضعیت)'
         }
+      }
+    };
+  }
+
+  public static normalizeEquipmentRecord(rawEq: EquipmentRecord): EquipmentRecord {
+    const rawItems =
+      rawEq?.items && Array.isArray(rawEq.items) && rawEq.items.length > 0
+        ? rawEq.items
+        : rawEq?.equipmentSummary?.items && Array.isArray(rawEq.equipmentSummary.items) && rawEq.equipmentSummary.items.length > 0
+        ? rawEq.equipmentSummary.items
+        : initialEquipmentItems;
+
+    const normalizedItems = rawItems.map((it, idx) => {
+      const seq = it.sequence || idx + 1;
+      const total = Number(it.total) || 0;
+      const completed = Number(it.completed) || 0;
+      const remaining = Math.max(0, total - completed);
+      const weight =
+        typeof it.weight === 'number' && !Number.isNaN(it.weight)
+          ? it.weight
+          : getCanonicalEquipmentWeight(it.name, seq);
+      const weightedProgress = total > 0 && weight > 0 ? Number(((completed / total) * weight).toFixed(1)) : 0.0;
+      return {
+        ...it,
+        sequence: seq,
+        total,
+        completed,
+        remaining,
+        weight,
+        weightedProgress,
+        progressPercent: weightedProgress
+      };
+    });
+
+    const totalSum = normalizedItems.reduce((s, i) => s + i.total, 0);
+    const completedSum = normalizedItems.reduce((s, i) => s + i.completed, 0);
+    const remainingSum = Math.max(0, totalSum - completedSum);
+    const exactWeightedSum = Number(
+      normalizedItems.reduce((s, i) => s + (i.weightedProgress ?? 0), 0).toFixed(1)
+    );
+    const roundedWeighted = normalizedItems.length > 0 ? Math.round(exactWeightedSum) : 84;
+
+    return {
+      ...rawEq,
+      totalEquipment: totalSum > 0 ? totalSum : (rawEq.totalEquipment || 252),
+      installed: totalSum > 0 ? completedSum : (rawEq.installed || 29),
+      remaining: totalSum > 0 ? remainingSum : (rawEq.remaining || 223),
+      installationPercentage: roundedWeighted,
+      items: normalizedItems,
+      equipmentSummary: {
+        ...(rawEq.equipmentSummary || {}),
+        total: totalSum > 0 ? totalSum : 252,
+        completed: totalSum > 0 ? completedSum : 29,
+        remaining: totalSum > 0 ? remainingSum : 223,
+        weightedProgress: roundedWeighted,
+        exactWeightedProgress: exactWeightedSum,
+        items: normalizedItems,
+        sourceFile: rawEq.equipmentSummary?.sourceFile || rawEq.fileName || 'Daily_Report_Workbook.xlsx',
+        sourceSheet: rawEq.equipmentSummary?.sourceSheet || 'Equipment'
       }
     };
   }
@@ -439,15 +500,10 @@ export class ProjectDataStore {
       }
     }
 
-    // Ensure currentEquipment has valid items array
+    // Ensure currentEquipment has valid items array and weighted progress migration
     if (this.currentEquipment) {
-      if (!this.currentEquipment.items || !Array.isArray(this.currentEquipment.items)) {
-        this.currentEquipment = {
-          ...this.currentEquipment,
-          items: initialEquipmentRecord.items || initialEquipmentItems
-        };
-        this.saveToStorage(STORAGE_KEYS.EQUIPMENT, this.currentEquipment);
-      }
+      this.currentEquipment = ProjectDataStore.normalizeEquipmentRecord(this.currentEquipment);
+      this.saveToStorage(STORAGE_KEYS.EQUIPMENT, this.currentEquipment);
     }
   }
 
@@ -576,13 +632,13 @@ export class ProjectDataStore {
       this.saveToStorage(STORAGE_KEYS.IPC, this.currentIpc);
     }
     if (report.equipment) {
-      this.currentEquipment = {
+      this.currentEquipment = ProjectDataStore.normalizeEquipmentRecord({
         ...initialEquipmentRecord,
         ...report.equipment,
         items: (report.equipment.items && Array.isArray(report.equipment.items) && report.equipment.items.length > 0)
           ? report.equipment.items
           : (this.currentEquipment?.items || initialEquipmentRecord.items || initialEquipmentItems)
-      };
+      });
     }
 
     this.publishedReportMetadata = {
@@ -1339,30 +1395,18 @@ export class ProjectDataStore {
     }
 
     const nextVersion = (this.currentEquipment?.version || 0) + 1;
-    const items = newRecord.items || this.currentEquipment?.items || [];
-    const totalEq = newRecord.equipmentSummary?.total ?? (items.length > 0 ? items.reduce((s, i) => s + i.total, 0) : (newRecord.totalEquipment ?? this.currentEquipment?.totalEquipment ?? 252));
-    const installedEq = newRecord.equipmentSummary?.completed ?? (items.length > 0 ? items.reduce((s, i) => s + i.completed, 0) : (newRecord.installed ?? this.currentEquipment?.installed ?? 29));
-    const weightedProg = newRecord.equipmentSummary?.weightedProgress ?? (totalEq > 0 ? Number(((installedEq / totalEq) * 100).toFixed(2)) : 11.51);
-
-    const eqFull: EquipmentRecord = {
+    const rawItems = newRecord.items || this.currentEquipment?.items || initialEquipmentItems;
+    const normalizedRecord = ProjectDataStore.normalizeEquipmentRecord({
       ...this.currentEquipment,
       ...newRecord,
-      totalEquipment: totalEq,
-      installed: installedEq,
-      installationPercentage: weightedProg,
-      items,
-      equipmentSummary: newRecord.equipmentSummary || {
-        total: totalEq,
-        completed: installedEq,
-        remaining: Math.max(0, totalEq - installedEq),
-        weightedProgress: weightedProg,
-        items
-      },
+      items: rawItems,
       id: `eq-v${nextVersion}`,
       version: nextVersion,
       dataDate: incomingDate,
       uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16)
-    } as EquipmentRecord;
+    } as EquipmentRecord);
+
+    const eqFull: EquipmentRecord = normalizedRecord;
 
     this.currentEquipment = eqFull;
     this.equipmentHistory = [eqFull, ...this.equipmentHistory];

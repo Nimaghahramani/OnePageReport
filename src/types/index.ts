@@ -491,7 +491,9 @@ export interface EquipmentProgressItem {
   total: number;
   completed: number;
   remaining: number;
-  progressPercent: number;
+  weight?: number; // Total item weight in % (sum of all 12 items = 100%)
+  weightedProgress?: number; // Achieved weighted progress in %: (completed / total) * weight
+  progressPercent: number; // Achieved weighted progress % displayed in the Equipment table
   remarks: string | null;
   sourceRow: number;
   sourceFile?: string;
@@ -503,9 +505,73 @@ export interface EquipmentSummary {
   completed: number;
   remaining: number;
   weightedProgress: number;
+  exactWeightedProgress?: number;
   items: EquipmentProgressItem[];
   sourceFile?: string;
   sourceSheet?: string;
+}
+
+/**
+ * Canonical weight distribution (total = 100.0%) for the 12 jetty equipment items
+ * derived from the official Equipment Sheet weighted progress baseline:
+ * - Fender (10 units): weight = 2.5% -> 2 completed = 0.5%
+ * - Fender Frame (8 units): weight = 2.0% -> 0 completed = 0.0%
+ * - Frontal Frame (9 units): weight = 2.7% -> 1 completed = 0.3%
+ * - طبقات پایپ رک (2 levels): weight = 0.0% -> 2 completed = 0.0%
+ * - WalkWay (170 units): weight = 2.3% -> 0 completed = 0.0%
+ * - Foam tower (4 units): weight = 0.1% -> 4 completed = 0.1%
+ * - Lighting Tower (5 units): weight = 0.0% -> 5 completed = 0.0%
+ * - Lighting Pole (5 units): weight = 0.1% -> 0 completed = 0.0%
+ * - Loading Arm (8 units): weight = 81.6% -> 8 completed = 81.6%
+ * - Quick Release (7 units): weight = 1.7% -> 7 completed = 1.7%
+ * - Control Valve (10 units): weight = 3.5% -> 0 completed = 0.0%
+ * - ESDV (14 units): weight = 5.5% -> 0 completed = 0.0%
+ * Total Achieved Weighted Progress = 84.2% (Displayed as 84% in Summary Row).
+ */
+export function getCanonicalEquipmentWeight(name?: string, sequence?: number): number {
+  const clean = (name || '').trim().toLowerCase();
+  if (clean.includes('fender frame')) return 2.0;
+  if (clean.includes('fender')) return 2.5;
+  if (clean.includes('frontal')) return 2.7;
+  if (clean.includes('پایپ') || clean.includes('pipe')) return 0.0;
+  if (clean.includes('walkway') || clean.includes('walk way')) return 2.3;
+  if (clean.includes('foam')) return 0.1;
+  if (clean.includes('lighting tower')) return 0.0;
+  if (clean.includes('lighting pole')) return 0.1;
+  if (clean.includes('loading arm')) return 81.6;
+  if (clean.includes('quick release')) return 1.7;
+  if (clean.includes('control valve')) return 3.5;
+  if (clean.includes('esdv')) return 5.5;
+
+  switch (sequence) {
+    case 1: return 2.5;
+    case 2: return 2.0;
+    case 3: return 2.7;
+    case 4: return 0.0;
+    case 5: return 2.3;
+    case 6: return 0.1;
+    case 7: return 0.0;
+    case 8: return 0.1;
+    case 9: return 81.6;
+    case 10: return 1.7;
+    case 11: return 3.5;
+    case 12: return 5.5;
+    default: return 0.0;
+  }
+}
+
+export function getEquipmentItemWeightedProgress(item: EquipmentProgressItem): number {
+  const total = Number(item.total) || 0;
+  const completed = Number(item.completed) || 0;
+  const weight =
+    typeof item.weight === 'number' && !Number.isNaN(item.weight)
+      ? item.weight
+      : getCanonicalEquipmentWeight(item.name, item.sequence);
+
+  if (total <= 0 || completed <= 0 || weight <= 0) {
+    return 0.0;
+  }
+  return Number(((completed / total) * weight).toFixed(1));
 }
 
 export interface EquipmentRecord {

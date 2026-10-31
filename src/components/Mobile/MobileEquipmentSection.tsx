@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { EquipmentRecord, EquipmentProgressItem, Language } from '../../types';
+import {
+  EquipmentRecord,
+  EquipmentProgressItem,
+  getEquipmentItemWeightedProgress,
+  Language
+} from '../../types';
 import { initialEquipmentItems } from '../../data/sampleData';
 import { Wrench, ChevronDown, ChevronUp, Info, CheckCircle2 } from 'lucide-react';
 
@@ -31,9 +36,14 @@ export const MobileEquipmentSection: React.FC<MobileEquipmentSectionProps> = ({ 
     ((items || []).length > 0 ? (items || []).reduce((s, it) => s + (it.completed || 0), 0) : (equipment?.installed ?? 0));
 
   const remainingCount = Math.max(0, totalCount - completedCount);
+  const exactWeightedSum =
+    (items || []).length > 0
+      ? Number((items || []).reduce((s, it) => s + getEquipmentItemWeightedProgress(it), 0).toFixed(1))
+      : null;
   const weightedProgress =
-    equipment?.equipmentSummary?.weightedProgress ??
-    (totalCount > 0 ? Number(((completedCount / totalCount) * 100).toFixed(2)) : (equipment?.installationPercentage ?? 0));
+    exactWeightedSum !== null
+      ? Math.round(exactWeightedSum)
+      : (equipment?.equipmentSummary?.weightedProgress ?? equipment?.installationPercentage ?? 84);
 
   return (
     <div id="mobile-equipment-section" className="mobile-equipment-card bg-white border border-slate-200 rounded-xl p-3 shadow-xs mb-2.5 relative">
@@ -90,8 +100,8 @@ export const MobileEquipmentSection: React.FC<MobileEquipmentSectionProps> = ({ 
               const itemTotal = Number(item.total) || 0;
               const itemCompleted = Number(item.completed) || 0;
               const itemRemaining = Math.max(0, itemTotal - itemCompleted);
-              const progress = itemTotal > 0 ? Number(((itemCompleted / itemTotal) * 100).toFixed(1)) : 0;
-              const isComplete = progress >= 100;
+              const progress = getEquipmentItemWeightedProgress(item);
+              const isComplete = itemTotal > 0 && itemCompleted >= itemTotal && progress > 0;
               const hasRemarks = Boolean(item.remarks && item.remarks.trim().length > 0);
 
               return (
@@ -121,7 +131,7 @@ export const MobileEquipmentSection: React.FC<MobileEquipmentSectionProps> = ({ 
                       )}
                     </div>
                     <span className="text-[9px] font-bold font-mono text-teal-800 shrink-0">
-                      {progress}%
+                      {progress.toFixed(1)}%
                     </span>
                   </div>
 

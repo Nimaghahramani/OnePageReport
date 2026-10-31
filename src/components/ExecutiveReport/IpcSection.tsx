@@ -130,10 +130,10 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           <span className="p-0.5 rounded bg-emerald-100 border border-emerald-300/80 text-emerald-700 shadow-2xs">
             <CreditCard className="w-3.5 h-3.5" />
           </span>
-          <h2 className="text-[10.5px] font-extrabold text-emerald-950 uppercase tracking-tight">
+          <h2 className="text-[11.5px] font-extrabold text-emerald-950 uppercase tracking-tight">
             {isFa ? (
               <>
-                وضعیت مالی و صورت‌وضعیت <span className="ltr-inline text-[9.5px] font-semibold text-emerald-700">(INVOICE & IPC)</span>
+                وضعیت مالی و صورت‌وضعیت <span className="ltr-inline text-[10px] font-bold text-emerald-700">(INVOICE & IPC)</span>
               </>
             ) : (
               'FINANCIAL & INVOICE STATUS'
@@ -142,11 +142,11 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
         </div>
         <div className="flex items-center gap-1">
           {fin?.latestInvoicePeriod && (
-            <span className="ipc-period-badge text-[7.5px] font-bold text-emerald-900 bg-white/95 border border-emerald-300/90 px-1.5 py-0.2 rounded shadow-2xs">
+            <span className="ipc-period-badge text-[9.5px] font-extrabold text-emerald-950 bg-white/95 border border-emerald-300/90 px-2 py-0.5 rounded shadow-2xs">
               {fin.latestInvoicePeriod}
             </span>
           )}
-          <span className="ipc-number-badge text-[8.5px] font-extrabold text-blue-950 bg-blue-100/95 border border-blue-300/90 px-1.5 py-0.2 rounded truncate max-w-[130px] shadow-2xs">
+          <span className="ipc-number-badge text-[10px] font-extrabold font-tabular tabular-nums text-blue-950 bg-blue-100/95 border border-blue-300/90 px-2 py-0.5 rounded truncate max-w-[130px] shadow-2xs">
             {fin?.latestInvoiceNumber ? `IPC #${fin.latestInvoiceNumber}` : ipc.latestIpcNo}
           </span>
         </div>
@@ -156,108 +156,105 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
       {fin ? (
         <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center">
           {/* 1. Cumulative Invoice / Approved */}
-          <div className="financial-metric-box financial-cumulative-box bg-linear-to-b from-blue-50/95 via-sky-50/60 to-blue-100/45 border border-blue-300/90 border-t-2 border-t-blue-600 rounded-md p-1 flex flex-col justify-between shadow-2xs">
-            <span className="fin-metric-title text-[7.5px] text-blue-900 font-sans block font-extrabold">{isFa ? 'کارکرد تجمعی' : 'Cumulative'}</span>
-            <div>
-              <div className="flex items-baseline justify-center gap-1 leading-tight">
-                <span className="font-tabular tabular-nums text-[11.5px] font-extrabold text-blue-950">
+          <div className="financial-metric-box financial-cumulative-box bg-linear-to-b from-blue-50/95 via-sky-50/60 to-blue-100/45 border border-blue-300/90 border-t-2 border-t-blue-600 rounded-md p-1.5 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-blue-950 font-sans block font-extrabold truncate">{isFa ? 'کارکرد تجمعی' : 'Cumulative'}</span>
+            <div className="my-0.5">
+              <div className="flex items-baseline justify-center gap-1 leading-tight whitespace-nowrap">
+                <span className="fin-metric-irr font-tabular tabular-nums text-[15.5px] font-extrabold text-blue-950 tracking-tight ltr-inline">
                   {formatIrrValue(fin.invoiceCumulativeIRR)}
                 </span>
-                <span className="text-[7.5px] text-blue-700 font-bold font-sans">
+                <span className="fin-metric-curr text-[9px] text-blue-800 font-extrabold font-sans">
                   {getIrrUnit(fin.invoiceCumulativeIRR, isFa)}
                 </span>
               </div>
-              <div className="flex items-baseline justify-center gap-0.5 text-[8.5px] font-bold text-blue-800 mt-0.5">
-                <span className="font-tabular tabular-nums">{formatEurValue(fin.invoiceCumulativeEUR)}</span>
-                <span className="text-[7.5px] font-sans">€</span>
+              <div className="fin-metric-eur flex items-baseline justify-center gap-0.5 text-[11px] font-extrabold text-blue-900 mt-0.5 ltr-inline whitespace-nowrap">
+                <span className="font-tabular tabular-nums tracking-tight">€ {formatEurValue(fin.invoiceCumulativeEUR)}</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7.5px] text-blue-900 bg-blue-100/60 rounded px-1 font-sans mt-0.5 pt-0.5 border-t border-blue-200/90 flex items-center justify-center gap-1">
+            <div className="fin-metric-ratio text-[9.5px] text-blue-950 bg-blue-100/75 rounded px-1 font-sans mt-0.5 py-0.5 border-t border-blue-200/90 flex items-center justify-center gap-1 font-extrabold whitespace-nowrap">
               <span>{isFa ? 'پیشرفت مالی:' : 'Fin Prog:'}</span>
-              <span className="font-extrabold font-tabular tabular-nums">{finProgress}%</span>
+              <span className="font-extrabold text-[11px] font-tabular tabular-nums tracking-tight ltr-inline">{finProgress}%</span>
             </div>
           </div>
 
           {/* 2. Received / Paid */}
-          <div className="financial-metric-box financial-received-box bg-linear-to-b from-emerald-50/95 via-teal-50/55 to-emerald-100/45 border border-emerald-300/90 border-t-2 border-t-emerald-600 rounded-md p-1 flex flex-col justify-between shadow-2xs">
-            <span className="fin-metric-title text-[7.5px] text-emerald-900 font-sans block font-extrabold">{isFa ? 'دریافتی / وصولی' : 'Received'}</span>
-            <div>
-              <div className="flex items-baseline justify-center gap-1 leading-tight">
-                <span className="font-tabular tabular-nums text-[11.5px] font-extrabold text-emerald-950">
+          <div className="financial-metric-box financial-received-box bg-linear-to-b from-emerald-50/95 via-teal-50/55 to-emerald-100/45 border border-emerald-300/90 border-t-2 border-t-emerald-600 rounded-md p-1.5 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-emerald-950 font-sans block font-extrabold truncate">{isFa ? 'دریافتی / وصولی' : 'Received'}</span>
+            <div className="my-0.5">
+              <div className="flex items-baseline justify-center gap-1 leading-tight whitespace-nowrap">
+                <span className="fin-metric-irr font-tabular tabular-nums text-[15.5px] font-extrabold text-emerald-950 tracking-tight ltr-inline">
                   {formatIrrValue(displayReceivedIRR)}
                 </span>
-                <span className="text-[7.5px] text-emerald-700 font-bold font-sans">
+                <span className="fin-metric-curr text-[9px] text-emerald-800 font-extrabold font-sans">
                   {getIrrUnit(displayReceivedIRR, isFa)}
                 </span>
               </div>
-              <div className="flex items-baseline justify-center gap-0.5 text-[8.5px] font-bold text-emerald-800 mt-0.5">
-                <span className="font-tabular tabular-nums">{formatEurValue(displayReceivedEUR)}</span>
-                <span className="text-[7.5px] font-sans">€</span>
+              <div className="fin-metric-eur flex items-baseline justify-center gap-0.5 text-[11px] font-extrabold text-emerald-900 mt-0.5 ltr-inline whitespace-nowrap">
+                <span className="font-tabular tabular-nums tracking-tight">€ {formatEurValue(displayReceivedEUR)}</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7.5px] text-emerald-900 bg-emerald-100/60 rounded px-1 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/90 flex items-center justify-center gap-1">
+            <div className="fin-metric-ratio text-[9.5px] text-emerald-950 bg-emerald-100/75 rounded px-1 font-sans mt-0.5 py-0.5 border-t border-emerald-200/90 flex items-center justify-center gap-1 font-extrabold whitespace-nowrap">
               <span>{isFa ? 'نسبت وصول:' : 'Col Ratio:'}</span>
-              <span className="font-extrabold font-tabular tabular-nums">{collectionRatio.toFixed(1)}%</span>
+              <span className="font-extrabold text-[11px] font-tabular tabular-nums tracking-tight ltr-inline">{collectionRatio.toFixed(1)}%</span>
             </div>
           </div>
 
           {/* 3. Outstanding */}
-          <div className="financial-metric-box financial-outstanding-box bg-linear-to-b from-amber-50/95 via-orange-50/55 to-amber-100/45 border border-amber-300/90 border-t-2 border-t-amber-500 rounded-md p-1 flex flex-col justify-between shadow-2xs">
-            <span className="fin-metric-title text-[7.5px] text-amber-900 font-sans block font-extrabold">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
-            <div>
-              <div className="flex items-baseline justify-center gap-1 leading-tight">
-                <span className="font-tabular tabular-nums text-[11.5px] font-extrabold text-amber-950">
+          <div className="financial-metric-box financial-outstanding-box bg-linear-to-b from-amber-50/95 via-orange-50/55 to-amber-100/45 border border-amber-300/90 border-t-2 border-t-amber-500 rounded-md p-1.5 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-amber-950 font-sans block font-extrabold truncate">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
+            <div className="my-0.5">
+              <div className="flex items-baseline justify-center gap-1 leading-tight whitespace-nowrap">
+                <span className="fin-metric-irr font-tabular tabular-nums text-[15.5px] font-extrabold text-amber-950 tracking-tight ltr-inline">
                   {formatIrrValue(displayOutstandingIRR)}
                 </span>
-                <span className="text-[7.5px] text-amber-700 font-bold font-sans">
+                <span className="fin-metric-curr text-[9px] text-amber-800 font-extrabold font-sans">
                   {getIrrUnit(displayOutstandingIRR, isFa)}
                 </span>
               </div>
-              <div className="flex items-baseline justify-center gap-0.5 text-[8.5px] font-bold text-amber-800 mt-0.5">
-                <span className="font-tabular tabular-nums">{formatEurValue(displayOutstandingEUR)}</span>
-                <span className="text-[7.5px] font-sans">€</span>
+              <div className="fin-metric-eur flex items-baseline justify-center gap-0.5 text-[11px] font-extrabold text-amber-900 mt-0.5 ltr-inline whitespace-nowrap">
+                <span className="font-tabular tabular-nums tracking-tight">€ {formatEurValue(displayOutstandingEUR)}</span>
               </div>
             </div>
-            <div className="fin-metric-ratio text-[7.5px] text-amber-900 bg-amber-100/60 rounded px-1 font-sans mt-0.5 pt-0.5 border-t border-amber-200/90 flex items-center justify-center gap-1">
+            <div className="fin-metric-ratio text-[9.5px] text-amber-950 bg-amber-100/75 rounded px-1 font-sans mt-0.5 py-0.5 border-t border-amber-200/90 flex items-center justify-center gap-1 font-extrabold whitespace-nowrap">
               <span>{isFa ? 'نسبت مطالبات:' : 'Out Ratio:'}</span>
-              <span className="font-extrabold font-tabular tabular-nums">{outstandingRatio.toFixed(1)}%</span>
+              <span className="font-extrabold text-[11px] font-tabular tabular-nums tracking-tight ltr-inline">{outstandingRatio.toFixed(1)}%</span>
             </div>
           </div>
 
           {/* 4. Advance Payment & Adjustment */}
-          <div className="financial-metric-box financial-advance-box bg-linear-to-b from-indigo-50/95 via-violet-50/50 to-indigo-100/45 border border-indigo-300/90 border-t-2 border-t-indigo-600 rounded-md p-1 flex flex-col justify-between shadow-2xs">
-            <span className="fin-metric-title text-[7.5px] text-indigo-950 font-sans block font-extrabold text-center">
+          <div className="financial-metric-box financial-advance-box bg-linear-to-b from-indigo-50/95 via-violet-50/50 to-indigo-100/45 border border-indigo-300/90 border-t-2 border-t-indigo-600 rounded-md p-1 px-1.5 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-indigo-950 font-sans block font-extrabold text-center truncate">
               {isFa ? 'پیش‌پرداخت و تعدیل' : 'Advance & Adj'}
             </span>
-            <div className="space-y-0.5 my-0.5">
+            <div className="space-y-1 my-0.5">
               {/* Advance Payment Row */}
-              <div className="flex items-baseline justify-between text-[8px] leading-tight px-0.5">
-                <span className="text-indigo-900 font-sans text-[7.5px] font-semibold">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span>
-                <div className="flex items-baseline gap-0.5 font-bold text-slate-900">
-                  <span className="font-tabular tabular-nums">{formatIrrValue(fin.advancePaymentIRR)}</span>
-                  <span className="text-[6.5px] text-slate-600 font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                  <span className="text-[6.5px] font-semibold text-indigo-700 font-tabular tabular-nums">({Number(fin.advancePaymentPercentage || 22.07).toFixed(1)}%)</span>
+              <div className="flex items-baseline justify-between gap-0.5 leading-tight whitespace-nowrap">
+                <span className="text-indigo-950 font-sans text-[9px] font-extrabold shrink-0">{isFa ? 'پیش‌پرداخت:' : 'Adv:'}</span>
+                <div className="flex items-baseline gap-0.5 font-extrabold text-blue-950">
+                  <span className="font-tabular tabular-nums text-[11px] tracking-tight ltr-inline">{formatIrrValue(fin.advancePaymentIRR)}</span>
+                  <span className="text-[7.5px] text-slate-700 font-bold font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                  <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">({Number(fin.advancePaymentPercentage || 22.07).toFixed(1)}%)</span>
                 </div>
               </div>
               {/* Adjustment Row */}
-              <div className="flex items-baseline justify-between text-[8px] leading-tight px-0.5">
-                <span className="text-indigo-800 font-sans text-[7.5px] font-semibold">{isFa ? 'تعدیل:' : 'Adj:'}</span>
-                <div className="flex items-baseline gap-0.5 font-bold text-indigo-950">
-                  <span className="font-tabular tabular-nums">{formatIrrValue(fin.adjustmentIRR)}</span>
-                  <span className="text-[6.5px] text-indigo-600 font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                  <span className="text-[6.5px] font-semibold text-indigo-600 font-tabular tabular-nums">({Number(fin.adjustmentPercentage || 20.53).toFixed(1)}%)</span>
+              <div className="flex items-baseline justify-between gap-0.5 leading-tight whitespace-nowrap">
+                <span className="text-indigo-950 font-sans text-[9px] font-extrabold shrink-0">{isFa ? 'تعدیل:' : 'Adj:'}</span>
+                <div className="flex items-baseline gap-0.5 font-extrabold text-indigo-950">
+                  <span className="font-tabular tabular-nums text-[11px] tracking-tight ltr-inline">{formatIrrValue(fin.adjustmentIRR)}</span>
+                  <span className="text-[7.5px] text-indigo-700 font-bold font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                  <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">({Number(fin.adjustmentPercentage || 20.53).toFixed(1)}%)</span>
                 </div>
               </div>
             </div>
             {/* Summary Footer */}
-            <div className="fin-metric-ratio text-[7px] text-indigo-950 bg-indigo-100/60 rounded px-1 font-sans mt-0.5 pt-0.5 border-t border-indigo-200/90 flex items-center justify-between">
-              <span className="font-bold">{isFa ? 'مجموع:' : 'Total:'}</span>
+            <div className="fin-metric-ratio text-[9px] text-indigo-950 bg-indigo-100/75 rounded px-1 font-sans mt-0.5 py-0.5 border-t border-indigo-200/90 flex items-center justify-between gap-0.5 whitespace-nowrap">
+              <span className="font-extrabold shrink-0">{isFa ? 'مجموع:' : 'Total:'}</span>
               <div className="flex items-baseline gap-0.5 font-extrabold text-indigo-950">
-                <span className="font-tabular tabular-nums">
+                <span className="font-tabular tabular-nums text-[11px] tracking-tight ltr-inline">
                   {formatIrrValue((fin.advancePaymentIRR || 0) + (fin.adjustmentIRR || 0))}
                 </span>
-                <span className="text-[6.5px] font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                <span className="text-[6.5px] font-semibold text-indigo-700 font-tabular tabular-nums">
+                <span className="text-[7.5px] font-bold font-sans">{isFa ? 'م.ر' : 'B'}</span>
+                <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">
                   ({(Number(fin.advancePaymentPercentage || 22.07) + Number(fin.adjustmentPercentage || 20.53)).toFixed(1)}%)
                 </span>
               </div>
@@ -266,122 +263,122 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
         </div>
       ) : (
         <div className="grid grid-cols-4 gap-1.5 mb-1.5 text-center">
-          <div className="financial-metric-box financial-cumulative-box bg-slate-50 border border-slate-200 rounded p-1 flex flex-col justify-between">
-            <span className="fin-metric-title text-[7.5px] text-slate-500 font-sans block">{isFa ? 'ارائه‌شده' : 'Submitted'}</span>
+          <div className="financial-metric-box financial-cumulative-box bg-slate-50 border border-slate-200 rounded p-1.5 flex flex-col justify-between min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-slate-800 font-sans font-extrabold block">{isFa ? 'ارائه‌شده' : 'Submitted'}</span>
             <div className="flex items-baseline justify-center gap-1 leading-tight">
-              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-slate-800">
+              <span className="font-tabular tabular-nums text-[14px] font-extrabold text-slate-900 ltr-inline">
                 {(ipc.submittedAmount / 1000000).toFixed(1)}
               </span>
-              <span className="text-[7px] text-slate-500 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+              <span className="text-[9px] text-slate-600 font-bold font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
             </div>
           </div>
-          <div className="financial-metric-box financial-cumulative-box bg-blue-50/70 border border-blue-200 rounded p-1 flex flex-col justify-between">
-            <span className="fin-metric-title text-[7.5px] text-blue-700 font-sans block">{isFa ? 'تأییدشده' : 'Approved'}</span>
+          <div className="financial-metric-box financial-cumulative-box bg-blue-50/70 border border-blue-200 rounded p-1.5 flex flex-col justify-between min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-blue-900 font-sans font-extrabold block">{isFa ? 'تأییدشده' : 'Approved'}</span>
             <div className="flex items-baseline justify-center gap-1 leading-tight">
-              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-blue-950">
+              <span className="font-tabular tabular-nums text-[14px] font-extrabold text-blue-950 ltr-inline">
                 {(ipc.approvedAmount / 1000000).toFixed(1)}
               </span>
-              <span className="text-[7px] text-blue-600 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+              <span className="text-[9px] text-blue-700 font-bold font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
             </div>
-            <div className="fin-metric-ratio text-[7px] text-blue-700 font-sans mt-0.5 pt-0.5 border-t border-blue-200/60">
-              <span className="font-bold font-tabular tabular-nums">{finProgress}%</span>
+            <div className="fin-metric-ratio text-[9.5px] text-blue-800 font-sans mt-0.5 pt-0.5 border-t border-blue-200/60">
+              <span className="font-extrabold font-tabular tabular-nums ltr-inline">{finProgress}%</span>
             </div>
           </div>
-          <div className="financial-metric-box financial-received-box bg-emerald-50/70 border border-emerald-200 rounded p-1 flex flex-col justify-between">
-            <span className="fin-metric-title text-[7.5px] text-emerald-700 font-sans block">{isFa ? 'پرداخت‌شده' : 'Paid'}</span>
+          <div className="financial-metric-box financial-received-box bg-emerald-50/70 border border-emerald-200 rounded p-1.5 flex flex-col justify-between min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-emerald-900 font-sans font-extrabold block">{isFa ? 'پرداخت‌شده' : 'Paid'}</span>
             <div className="flex items-baseline justify-center gap-1 leading-tight">
-              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-emerald-950">
+              <span className="font-tabular tabular-nums text-[14px] font-extrabold text-emerald-950 ltr-inline">
                 {(displayReceivedIRR / 1000000).toFixed(1)}
               </span>
-              <span className="text-[7px] text-emerald-600 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+              <span className="text-[9px] text-emerald-700 font-bold font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
             </div>
-            <div className="fin-metric-ratio text-[7px] text-emerald-700 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/60">
-              <span className="font-bold font-tabular tabular-nums">{collectionRatio.toFixed(1)}%</span>
+            <div className="fin-metric-ratio text-[9.5px] text-emerald-800 font-sans mt-0.5 pt-0.5 border-t border-emerald-200/60">
+              <span className="font-extrabold font-tabular tabular-nums ltr-inline">{collectionRatio.toFixed(1)}%</span>
             </div>
           </div>
-          <div className="financial-metric-box financial-outstanding-box bg-amber-50/70 border border-amber-200 rounded p-1 flex flex-col justify-between">
-            <span className="fin-metric-title text-[7.5px] text-amber-700 font-sans block">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
+          <div className="financial-metric-box financial-outstanding-box bg-amber-50/70 border border-amber-200 rounded p-1.5 flex flex-col justify-between min-w-0 overflow-hidden">
+            <span className="fin-metric-title text-[10.5px] text-amber-900 font-sans font-extrabold block">{isFa ? 'مطالبات باز' : 'Outstanding'}</span>
             <div className="flex items-baseline justify-center gap-1 leading-tight">
-              <span className="font-tabular tabular-nums text-[10.5px] font-bold text-amber-950">
+              <span className="font-tabular tabular-nums text-[14px] font-extrabold text-amber-950 ltr-inline">
                 {(displayOutstandingIRR / 1000000).toFixed(1)}
               </span>
-              <span className="text-[7px] text-amber-600 font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
+              <span className="text-[9px] text-amber-700 font-bold font-sans">{ipc.currency || (isFa ? 'م.ر' : 'M')}</span>
             </div>
           </div>
         </div>
       )}
 
       {/* Site Resources Strip: Site Manpower KPI + Machinery KPI */}
-      <div id="manpower-section" className="ipc-resources-strip mt-1 pt-1.5 border-t border-emerald-200/80 grid grid-cols-12 gap-1.5 text-[8.5px]">
+      <div id="manpower-section" className="ipc-resources-strip mt-1 pt-1.5 border-t border-emerald-200/80 grid grid-cols-12 gap-1.5 text-[10.5px]">
         {/* Site Manpower KPI (نیروی انسانی کارگاه) */}
         <div
           id="kpi-site-manpower"
-          className="col-span-7 bg-linear-to-br from-sky-50/95 via-blue-50/60 to-indigo-50/45 border border-sky-300/90 border-r-3 border-r-blue-600 rounded-md px-2 py-1 flex flex-col justify-between min-w-0 shadow-2xs"
+          className="col-span-7 bg-linear-to-br from-sky-50/95 via-blue-50/60 to-indigo-50/45 border border-sky-300/90 border-r-3 border-r-blue-600 rounded-md px-2 py-1.5 flex flex-col justify-between min-w-0 overflow-hidden shadow-2xs"
         >
           {/* Header Row */}
           <div className="flex items-center justify-between gap-1 mb-0.5 min-w-0">
             <div className="flex items-center gap-1 text-blue-950 font-extrabold min-w-0 truncate">
               <span className="p-0.5 rounded bg-blue-100/90 text-blue-700 shrink-0">
-                <Users className="w-3 h-3" />
+                <Users className="w-3.5 h-3.5" />
               </span>
-              <span className="text-[8.5px] text-blue-950 truncate">
+              <span className="text-[11px] text-blue-950 font-extrabold truncate">
                 {isFa ? 'نیروی انسانی کارگاه' : 'Site Manpower'}
               </span>
             </div>
             {attendanceRatio !== null ? (
-              <span className={`text-[7.5px] font-extrabold px-1.5 py-0.2 rounded border shrink-0 whitespace-nowrap shadow-2xs ${attTheme.badge}`}>
-                {attendanceRatio.toFixed(1)}% {isFa ? 'نسبت حضور' : 'Attendance'}
+              <span className={`text-[9.5px] font-extrabold font-tabular tabular-nums px-1.5 py-0.5 rounded border shrink-0 whitespace-nowrap shadow-2xs ${attTheme.badge}`}>
+                <span className="ltr-inline">{attendanceRatio.toFixed(1)}%</span> {isFa ? 'نسبت حضور' : 'Attendance'}
               </span>
             ) : (
-              <span className="text-[7.5px] text-slate-400 font-medium shrink-0">—</span>
+              <span className="text-[9.5px] text-slate-400 font-medium shrink-0">—</span>
             )}
           </div>
 
           {/* Primary Counts Row: Total, Present, Absent */}
-          <div className="flex items-baseline justify-between text-[7.5px] mt-0.5 mb-1 px-0.5 min-w-0">
+          <div className="flex items-baseline justify-between text-[10px] mt-0.5 mb-1 px-0.5 min-w-0 whitespace-nowrap">
             <div className="flex items-baseline gap-1">
-              <span className="text-blue-900 font-bold">{isFa ? 'کل:' : 'Total:'}</span>
-              <strong className="font-extrabold text-blue-950 text-[11.5px] font-mono leading-none">
+              <span className="text-blue-950 font-extrabold">{isFa ? 'کل:' : 'Total:'}</span>
+              <strong className="font-extrabold text-blue-950 text-[15px] font-tabular tabular-nums tracking-tight leading-none ltr-inline">
                 {totalMp !== null ? totalMp : '—'}
               </strong>
-              <span className="text-blue-700 font-semibold text-[7px]">{isFa ? 'نفر' : 'pax'}</span>
+              <span className="text-blue-800 font-extrabold text-[9.5px]">{isFa ? 'نفر' : 'pax'}</span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-emerald-800 font-bold flex items-center gap-0.5 bg-emerald-50/90 border border-emerald-200/80 px-1 rounded">
+            <div className="flex items-center gap-1">
+              <span className="text-emerald-950 font-extrabold flex items-center gap-1 bg-emerald-50/95 border border-emerald-200/90 px-1.5 py-0.5 rounded text-[9.5px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
                 {isFa ? 'حاضر:' : 'Pres:'}{' '}
-                <strong className="font-extrabold text-[8.5px] text-emerald-950 font-mono">{presentMp !== null ? presentMp : '—'}</strong>
+                <strong className="font-extrabold text-[11.5px] text-emerald-950 font-tabular tabular-nums ltr-inline">{presentMp !== null ? presentMp : '—'}</strong>
               </span>
-              <span className="text-amber-900 font-bold flex items-center gap-0.5 bg-amber-50/90 border border-amber-200/80 px-1 rounded">
+              <span className="text-amber-950 font-extrabold flex items-center gap-1 bg-amber-50/95 border border-amber-200/90 px-1.5 py-0.5 rounded text-[9.5px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block shrink-0"></span>
                 {isFa ? 'غایب/مرخصی:' : 'Abs:'}{' '}
-                <strong className="font-extrabold text-[8.5px] text-amber-950 font-mono">{absentMp !== null ? absentMp : '—'}</strong>
+                <strong className="font-extrabold text-[11.5px] text-amber-950 font-tabular tabular-nums ltr-inline">{absentMp !== null ? absentMp : '—'}</strong>
               </span>
             </div>
           </div>
 
           {/* Breakdown Strip: Direct & Indirect */}
-          <div className="flex items-center justify-between text-[7px] text-slate-700 bg-white/95 border border-sky-200/90 rounded px-1.5 py-0.5 min-w-0">
+          <div className="flex items-center justify-between text-[9.5px] text-slate-800 bg-white/95 border border-sky-200/90 rounded px-1.5 py-0.5 min-w-0 whitespace-nowrap overflow-hidden">
             <div className="flex items-center gap-1 min-w-0 truncate" title={isFa ? 'نیروی مستقیم: حاضر از کل' : 'Direct: Present of Total'}>
-              <span className="text-blue-800 font-semibold shrink-0">{isFa ? 'مستقیم:' : 'Dir:'}</span>
-              <strong className="text-slate-900 font-extrabold font-mono">
+              <span className="text-blue-950 font-extrabold shrink-0">{isFa ? 'مستقیم:' : 'Dir:'}</span>
+              <strong className="text-blue-950 font-extrabold text-[11px] font-tabular tabular-nums tracking-tight ltr-inline">
                 {dirPresent !== null && dirTotal !== null ? `${dirPresent}/${dirTotal}` : (dirPresent ?? '—')}
               </strong>
               {dirAttendance !== null && (
-                <span className="text-[6.5px] font-bold px-1 py-0.1 bg-sky-100 text-sky-900 border border-sky-300 rounded font-mono shrink-0">
+                <span className="text-[9px] font-extrabold px-1 py-0.1 bg-sky-100 text-sky-950 border border-sky-300 rounded font-tabular tabular-nums ltr-inline shrink-0">
                   {dirAttendance.toFixed(0)}%
                 </span>
               )}
             </div>
             <span className="text-slate-300 mx-1 shrink-0">|</span>
             <div className="flex items-center gap-1 min-w-0 truncate" title={isFa ? 'نیروی غیرمستقیم: حاضر از کل' : 'Indirect: Present of Total'}>
-              <span className="text-indigo-800 font-semibold shrink-0">{isFa ? 'غیرمستقیم:' : 'Ind:'}</span>
-              <strong className="text-slate-900 font-extrabold font-mono">
+              <span className="text-indigo-950 font-extrabold shrink-0">{isFa ? 'غیرمستقیم:' : 'Ind:'}</span>
+              <strong className="text-blue-950 font-extrabold text-[11px] font-tabular tabular-nums tracking-tight ltr-inline">
                 {indPresent !== null && indTotal !== null ? `${indPresent}/${indTotal}` : (indPresent ?? '—')}
               </strong>
               {indAttendance !== null && (
-                <span className="text-[6.5px] font-bold px-1 py-0.1 bg-indigo-100 text-indigo-900 border border-indigo-300 rounded font-mono shrink-0">
+                <span className="text-[9px] font-extrabold px-1 py-0.1 bg-indigo-100 text-indigo-950 border border-indigo-300 rounded font-tabular tabular-nums ltr-inline shrink-0">
                   {indAttendance.toFixed(0)}%
                 </span>
               )}
@@ -400,19 +397,19 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
         {/* Machinery KPI Card */}
         <div
           id="kpi-site-machinery"
-          className="col-span-5 bg-linear-to-br from-amber-50/95 via-orange-50/60 to-amber-100/40 border border-amber-300/90 border-r-3 border-r-amber-500 rounded-md px-2 py-1 flex flex-col justify-between min-w-0 shadow-2xs"
+          className="col-span-5 bg-linear-to-br from-amber-50/95 via-orange-50/60 to-amber-100/40 border border-amber-300/90 border-r-3 border-r-amber-500 rounded-md px-2 py-1.5 flex flex-col justify-between min-w-0 overflow-hidden shadow-2xs"
         >
           {/* Header Row */}
           <div className="flex items-center justify-between text-amber-950 mb-0.5 min-w-0">
             <div className="flex items-center gap-1 min-w-0 truncate">
               <span className="p-0.5 rounded bg-amber-100/90 text-amber-700 shrink-0">
-                <Truck className="w-3 h-3" />
+                <Truck className="w-3.5 h-3.5" />
               </span>
-              <span className="res-label text-amber-950 font-extrabold text-[8.5px] truncate">
+              <span className="res-label text-amber-950 font-extrabold text-[11px] truncate">
                 {isFa ? 'ماشین‌آلات فعال' : 'Active Machinery'}
               </span>
             </div>
-            <span className="text-[7.5px] font-extrabold text-amber-950 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded shrink-0 whitespace-nowrap shadow-2xs">
+            <span className="text-[10px] font-extrabold font-tabular tabular-nums text-amber-950 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap ltr-inline shadow-2xs">
               {daily.machinery?.active !== undefined && daily.machinery?.total !== undefined && daily.machinery.total > 0
                 ? `${Math.round((daily.machinery.active / daily.machinery.total) * 100)}%`
                 : '—'}
@@ -420,29 +417,29 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
           </div>
 
           {/* Primary Counts Row: Active / Total & Standby units */}
-          <div className="flex items-baseline justify-between text-[7.5px] mt-0.5 mb-1 px-0.5 min-w-0">
+          <div className="flex items-baseline justify-between text-[10px] mt-0.5 mb-1 px-0.5 min-w-0 whitespace-nowrap">
             <div className="flex items-baseline gap-1">
-              <span className="text-amber-900 font-bold">{isFa ? 'فعال:' : 'Act:'}</span>
-              <strong className="res-val font-extrabold text-amber-950 text-[11.5px] font-mono leading-none">
+              <span className="text-amber-950 font-extrabold">{isFa ? 'فعال:' : 'Act:'}</span>
+              <strong className="res-val font-extrabold text-amber-950 text-[15px] font-tabular tabular-nums tracking-tight leading-none ltr-inline">
                 {daily.machinery?.active ?? '—'}
               </strong>
-              <span className="text-[7.5px] font-bold text-amber-800 font-mono">/ {daily.machinery?.total ?? '—'}</span>
+              <span className="text-[11px] font-extrabold text-amber-900 font-tabular tabular-nums ltr-inline">/ {daily.machinery?.total ?? '—'}</span>
             </div>
-            <span className="text-[7.5px] text-amber-900 bg-amber-100/80 border border-amber-200/80 px-1 rounded font-bold">
+            <span className="text-[9.5px] text-amber-950 bg-amber-100/90 border border-amber-200/90 px-1.5 py-0.5 rounded font-extrabold font-tabular tabular-nums">
               {daily.machinery?.standby ? `${daily.machinery.standby} ${isFa ? 'آماده' : 'stby'}` : (isFa ? 'دستگاه' : 'units')}
             </span>
           </div>
 
           {/* Breakdown Strip: Standby & Utilization */}
-          <div className="flex items-center justify-between text-[7px] text-slate-700 bg-white/95 border border-amber-200/90 rounded px-1.5 py-0.5 min-w-0">
+          <div className="flex items-center justify-between text-[9.5px] text-slate-800 bg-white/95 border border-amber-200/90 rounded px-1.5 py-0.5 min-w-0 whitespace-nowrap overflow-hidden">
             <div className="flex items-center gap-1 min-w-0 truncate">
-              <span className="text-amber-900 font-semibold shrink-0">{isFa ? 'آماده‌به‌کار:' : 'Standby:'}</span>
-              <strong className="font-mono text-slate-900 font-extrabold">{daily.machinery?.standby ?? 0}</strong>
+              <span className="text-amber-950 font-extrabold shrink-0">{isFa ? 'آماده‌به‌کار:' : 'Standby:'}</span>
+              <strong className="font-tabular tabular-nums text-blue-950 text-[11px] font-extrabold ltr-inline">{daily.machinery?.standby ?? 0}</strong>
             </div>
             <span className="text-slate-300 mx-1 shrink-0">|</span>
             <div className="flex items-center gap-1 min-w-0 truncate">
-              <span className="text-amber-900 font-semibold shrink-0">{isFa ? 'بهره‌برداری:' : 'Util:'}</span>
-              <strong className="font-mono text-amber-900 font-extrabold">
+              <span className="text-amber-950 font-extrabold shrink-0">{isFa ? 'بهره‌برداری:' : 'Util:'}</span>
+              <strong className="font-tabular tabular-nums text-amber-950 text-[11px] font-extrabold ltr-inline">
                 {daily.machinery?.active !== undefined && daily.machinery?.total !== undefined && daily.machinery.total > 0
                   ? `${Math.round((daily.machinery.active / daily.machinery.total) * 100)}%`
                   : '—'}

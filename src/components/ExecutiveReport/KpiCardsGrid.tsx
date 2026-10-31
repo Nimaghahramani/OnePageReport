@@ -142,7 +142,7 @@ const KpiSparkline: React.FC<SparklineProps> = ({
       </svg>
       {deltaLabel && (
         <span
-          className={`kpi-sparkline-delta text-[6.5px] leading-none font-bold tracking-tight ltr-inline mt-0.5 ${deltaColorClass}`}
+          className={`kpi-sparkline-delta text-[8.5px] leading-none font-extrabold font-tabular tabular-nums tracking-tight ltr-inline mt-0.5 whitespace-nowrap ${deltaColorClass}`}
         >
           {deltaLabel}
         </span>
@@ -219,16 +219,16 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
     });
     const elapsedDelta = Number((elapsedSeries[6] - elapsedSeries[0]).toFixed(1));
 
-    // 5. Equipment Installation 7-Day Trend
-    const equipPct = kpis.equipmentInstallationPercentage ?? 11.51;
-    const equipTotal = Math.max(1, kpis.equipmentTotal || 252);
+    // 5. Equipment Installation 7-Day Trend (Weighted Progress)
+    const equipPct = kpis.equipmentInstallationPercentage ?? 84;
     const equipInstalled = kpis.equipmentInstalled ?? 29;
-    // Assume 2 units installed over the past 7 days (or proportional step)
+    // Assume 2 units installed over the past 7 days (~0.5% weighted step)
     const recentUnits = Math.min(equipInstalled, Math.max(1, Math.round(equipInstalled * 0.07)));
-    const equipStartUnits = Math.max(0, equipInstalled - recentUnits);
-    const equipUnitSteps = [0, 0, 0.35, 0.35, 0.7, 1.0, 1.0];
+    const equipWeightedDelta = 0.5;
+    const equipStartPct = Math.max(0, equipPct - equipWeightedDelta);
+    const equipUnitSteps = [0, 0, 0.4, 0.4, 0.8, 1.0, 1.0];
     const equipSeries = equipUnitSteps.map((step) =>
-      Number((((equipStartUnits + recentUnits * step) / equipTotal) * 100).toFixed(2))
+      Number((equipStartPct + equipWeightedDelta * step).toFixed(2))
     );
     // Ensure terminal value matches exact KPI percentage
     equipSeries[6] = Number(equipPct.toFixed(2));
@@ -285,20 +285,20 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
       {/* 1. Planned Progress (Indigo / Slate Executive Theme) */}
       <div
         id="kpi-card-planned"
-        className="kpi-card kpi-card-planned bg-linear-to-br from-indigo-50/75 via-slate-50 to-indigo-50/40 border border-indigo-200/90 rounded-lg p-1.5 flex flex-col justify-between shadow-2xs print:break-inside-avoid"
+        className="kpi-card kpi-card-planned bg-linear-to-br from-indigo-50/75 via-slate-50 to-indigo-50/40 border border-indigo-200/90 rounded-lg p-2 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden print:break-inside-avoid"
       >
-        <div className="flex items-center justify-between text-indigo-950 text-[9.5px] font-bold">
+        <div className="flex items-center justify-between gap-1 text-indigo-950 text-[11.5px] font-extrabold min-w-0">
           <span className="kpi-title truncate">{isFa ? 'پیشرفت برنامه‌ای' : 'PLANNED PROGRESS'}</span>
           <span className="p-0.5 rounded bg-indigo-100/80 text-indigo-700 shrink-0">
-            <Activity className="w-3 h-3" />
+            <Activity className="w-3.5 h-3.5" />
           </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-1">
-          <div className="flex flex-col">
-            <span className="kpi-value text-base font-extrabold text-indigo-950 tracking-tight ltr-inline leading-tight">
+        <div className="mt-1 flex items-center justify-between gap-1 min-w-0">
+          <div className="flex flex-col min-w-0">
+            <span className="kpi-value text-[20px] font-extrabold text-indigo-950 font-tabular tabular-nums tracking-tight ltr-inline leading-none whitespace-nowrap">
               {planned}
             </span>
-            <span className="kpi-sub text-[7.5px] text-indigo-800 bg-indigo-100/80 border border-indigo-200/80 px-1 py-0.1 rounded font-bold w-fit mt-0.5">
+            <span className="kpi-sub text-[9.5px] text-indigo-900 bg-indigo-100/90 border border-indigo-200/90 px-1.5 py-0.5 rounded font-extrabold w-fit mt-1">
               Target
             </span>
           </div>
@@ -316,35 +316,35 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             deltaColorClass="text-indigo-700"
           />
         </div>
-        <div className="w-full bg-indigo-200/60 h-1.5 rounded-full mt-1 overflow-hidden">
+        <div className="w-full bg-indigo-200/60 h-1.5 rounded-full mt-1.5 overflow-hidden">
           <div
             className="bg-indigo-600 h-full rounded-full"
             style={{ width: `${Math.min(100, kpis.plannedProgress || 0)}%` }}
           />
         </div>
-        <div className="text-[7.5px] text-indigo-800/80 font-semibold truncate mt-0.5 flex items-center justify-between">
+        <div className="text-[9.5px] text-indigo-900 font-bold truncate mt-1 flex items-center justify-between gap-1 min-w-0">
           <span className="truncate">{isFa ? 'برنامه مبنا (Baseline Plan)' : 'Baseline Schedule Target'}</span>
-          <span className="text-[7px] text-indigo-700/90 font-bold ltr-inline shrink-0">7D Trend</span>
+          <span className="text-[8.5px] text-indigo-800 font-extrabold ltr-inline shrink-0">7D Trend</span>
         </div>
       </div>
 
       {/* 2. Actual Progress (Royal / Sky Blue Theme) */}
       <div
         id="kpi-card-actual"
-        className="kpi-card kpi-card-actual bg-linear-to-br from-blue-50/90 via-sky-50/55 to-blue-50/60 border border-blue-300/90 rounded-lg p-1.5 flex flex-col justify-between shadow-2xs print:break-inside-avoid"
+        className="kpi-card kpi-card-actual bg-linear-to-br from-blue-50/90 via-sky-50/55 to-blue-50/60 border border-blue-300/90 rounded-lg p-2 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden print:break-inside-avoid"
       >
-        <div className="flex items-center justify-between text-blue-950 text-[9.5px] font-bold">
+        <div className="flex items-center justify-between gap-1 text-blue-950 text-[11.5px] font-extrabold min-w-0">
           <span className="kpi-title truncate">{isFa ? 'پیشرفت واقعی' : 'ACTUAL PROGRESS'}</span>
           <span className="p-0.5 rounded bg-blue-100/90 text-blue-700 shrink-0">
-            <TrendingUp className="w-3 h-3" />
+            <TrendingUp className="w-3.5 h-3.5" />
           </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-1">
-          <div className="flex flex-col">
-            <span className="kpi-value text-base font-extrabold text-blue-950 tracking-tight ltr-inline leading-tight">
+        <div className="mt-1 flex items-center justify-between gap-1 min-w-0">
+          <div className="flex flex-col min-w-0">
+            <span className="kpi-value text-[20px] font-extrabold text-blue-950 font-tabular tabular-nums tracking-tight ltr-inline leading-none whitespace-nowrap">
               {actual}
             </span>
-            <span className="kpi-sub text-[7.5px] text-blue-800 bg-blue-100/90 border border-blue-200/80 px-1 py-0.1 rounded font-bold w-fit mt-0.5">
+            <span className="kpi-sub text-[9.5px] text-blue-900 bg-blue-100/90 border border-blue-200/90 px-1.5 py-0.5 rounded font-extrabold w-fit mt-1">
               Actual
             </span>
           </div>
@@ -358,15 +358,15 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             deltaColorClass="text-blue-700"
           />
         </div>
-        <div className="w-full bg-blue-200/75 h-1.5 rounded-full mt-1 overflow-hidden">
+        <div className="w-full bg-blue-200/75 h-1.5 rounded-full mt-1.5 overflow-hidden">
           <div
             className="bg-blue-600 h-full rounded-full"
             style={{ width: `${Math.min(100, kpis.actualProgress || 0)}%` }}
           />
         </div>
-        <div className="text-[7.5px] text-blue-800/85 font-semibold truncate mt-0.5 flex items-center justify-between">
+        <div className="text-[9.5px] text-blue-900 font-bold truncate mt-1 flex items-center justify-between gap-1 min-w-0">
           <span className="truncate">{isFa ? 'عملکرد تجمعی محقق‌شده' : 'Cumulative Realized'}</span>
-          <span className="text-[7px] text-blue-700 font-bold ltr-inline shrink-0">
+          <span className="text-[8.5px] text-blue-800 font-extrabold ltr-inline shrink-0">
             +{trends.actualWeeklyDelta.toFixed(2)}%/w
           </span>
         </div>
@@ -375,7 +375,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
       {/* 3. Variance (Rose Alert / Emerald Ahead Theme) */}
       <div
         id="kpi-card-variance"
-        className={`kpi-card kpi-card-variance rounded-lg p-1.5 flex flex-col justify-between border shadow-2xs print:break-inside-avoid ${
+        className={`kpi-card kpi-card-variance rounded-lg p-2 flex flex-col justify-between border shadow-2xs min-w-0 overflow-hidden print:break-inside-avoid ${
           variance === null
             ? 'bg-slate-50 border-slate-300'
             : isPositiveVariance
@@ -383,7 +383,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             : 'bg-linear-to-br from-rose-50/90 via-rose-50/55 to-orange-50/35 border-rose-300/90 text-rose-950'
         }`}
       >
-        <div className="flex items-center justify-between text-[9.5px] font-bold">
+        <div className="flex items-center justify-between gap-1 text-[11.5px] font-extrabold min-w-0">
           <span className={`kpi-title truncate ${isPositiveVariance ? 'text-emerald-950' : 'text-rose-950'}`}>
             {isFa ? 'انحراف پیشرفت' : 'VARIANCE (SV)'}
           </span>
@@ -392,13 +392,13 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
               isPositiveVariance ? 'bg-emerald-100/90 text-emerald-700' : 'bg-rose-100/90 text-rose-700'
             }`}
           >
-            {isPositiveVariance ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+            {isPositiveVariance ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
           </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-1">
-          <div className="flex flex-col">
+        <div className="mt-1 flex items-center justify-between gap-1 min-w-0">
+          <div className="flex flex-col min-w-0">
             <span
-              className={`kpi-value text-base font-extrabold tracking-tight ltr-inline leading-tight ${
+              className={`kpi-value text-[20px] font-extrabold font-tabular tabular-nums tracking-tight ltr-inline leading-none whitespace-nowrap ${
                 variance === null ? 'text-slate-900' : isPositiveVariance ? 'text-emerald-900' : 'text-rose-900'
               }`}
             >
@@ -406,7 +406,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             </span>
             {kpis.scheduleDelayDays !== null && kpis.scheduleDelayDays !== undefined && (
               <span
-                className={`kpi-delay-badge text-[7.5px] font-extrabold px-1 py-0.1 rounded border ltr-inline w-fit mt-0.5 ${
+                className={`kpi-delay-badge text-[9.5px] font-extrabold font-tabular tabular-nums px-1.5 py-0.5 rounded border ltr-inline w-fit mt-1 ${
                   kpis.scheduleDelayDays > 0
                     ? 'bg-rose-200/80 text-rose-950 border-rose-300'
                     : 'bg-emerald-200/80 text-emerald-950 border-emerald-300'
@@ -427,7 +427,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
           />
         </div>
         <div
-          className={`w-full h-1.5 rounded-full mt-1 overflow-hidden ${
+          className={`w-full h-1.5 rounded-full mt-1.5 overflow-hidden ${
             isPositiveVariance ? 'bg-emerald-200/70' : 'bg-rose-200/75'
           }`}
         >
@@ -437,8 +437,8 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
           />
         </div>
         <div
-          className={`kpi-delay-text text-[7.5px] font-semibold truncate mt-0.5 flex items-center justify-between ${
-            isPositiveVariance ? 'text-emerald-900' : 'text-rose-900'
+          className={`kpi-delay-text text-[9.5px] font-bold truncate mt-1 flex items-center justify-between gap-1 min-w-0 ${
+            isPositiveVariance ? 'text-emerald-950' : 'text-rose-950'
           }`}
           title={kpis.plannedAchievementDate ? `تاریخ برنامه برای ${kpis.actualProgress}%: ${kpis.plannedAchievementDate}` : undefined}
         >
@@ -455,27 +455,27 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
               ? 'انحراف نسبت به برنامه'
               : 'Schedule Variance'}
           </span>
-          <span className="text-[7px] font-bold ltr-inline shrink-0 opacity-85">SV 7D</span>
+          <span className="text-[8.5px] font-extrabold ltr-inline shrink-0 opacity-85">SV 7D</span>
         </div>
       </div>
 
       {/* 4. Time Elapsed (Warm Amber / Orange Executive Theme) */}
       <div
         id="kpi-card-elapsed"
-        className="kpi-card kpi-card-elapsed bg-linear-to-br from-amber-50/85 via-orange-50/45 to-amber-50/50 border border-amber-300/90 rounded-lg p-1.5 flex flex-col justify-between shadow-2xs print:break-inside-avoid"
+        className="kpi-card kpi-card-elapsed bg-linear-to-br from-amber-50/85 via-orange-50/45 to-amber-50/50 border border-amber-300/90 rounded-lg p-2 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden print:break-inside-avoid"
       >
-        <div className="flex items-center justify-between text-amber-950 text-[9.5px] font-bold">
+        <div className="flex items-center justify-between gap-1 text-amber-950 text-[11.5px] font-extrabold min-w-0">
           <span className="kpi-title truncate">{isFa ? 'زمان سپری‌شده' : 'TIME ELAPSED'}</span>
           <span className="p-0.5 rounded bg-amber-100/90 text-amber-700 shrink-0">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3.5 h-3.5" />
           </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-1">
-          <div className="flex flex-col">
-            <span className="kpi-value text-base font-extrabold text-amber-950 tracking-tight ltr-inline leading-tight">
+        <div className="mt-1 flex items-center justify-between gap-1 min-w-0">
+          <div className="flex flex-col min-w-0">
+            <span className="kpi-value text-[20px] font-extrabold text-amber-950 font-tabular tabular-nums tracking-tight ltr-inline leading-none whitespace-nowrap">
               {kpis.timeElapsedPercentage !== null ? `${Math.min(100, Math.max(0, kpis.timeElapsedPercentage))}%` : 'N/A'}
             </span>
-            <span className="kpi-sub text-[7.5px] text-amber-900 bg-amber-100/90 border border-amber-200/90 px-1 py-0.1 rounded font-bold ltr-inline w-fit mt-0.5">
+            <span className="kpi-sub text-[9.5px] text-amber-950 bg-amber-100/90 border border-amber-200/90 px-1.5 py-0.5 rounded font-extrabold font-tabular tabular-nums ltr-inline w-fit mt-1">
               {kpis.timeElapsedDays !== null ? `${kpis.timeElapsedDays}/${kpis.totalDurationDays}d` : `${kpis.totalDurationDays}d`}
             </span>
           </div>
@@ -493,35 +493,35 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             deltaColorClass="text-amber-800"
           />
         </div>
-        <div className="w-full bg-amber-200/75 h-1.5 rounded-full mt-1 overflow-hidden">
+        <div className="w-full bg-amber-200/75 h-1.5 rounded-full mt-1.5 overflow-hidden">
           <div
             className="bg-amber-600 h-full rounded-full"
             style={{ width: `${Math.min(100, Math.max(0, kpis.timeElapsedPercentage || 0))}%` }}
           />
         </div>
-        <div className="kpi-elapsed-meta text-[7.5px] text-amber-900 font-semibold truncate mt-0.5 flex items-center justify-between">
+        <div className="kpi-elapsed-meta text-[9.5px] text-amber-950 font-bold truncate mt-1 flex items-center justify-between gap-1 min-w-0">
           <span className="truncate">{isFa ? kpis.effectiveEndLabelFa : kpis.effectiveEndLabelEn}</span>
-          <span className="text-[7px] text-amber-800 font-bold ltr-inline shrink-0">+7d</span>
+          <span className="text-[8.5px] text-amber-800 font-extrabold ltr-inline shrink-0">+7d</span>
         </div>
       </div>
 
       {/* 5. Equipment Installation (Teal / Cyan Engineering Theme) */}
       <div
         id="kpi-card-equipment"
-        className="kpi-card kpi-card-equipment bg-linear-to-br from-teal-50/85 via-cyan-50/45 to-teal-50/50 border border-teal-300/90 rounded-lg p-1.5 flex flex-col justify-between shadow-2xs print:break-inside-avoid"
+        className="kpi-card kpi-card-equipment bg-linear-to-br from-teal-50/85 via-cyan-50/45 to-teal-50/50 border border-teal-300/90 rounded-lg p-2 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden print:break-inside-avoid"
       >
-        <div className="flex items-center justify-between text-teal-950 text-[9.5px] font-bold">
+        <div className="flex items-center justify-between gap-1 text-teal-950 text-[11.5px] font-extrabold min-w-0">
           <span className="kpi-title truncate">{isFa ? 'نصب تجهیزات' : 'EQUIPMENT INST.'}</span>
           <span className="p-0.5 rounded bg-teal-100/90 text-teal-700 shrink-0">
-            <Wrench className="w-3 h-3" />
+            <Wrench className="w-3.5 h-3.5" />
           </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-1">
-          <div className="flex flex-col">
-            <span className="kpi-value text-base font-extrabold text-teal-950 tracking-tight ltr-inline leading-tight">
-              {kpis.equipmentInstallationPercentage !== null ? `${kpis.equipmentInstallationPercentage.toFixed(1)}%` : 'N/A'}
+        <div className="mt-1 flex items-center justify-between gap-1 min-w-0">
+          <div className="flex flex-col min-w-0">
+            <span className="kpi-value text-[20px] font-extrabold text-teal-950 font-tabular tabular-nums tracking-tight ltr-inline leading-none whitespace-nowrap">
+              {kpis.equipmentInstallationPercentage !== null ? `${Number(kpis.equipmentInstallationPercentage.toFixed(1))}%` : 'N/A'}
             </span>
-            <span className="kpi-sub text-[7.5px] text-teal-900 bg-teal-100/90 border border-teal-200/90 px-1 py-0.1 rounded font-bold ltr-inline w-fit mt-0.5">
+            <span className="kpi-sub text-[9.5px] text-teal-950 bg-teal-100/90 border border-teal-200/90 px-1.5 py-0.5 rounded font-extrabold font-tabular tabular-nums ltr-inline w-fit mt-1">
               {kpis.equipmentInstalled || 0}/{kpis.equipmentTotal || 0}
             </span>
           </div>
@@ -535,43 +535,43 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             deltaColorClass="text-teal-800"
           />
         </div>
-        <div className="w-full bg-teal-200/75 h-1.5 rounded-full mt-1 overflow-hidden">
+        <div className="w-full bg-teal-200/75 h-1.5 rounded-full mt-1.5 overflow-hidden">
           <div
             className="bg-teal-600 h-full rounded-full"
             style={{ width: `${Math.min(100, kpis.equipmentInstallationPercentage || 0)}%` }}
           />
         </div>
-        <div className="text-[7.5px] text-teal-900 font-semibold truncate mt-0.5 flex items-center justify-between">
+        <div className="text-[9.5px] text-teal-950 font-bold truncate mt-1 flex items-center justify-between gap-1 min-w-0">
           <span className="truncate">
             {isFa
               ? `${kpis.equipmentInstalled || 0} از ${kpis.equipmentTotal || 0} قلم تجهیز منصوبه`
               : `${kpis.equipmentInstalled || 0} of ${kpis.equipmentTotal || 0} Units Installed`}
           </span>
-          <span className="text-[7px] text-teal-800 font-bold ltr-inline shrink-0">7D</span>
+          <span className="text-[8.5px] text-teal-800 font-extrabold ltr-inline shrink-0">7D</span>
         </div>
       </div>
 
       {/* 6. Financial / IPC Status (Emerald / Green Financial Theme) */}
       <div
         id="kpi-card-financial"
-        className="kpi-card kpi-card-financial bg-linear-to-br from-emerald-50/85 via-green-50/45 to-emerald-50/50 border border-emerald-300/90 rounded-lg p-1.5 flex flex-col justify-between shadow-2xs print:break-inside-avoid"
+        className="kpi-card kpi-card-financial bg-linear-to-br from-emerald-50/85 via-green-50/45 to-emerald-50/50 border border-emerald-300/90 rounded-lg p-2 flex flex-col justify-between shadow-2xs min-w-0 overflow-hidden print:break-inside-avoid"
       >
-        <div className="flex items-center justify-between text-emerald-950 text-[9.5px] font-bold">
+        <div className="flex items-center justify-between gap-1 text-emerald-950 text-[11px] font-extrabold min-w-0">
           <span className="kpi-title truncate">{isFa ? 'پیشرفت مالی (Financial)' : 'FINANCIAL PROGRESS'}</span>
           <span className="p-0.5 rounded bg-emerald-100/90 text-emerald-700 shrink-0">
-            <CreditCard className="w-3 h-3" />
+            <CreditCard className="w-3.5 h-3.5" />
           </span>
         </div>
-        <div className="mt-0.5 flex items-center justify-between gap-1">
-          <div className="flex flex-col">
-            <span className="kpi-value text-base font-extrabold text-emerald-950 tracking-tight ltr-inline leading-tight">
+        <div className="mt-1 flex items-center justify-between gap-1 min-w-0">
+          <div className="flex flex-col min-w-0">
+            <span className="kpi-value text-[20px] font-extrabold text-emerald-950 font-tabular tabular-nums tracking-tight ltr-inline leading-none whitespace-nowrap">
               {kpis.financialSummary?.financialProgress !== undefined && kpis.financialSummary?.financialProgress !== null
                 ? `${kpis.financialSummary.financialProgress.toFixed(2)}%`
                 : kpis.ipcCachedRatio !== null
                 ? `${kpis.ipcCachedRatio}%`
                 : 'N/A'}
             </span>
-            <span className="kpi-sub text-[7.5px] text-emerald-900 bg-emerald-100/90 border border-emerald-200/90 px-1 py-0.1 rounded font-bold whitespace-nowrap w-fit mt-0.5">
+            <span className="kpi-sub text-[9.5px] text-emerald-950 bg-emerald-100/90 border border-emerald-200/90 px-1.5 py-0.5 rounded font-extrabold font-tabular tabular-nums whitespace-nowrap w-fit mt-1">
               {kpis.financialSummary?.collectionRatio !== undefined && kpis.financialSummary?.collectionRatio !== null
                 ? `${isFa ? 'وصول' : 'Col'}: ${kpis.financialSummary.collectionRatio.toFixed(1)}%`
                 : isFa
@@ -589,7 +589,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             deltaColorClass="text-emerald-800"
           />
         </div>
-        <div className="w-full bg-emerald-200/75 h-1.5 rounded-full mt-1 overflow-hidden">
+        <div className="w-full bg-emerald-200/75 h-1.5 rounded-full mt-1.5 overflow-hidden">
           <div
             className="bg-emerald-600 h-full rounded-full"
             style={{
@@ -597,11 +597,11 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
             }}
           />
         </div>
-        <div className="text-[7.5px] text-emerald-900 font-semibold truncate mt-0.5 flex items-center justify-between">
+        <div className="text-[9.5px] text-emerald-950 font-bold truncate mt-1 flex items-center justify-between gap-1 min-w-0">
           <span className="truncate">
             {isFa ? 'مبتنی بر آخرین صورت‌وضعیت تأییدی' : 'Based on Latest Certified IPC'}
           </span>
-          <span className="text-[7px] text-emerald-800 font-bold ltr-inline shrink-0">IPC#17</span>
+          <span className="text-[8.5px] text-emerald-800 font-extrabold ltr-inline shrink-0">IPC#17</span>
         </div>
       </div>
     </div>

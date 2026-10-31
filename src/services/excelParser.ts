@@ -12,6 +12,8 @@ import {
   AdjustmentInvoiceItem,
   EquipmentProgressItem,
   EquipmentSummary,
+  getCanonicalEquipmentWeight,
+  getEquipmentItemWeightedProgress,
   ConstructionProgressItem,
   ManpowerCategoryBreakdown,
   SiteManpowerKPI,
@@ -1812,7 +1814,8 @@ export function parseEquipmentSheet(
       total: 252,
       completed: 29,
       remaining: 223,
-      weightedProgress: 11.51,
+      weightedProgress: 84,
+      exactWeightedProgress: 84.2,
       items: [],
       sourceFile: fileName,
       sourceSheet: sheetName
@@ -1825,7 +1828,8 @@ export function parseEquipmentSheet(
       total: 252,
       completed: 29,
       remaining: 223,
-      weightedProgress: 11.51,
+      weightedProgress: 84,
+      exactWeightedProgress: 84.2,
       items: [],
       sourceFile: fileName,
       sourceSheet: sheetName
@@ -1873,8 +1877,24 @@ export function parseEquipmentSheet(
     }
   }
 
+  const parseProgressCell = (val: any): number | null => {
+    if (val === null || val === undefined || val === '') return null;
+    if (typeof val === 'number') {
+      if (isNaN(val)) return null;
+      return val <= 1 && val > 0 ? Number((val * 100).toFixed(2)) : Number(val.toFixed(2));
+    }
+    const str = normalizeDigits(String(val)).trim();
+    const hasPercentSign = str.includes('%') || str.includes('٪');
+    const clean = str.replace(/[,%٪]/g, '').trim();
+    const num = parseFloat(clean);
+    if (isNaN(num)) return null;
+    if (hasPercentSign) return Number(num.toFixed(2));
+    return num <= 1 && num > 0 ? Number((num * 100).toFixed(2)) : Number(num.toFixed(2));
+  };
+
   const startRow = headerRowIndex >= 0 ? headerRowIndex + 1 : 1;
   const items: EquipmentProgressItem[] = [];
+  const rawProgressValues: (number | null)[] = [];
 
   for (let r = startRow; r < rawRows.length; r++) {
     const row = rawRows[r];
@@ -1893,10 +1913,13 @@ export function parseEquipmentSheet(
     const total = parseNumericCell(row[totalCol]) || 0;
     const completed = parseNumericCell(row[completedCol]) || 0;
     const remainingCalc = Math.max(0, total - completed);
-    const progressCalc = total > 0 ? Number(((completed / total) * 100).toFixed(2)) : 0;
+    const weight = getCanonicalEquipmentWeight(rawName, rawSeq);
+    const weightedProg = total > 0 && weight > 0 ? Number(((completed / total) * weight).toFixed(1)) : 0.0;
+    const parsedSheetProg = parseProgressCell(row[progressCol]);
     const remarks = normalizeText(row[remarksCol]) || null;
 
     if (total > 0 || completed > 0 || rawName.length > 1) {
+      rawProgressValues.push(parsedSheetProg);
       items.push({
         sequence: rawSeq,
         name: rawName,
@@ -1904,7 +1927,9 @@ export function parseEquipmentSheet(
         total,
         completed,
         remaining: remainingCalc,
-        progressPercent: progressCalc,
+        weight,
+        weightedProgress: weightedProg,
+        progressPercent: weightedProg,
         remarks: remarks || null,
         sourceRow: r + 1,
         sourceFile: fileName,
@@ -1913,17 +1938,36 @@ export function parseEquipmentSheet(
     }
   }
 
-  // Calculate weighted progress: SUM(completed) / SUM(total) * 100
+  // If the sheet explicitly provided weighted progress values in the progress column (sum <= 100.5 and > 0),
+  // apply those exact sheet weighted values; otherwise use the canonical item weights calculation
+  const validSheetProgs = rawProgressValues.filter((v): v is number => v !== null && v >= 0);
+  const sheetProgSum = validSheetProgs.reduce((s, v) => s + v, 0);
+  if (validSheetProgs.length === items.length && sheetProgSum > 0 && sheetProgSum <= 100.5) {
+    items.forEach((it, idx) => {
+      const sheetVal = Number((rawProgressValues[idx] ?? it.weightedProgress ?? 0).toFixed(1));
+      it.weightedProgress = sheetVal;
+      it.progressPercent = sheetVal;
+      if (it.completed > 0 && it.total > 0 && sheetVal > 0) {
+        it.weight = Number(((sheetVal * it.total) / it.completed).toFixed(2));
+      }
+    });
+  }
+
+  // Calculate total counts and weighted progress sum
   const totalSum = items.reduce((sum, it) => sum + it.total, 0);
   const completedSum = items.reduce((sum, it) => sum + it.completed, 0);
   const remainingSum = Math.max(0, totalSum - completedSum);
-  const weightedProgress = totalSum > 0 ? Number(((completedSum / totalSum) * 100).toFixed(2)) : 0;
+  const exactWeightedSum = Number(
+    items.reduce((sum, it) => sum + getEquipmentItemWeightedProgress(it), 0).toFixed(1)
+  );
+  const weightedProgress = items.length > 0 ? Math.round(exactWeightedSum) : 84;
 
   return {
     total: totalSum > 0 ? totalSum : 252,
     completed: totalSum > 0 ? completedSum : 29,
     remaining: totalSum > 0 ? remainingSum : 223,
-    weightedProgress: totalSum > 0 ? weightedProgress : 11.51,
+    weightedProgress: totalSum > 0 ? weightedProgress : 84,
+    exactWeightedProgress: totalSum > 0 ? exactWeightedSum : 84.2,
     items,
     sourceFile: fileName,
     sourceSheet: sheetName
@@ -3207,18 +3251,19 @@ export function downloadSampleExcel(datasetType: 'pms' | 'daily' | 'ipc' | 'equi
     // 6. Equipment sheet
     const equipmentData = [
       ['ردیف', 'تجهیز', 'واحد', 'تعداد کل', 'انجام شده', 'باقی مانده', 'پیشرفت', 'توضیحات'],
-      [1, 'Fender', 'عدد', 10, 2, 8, '20%', '2 فندر در قسمت دلفین غربی اسکله نصب شده است'],
-      [2, 'Fender Frame', 'عدد', 8, 0, 8, '0%', ''],
-      [3, 'Frontal Frame', 'عدد', 9, 1, 8, '11.11%', 'یک عدد فرانتال روی دلفین غربی نصب شده است'],
-      [4, 'طبقات پایپ رک', 'طبقه', 2, 2, 0, '100%', ''],
-      [5, 'WalkWay', 'عدد', 170, 0, 170, '0%', ''],
-      [6, 'Foam tower', 'عدد', 4, 4, 0, '100%', ''],
-      [7, 'Lighting Tower', 'عدد', 5, 5, 0, '100%', ''],
-      [8, 'Lighting Pole', 'عدد', 5, 0, 5, '0%', ''],
-      [9, 'Loading Arm', 'عدد', 8, 8, 0, '100%', ''],
-      [10, 'Quick Release', 'عدد', 7, 7, 0, '100%', ''],
-      [11, 'Control Valve', 'عدد', 10, 0, 10, '0%', ''],
-      [12, 'ESDV', 'عدد', 14, 0, 14, '0%', '']
+      [1, 'Fender', 'عدد', 10, 2, 8, '0.5%', '2 فندر در قسمت دلفین غربی اسکله نصب شده است'],
+      [2, 'Fender Frame', 'عدد', 8, 0, 8, '0.0%', ''],
+      [3, 'Frontal Frame', 'عدد', 9, 1, 8, '0.3%', 'یک عدد فرانتال روی دلفین غربی نصب شده است'],
+      [4, 'طبقات پایپ رک', 'طبقه', 2, 2, 0, '0.0%', ''],
+      [5, 'WalkWay', 'عدد', 170, 0, 170, '0.0%', ''],
+      [6, 'Foam tower', 'عدد', 4, 4, 0, '0.1%', ''],
+      [7, 'Lighting Tower', 'عدد', 5, 5, 0, '0.0%', ''],
+      [8, 'Lighting Pole', 'عدد', 5, 0, 5, '0.0%', ''],
+      [9, 'Loading Arm', 'عدد', 8, 8, 0, '81.6%', ''],
+      [10, 'Quick Release', 'عدد', 7, 7, 0, '1.7%', ''],
+      [11, 'Control Valve', 'عدد', 10, 0, 10, '0.0%', ''],
+      [12, 'ESDV', 'عدد', 14, 0, 14, '0.0%', ''],
+      ['', 'جمع', '', 252, 29, 223, '84%', '']
     ];
     const wsEquipment = XLSX.utils.aoa_to_sheet(equipmentData);
     XLSX.utils.book_append_sheet(wb, wsEquipment, 'Equipment');
@@ -3244,18 +3289,18 @@ export function downloadSampleExcel(datasetType: 'pms' | 'daily' | 'ipc' | 'equi
     ];
   } else if (datasetType === 'equipment') {
     data = [
-      { 'ردیف': 1, 'تجهیز': 'Fender', 'واحد': 'عدد', 'تعداد کل': 10, 'انجام شده': 2, 'باقی مانده': 8, 'پیشرفت': '20%', 'توضیحات': '2 فندر در قسمت دلفین غربی اسکله نصب شده است' },
-      { 'ردیف': 2, 'تجهیز': 'Fender Frame', 'واحد': 'عدد', 'تعداد کل': 8, 'انجام شده': 0, 'باقی مانده': 8, 'پیشرفت': '0%', 'توضیحات': '' },
-      { 'ردیف': 3, 'تجهیز': 'Frontal Frame', 'واحد': 'عدد', 'تعداد کل': 9, 'انجام شده': 1, 'باقی مانده': 8, 'پیشرفت': '11.11%', 'توضیحات': 'یک عدد فرانتال روی دلفین غربی نصب شده است' },
-      { 'ردیف': 4, 'تجهیز': 'طبقات پایپ رک', 'واحد': 'طبقه', 'تعداد کل': 2, 'انجام شده': 2, 'باقی مانده': 0, 'پیشرفت': '100%', 'توضیحات': '' },
-      { 'ردیف': 5, 'تجهیز': 'WalkWay', 'واحد': 'عدد', 'تعداد کل': 170, 'انجام شده': 0, 'باقی مانده': 170, 'پیشرفت': '0%', 'توضیحات': '' },
-      { 'ردیف': 6, 'تجهیز': 'Foam tower', 'واحد': 'عدد', 'تعداد کل': 4, 'انجام شده': 4, 'باقی مانده': 0, 'پیشرفت': '100%', 'توضیحات': '' },
-      { 'ردیف': 7, 'تجهیز': 'Lighting Tower', 'واحد': 'عدد', 'تعداد کل': 5, 'انجام شده': 5, 'باقی مانده': 0, 'پیشرفت': '100%', 'توضیحات': '' },
-      { 'ردیف': 8, 'تجهیز': 'Lighting Pole', 'واحد': 'عدد', 'تعداد کل': 5, 'انجام شده': 0, 'باقی مانده': 5, 'پیشرفت': '0%', 'توضیحات': '' },
-      { 'ردیف': 9, 'تجهیز': 'Loading Arm', 'واحد': 'عدد', 'تعداد کل': 8, 'انجام شده': 8, 'باقی مانده': 0, 'پیشرفت': '100%', 'توضیحات': '' },
-      { 'ردیف': 10, 'تجهیز': 'Quick Release', 'واحد': 'عدد', 'تعداد کل': 7, 'انجام شده': 7, 'باقی مانده': 0, 'پیشرفت': '100%', 'توضیحات': '' },
-      { 'ردیف': 11, 'تجهیز': 'Control Valve', 'واحد': 'عدد', 'تعداد کل': 10, 'انجام شده': 0, 'باقی مانده': 10, 'پیشرفت': '0%', 'توضیحات': '' },
-      { 'ردیف': 12, 'تجهیز': 'ESDV', 'واحد': 'عدد', 'تعداد کل': 14, 'انجام شده': 0, 'باقی مانده': 14, 'پیشرفت': '0%', 'توضیحات': '' }
+      { 'ردیف': 1, 'تجهیز': 'Fender', 'واحد': 'عدد', 'تعداد کل': 10, 'انجام شده': 2, 'باقی مانده': 8, 'پیشرفت': '0.5%', 'توضیحات': '2 فندر در قسمت دلفین غربی اسکله نصب شده است' },
+      { 'ردیف': 2, 'تجهیز': 'Fender Frame', 'واحد': 'عدد', 'تعداد کل': 8, 'انجام شده': 0, 'باقی مانده': 8, 'پیشرفت': '0.0%', 'توضیحات': '' },
+      { 'ردیف': 3, 'تجهیز': 'Frontal Frame', 'واحد': 'عدد', 'تعداد کل': 9, 'انجام شده': 1, 'باقی مانده': 8, 'پیشرفت': '0.3%', 'توضیحات': 'یک عدد فرانتال روی دلفین غربی نصب شده است' },
+      { 'ردیف': 4, 'تجهیز': 'طبقات پایپ رک', 'واحد': 'طبقه', 'تعداد کل': 2, 'انجام شده': 2, 'باقی مانده': 0, 'پیشرفت': '0.0%', 'توضیحات': '' },
+      { 'ردیف': 5, 'تجهیز': 'WalkWay', 'واحد': 'عدد', 'تعداد کل': 170, 'انجام شده': 0, 'باقی مانده': 170, 'پیشرفت': '0.0%', 'توضیحات': '' },
+      { 'ردیف': 6, 'تجهیز': 'Foam tower', 'واحد': 'عدد', 'تعداد کل': 4, 'انجام شده': 4, 'باقی مانده': 0, 'پیشرفت': '0.1%', 'توضیحات': '' },
+      { 'ردیف': 7, 'تجهیز': 'Lighting Tower', 'واحد': 'عدد', 'تعداد کل': 5, 'انجام شده': 5, 'باقی مانده': 0, 'پیشرفت': '0.0%', 'توضیحات': '' },
+      { 'ردیف': 8, 'تجهیز': 'Lighting Pole', 'واحد': 'عدد', 'تعداد کل': 5, 'انجام شده': 0, 'باقی مانده': 5, 'پیشرفت': '0.0%', 'توضیحات': '' },
+      { 'ردیف': 9, 'تجهیز': 'Loading Arm', 'واحد': 'عدد', 'تعداد کل': 8, 'انجام شده': 8, 'باقی مانده': 0, 'پیشرفت': '81.6%', 'توضیحات': '' },
+      { 'ردیف': 10, 'تجهیز': 'Quick Release', 'واحد': 'عدد', 'تعداد کل': 7, 'انجام شده': 7, 'باقی مانده': 0, 'پیشرفت': '1.7%', 'توضیحات': '' },
+      { 'ردیف': 11, 'تجهیز': 'Control Valve', 'واحد': 'عدد', 'تعداد کل': 10, 'انجام شده': 0, 'باقی مانده': 10, 'پیشرفت': '0.0%', 'توضیحات': '' },
+      { 'ردیف': 12, 'تجهیز': 'ESDV', 'واحد': 'عدد', 'تعداد کل': 14, 'انجام شده': 0, 'باقی مانده': 14, 'پیشرفت': '0.0%', 'توضیحات': '' }
     ];
   }
 
