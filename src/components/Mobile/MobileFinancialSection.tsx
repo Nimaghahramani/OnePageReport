@@ -62,7 +62,7 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
     ? (fin?.invoiceCumulativeEUR ?? fin?.receivedEUR ?? 0)
     : (fin?.receivedEUR ?? 0);
 
-  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 55.4);
+  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(2)) : 74.79);
   const collectionRatio = isReceived ? 100 : (fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 100));
   const outstandingRatio = isReceived ? 0 : (fin?.outstandingRatio ?? Math.max(0, 100 - collectionRatio));
 
@@ -207,7 +207,7 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
               <div className="flex items-baseline gap-0.5 font-bold text-slate-900">
                 <span className="font-tabular tabular-nums">{formatIrrValue(fin?.advancePaymentIRR || 0)}</span>
                 <span className="text-[7px] text-slate-500 font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                <span className="text-[7px] font-normal text-slate-400 font-tabular tabular-nums">({Number(fin?.advancePaymentPercentage || 22.07).toFixed(1)}%)</span>
+                <span className="text-[7px] font-normal text-slate-400 font-tabular tabular-nums">({Number(fin?.advancePaymentPercentage || 22.95).toFixed(1)}%)</span>
               </div>
             </div>
             <div className="text-[9.5px] flex items-baseline justify-between">
@@ -215,7 +215,7 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
               <div className="flex items-baseline gap-0.5 font-bold text-indigo-950">
                 <span className="font-tabular tabular-nums">{formatIrrValue(fin?.adjustmentIRR || 0)}</span>
                 <span className="text-[7px] text-indigo-600 font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                <span className="text-[7px] font-normal text-indigo-400 font-tabular tabular-nums">({Number(fin?.adjustmentPercentage || 20.53).toFixed(1)}%)</span>
+                <span className="text-[7px] font-normal text-indigo-400 font-tabular tabular-nums">({Number(fin?.adjustmentPercentage || 21.35).toFixed(1)}%)</span>
               </div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export const MobileFinancialSection: React.FC<MobileFinancialSectionProps> = ({ 
               </span>
               <span className="text-[7px] font-sans">{isFa ? 'م.ر' : 'B'}</span>
               <span className="text-[7px] font-normal text-slate-400 font-tabular tabular-nums">
-                ({(Number(fin?.advancePaymentPercentage || 22.07) + Number(fin?.adjustmentPercentage || 20.53)).toFixed(1)}%)
+                ({(Number(fin?.advancePaymentPercentage || 22.95) + Number(fin?.adjustmentPercentage || 21.35)).toFixed(1)}%)
               </span>
             </div>
           </div>

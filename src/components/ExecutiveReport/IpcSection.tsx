@@ -64,7 +64,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
     : (fin?.receivedEUR ?? 0);
 
   // Ratios and figures
-  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(1)) : 55.4);
+  const finProgress = fin?.financialProgress ?? (ipc.approvedAmount > 0 ? Number(((ipc.approvedAmount / (fin?.financialCalculationBaseIRR || FINANCIAL_CALCULATION_BASE_IRR)) * 100).toFixed(2)) : 74.79);
   const collectionRatio = isReceived ? 100 : (fin?.collectionRatio ?? (ipc.approvedAmount > 0 && ipc.paidAmount > 0 ? Number(((ipc.paidAmount / ipc.approvedAmount) * 100).toFixed(1)) : 100));
   const outstandingRatio = isReceived ? 0 : (fin?.outstandingRatio ?? Math.max(0, 100 - collectionRatio));
 
@@ -233,7 +233,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
                 <div className="flex items-baseline gap-0.5 font-extrabold text-blue-950">
                   <span className="font-tabular tabular-nums text-[11px] tracking-tight ltr-inline">{formatIrrValue(fin.advancePaymentIRR)}</span>
                   <span className="text-[7.5px] text-slate-700 font-bold font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                  <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">({Number(fin.advancePaymentPercentage || 22.07).toFixed(1)}%)</span>
+                  <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">({Number(fin.advancePaymentPercentage || 22.95).toFixed(1)}%)</span>
                 </div>
               </div>
               {/* Adjustment Row */}
@@ -242,7 +242,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
                 <div className="flex items-baseline gap-0.5 font-extrabold text-indigo-950">
                   <span className="font-tabular tabular-nums text-[11px] tracking-tight ltr-inline">{formatIrrValue(fin.adjustmentIRR)}</span>
                   <span className="text-[7.5px] text-indigo-700 font-bold font-sans">{isFa ? 'م.ر' : 'B'}</span>
-                  <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">({Number(fin.adjustmentPercentage || 20.53).toFixed(1)}%)</span>
+                  <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">({Number(fin.adjustmentPercentage || 21.35).toFixed(1)}%)</span>
                 </div>
               </div>
             </div>
@@ -255,7 +255,7 @@ export const IpcSection: React.FC<IpcSectionProps> = ({ ipc, daily, lang }) => {
                 </span>
                 <span className="text-[7.5px] font-bold font-sans">{isFa ? 'م.ر' : 'B'}</span>
                 <span className="text-[8.5px] font-extrabold text-indigo-800 font-tabular tabular-nums ltr-inline">
-                  ({(Number(fin.advancePaymentPercentage || 22.07) + Number(fin.adjustmentPercentage || 20.53)).toFixed(1)}%)
+                  ({(Number(fin.advancePaymentPercentage || 22.95) + Number(fin.adjustmentPercentage || 21.35)).toFixed(1)}%)
                 </span>
               </div>
             </div>

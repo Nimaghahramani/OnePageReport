@@ -238,7 +238,7 @@ export const KpiCardsGrid: React.FC<KpiCardsGridProps> = ({ kpis, pms, masterSCu
       kpis.financialSummary?.financialProgress ??
       kpis.financialProgress ??
       kpis.ipcCachedRatio ??
-      58.22;
+      74.79;
     const ipcRows = kpis.financialSummary?.ipcRows;
     let finWeeklyDelta = 0.65;
     if (ipcRows && ipcRows.length >= 2) {

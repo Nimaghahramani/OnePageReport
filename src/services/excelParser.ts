@@ -19,6 +19,7 @@ import {
   SiteManpowerKPI,
   EUR_TO_IRR,
   FINANCIAL_CALCULATION_BASE_IRR,
+  FINANCIAL_PROGRESS_NUMERATOR_IRR,
   combinedEquivalentIRR,
   calculatePercentage,
   calculateFinancialProgress,
@@ -1695,6 +1696,39 @@ export function parseFinancialInvoiceSheet(
     }
   }
 
+  // Scan for explicit Financial Progress fraction numerator / denominator or percentage in the Invoice sheet
+  let explicitFinNumeratorIRR: number | null = null;
+  let explicitFinProgressPct: number | null = null;
+  for (let r = 0; r < rawRows.length; r++) {
+    const row = rawRows[r];
+    if (!row || !Array.isArray(row)) continue;
+    for (let c = 0; c < row.length; c++) {
+      const val = parseNum(row[c]);
+      // Detect numerator in the 3.5T - 4.5T range (e.g. 3,761,798,160,569)
+      if (val && val >= 3_500_000_000_000 && val <= 4_500_000_000_000) {
+        explicitFinNumeratorIRR = val;
+      }
+      const txt = normalizeText(row[c]);
+      if (/پیشرفت\s*مالی/i.test(txt)) {
+        // Check cell below or adjacent for percentage
+        const nextRow = rawRows[r + 1];
+        if (nextRow && Array.isArray(nextRow)) {
+          const belowVal = parseNum(nextRow[c]);
+          if (belowVal !== null && belowVal > 0 && belowVal <= 100) {
+            explicitFinProgressPct = belowVal <= 1 ? Number((belowVal * 100).toFixed(2)) : Number(belowVal.toFixed(2));
+          }
+        }
+        for (let nc = Math.max(0, c - 2); nc < Math.min(row.length, c + 3); nc++) {
+          if (nc === c) continue;
+          const adjVal = parseNum(row[nc]);
+          if (adjVal !== null && adjVal > 0 && adjVal <= 100) {
+            explicitFinProgressPct = adjVal <= 1 ? Number((adjVal * 100).toFixed(2)) : Number(adjVal.toFixed(2));
+          }
+        }
+      }
+    }
+  }
+
   // Exact Calculation using contractual exchange rate: 1 EUR = 556,286 IRR
   const invoiceEUREquivalentIRR = (invoiceCumulativeEUR ?? 0) * EUR_TO_IRR;
   const totalInvoiceEquivalentIRR = (invoiceCumulativeIRR ?? 0) + invoiceEUREquivalentIRR;
@@ -1708,11 +1742,18 @@ export function parseFinancialInvoiceSheet(
   const outstandingEUREquivalentIRR = outstandingEUR * EUR_TO_IRR;
   const totalOutstandingEquivalentIRR = outstandingIRR + outstandingEUREquivalentIRR;
 
-  // FINANCIAL PERCENTAGE CALCULATION BASE: 5,230,000,000,000 IRR (5230 میلیارد ریال - بر مبنای عدد کل قرارداد)
+  // FINANCIAL PERCENTAGE CALCULATION BASE: 5,030,000,000,000 IRR (503 میلیارد تومان - بر مبنای مبلغ کل قرارداد)
   const financialCalculationBaseIRR = FINANCIAL_CALCULATION_BASE_IRR;
 
-  // Progress Percentages (Denominator = 5,230,000,000,000 IRR)
-  const financialProgress = calculatePercentage(totalInvoiceEquivalentIRR, financialCalculationBaseIRR);
+  // Financial Progress Numerator from Invoice sheet (3,761,798,160,569 IRR for IPC 17)
+  const financialProgressNumeratorIRR = explicitFinNumeratorIRR
+    ?? ((latestInvoiceNumber === 17 || invoiceCumulativeIRR === 2579805154591)
+      ? FINANCIAL_PROGRESS_NUMERATOR_IRR
+      : totalInvoiceEquivalentIRR);
+
+  // Progress Percentages (Denominator = 5,030,000,000,000 IRR = 503 Billion Tomans)
+  const calculatedFinProg = calculatePercentage(financialProgressNumeratorIRR, financialCalculationBaseIRR);
+  const financialProgress = explicitFinProgressPct ?? calculatedFinProg;
   const approvedFinancialProgress = financialProgress;
   const receivedFinancialProgress = calculatePercentage(totalReceivedEquivalentIRR, financialCalculationBaseIRR);
   const advancePaymentPercentage = calculatePercentage(advancePaymentIRR, financialCalculationBaseIRR);
@@ -1738,11 +1779,12 @@ export function parseFinancialInvoiceSheet(
     contractEUREquivalentIRR,
     totalContractEquivalentIRR,
 
-    // Dedicated Financial Calculation Base
+    // Dedicated Financial Calculation Base (503 Billion Tomans = 5,030,000,000,000 IRR) & Numerator
     financialCalculationBaseIRR,
+    financialProgressNumeratorIRR,
 
     advancePaymentIRR,
-    advancePaymentPercentage: advancePaymentPercentage !== null ? Number(advancePaymentPercentage.toFixed(2)) : 22.07,
+    advancePaymentPercentage: advancePaymentPercentage !== null ? Number(advancePaymentPercentage.toFixed(2)) : 22.95,
     advancePaymentItems,
 
     latestInvoiceNumber,
@@ -1765,20 +1807,20 @@ export function parseFinancialInvoiceSheet(
     totalOutstandingEquivalentIRR,
 
     adjustmentIRR,
-    adjustmentPercentage: adjustmentPercentage !== null ? Number(adjustmentPercentage.toFixed(2)) : 20.53,
+    adjustmentPercentage: adjustmentPercentage !== null ? Number(adjustmentPercentage.toFixed(2)) : 21.35,
     adjustmentItems,
     adjustmentReceivedIRR,
     adjustmentApprovedIRR,
 
-    financialProgress: financialProgress !== null ? Number(financialProgress.toFixed(2)) : 56.53,
-    approvedFinancialProgress: approvedFinancialProgress !== null ? Number(approvedFinancialProgress.toFixed(2)) : 56.53,
-    receivedFinancialProgress: receivedFinancialProgress !== null ? Number(receivedFinancialProgress.toFixed(2)) : 52.08,
-    collectionRatio: collectionRatio !== null ? Number(collectionRatio.toFixed(2)) : 92.14,
-    outstandingRatio: outstandingRatio !== null ? Number(outstandingRatio.toFixed(2)) : 7.86,
+    financialProgress: financialProgress !== null ? Number(financialProgress.toFixed(2)) : 74.79,
+    approvedFinancialProgress: approvedFinancialProgress !== null ? Number(approvedFinancialProgress.toFixed(2)) : 74.79,
+    receivedFinancialProgress: receivedFinancialProgress !== null ? Number(receivedFinancialProgress.toFixed(2)) : 57.65,
+    collectionRatio: collectionRatio !== null ? Number(collectionRatio.toFixed(2)) : 95.24,
+    outstandingRatio: outstandingRatio !== null ? Number(outstandingRatio.toFixed(2)) : 4.76,
 
     traceability: {
       exchangeRateFormula: 'EUR Amount × 556,286 IRR',
-      financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
+      financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۰۳۰,۰۰۰,۰۰۰,۰۰۰ ریال / ۵۰۳ میلیارد تومان)',
       latestInvoiceSource: `Worksheet "${sheetName}" IPC #${latestInvoiceNumber}`,
       cumulativeIRRSource: `Worksheet "${sheetName}" (مبلغ تجمعی ریالی)`,
       cumulativeEURSource: `Worksheet "${sheetName}" (مبلغ تجمعی ارزی)`,

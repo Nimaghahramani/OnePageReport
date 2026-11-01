@@ -11,7 +11,8 @@ import {
   DatasetVersionAudit,
   FinancialSummary,
   EUR_TO_IRR,
-  FINANCIAL_CALCULATION_BASE_IRR
+  FINANCIAL_CALCULATION_BASE_IRR,
+  FINANCIAL_PROGRESS_NUMERATOR_IRR
 } from '../types';
 
 export const initialMasterSCurveRecord: MasterSCurveRecord = {
@@ -523,11 +524,12 @@ export const initialFinancialSummary: FinancialSummary = {
   contractEUREquivalentIRR: 673167 * EUR_TO_IRR,
   totalContractEquivalentIRR: 4653170392630 + (673167 * EUR_TO_IRR),
 
-  // Dedicated Total Contract Value Financial Percentage Calculation Base: 5,230,000,000,000 IRR (5230 میلیارد ریال)
+  // Dedicated Total Contract Value Financial Percentage Calculation Base: 5,030,000,000,000 IRR (503 میلیارد تومان)
   financialCalculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR,
+  financialProgressNumeratorIRR: FINANCIAL_PROGRESS_NUMERATOR_IRR,
 
   advancePaymentIRR: 1154139060582,
-  advancePaymentPercentage: Number(((1154139060582 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 22.07%
+  advancePaymentPercentage: Number(((1154139060582 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 22.95%
   advancePaymentItems: [
     { id: 1, itemNo: 1, month: 'اسفند 1403', amountIRR: 425188605151 },
     { id: 2, itemNo: 2, month: 'اردیبهشت 1404', amountIRR: 318891453863 },
@@ -555,7 +557,7 @@ export const initialFinancialSummary: FinancialSummary = {
   totalOutstandingEquivalentIRR: 95490299875 + (89578 * EUR_TO_IRR),
 
   adjustmentIRR: 1073741658385,
-  adjustmentPercentage: Number(((1073741658385 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 20.53%
+  adjustmentPercentage: Number(((1073741658385 / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 21.35%
   adjustmentItems: [
     { id: 1, itemNo: 1, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۱', amountIRR: 1320883200, status: 'دریافت شده' },
     { id: 2, itemNo: 2, invoiceTitle: 'صورت‌وضعیت تعدیل شماره ۲', amountIRR: 20685139277, status: 'دریافت شده' },
@@ -572,10 +574,11 @@ export const initialFinancialSummary: FinancialSummary = {
   adjustmentReceivedIRR: 925447234863,
   adjustmentApprovedIRR: 148294423522,
 
-  // Progress Percentages (against 5,230,000,000,000 IRR)
-  financialProgress: Number((((2579805154591 + (836400 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 58.22%
-  approvedFinancialProgress: Number((((2579805154591 + (836400 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 58.22%
-  receivedFinancialProgress: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 55.44%
+  // Progress Percentages (against 5,030,000,000,000 IRR = 503 Billion Tomans)
+  // Formula: 3,761,798,160,569 / 5,030,000,000,000 * 100 = 74.79%
+  financialProgress: Number(((FINANCIAL_PROGRESS_NUMERATOR_IRR / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 74.79%
+  approvedFinancialProgress: Number(((FINANCIAL_PROGRESS_NUMERATOR_IRR / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 74.79%
+  receivedFinancialProgress: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / FINANCIAL_CALCULATION_BASE_IRR) * 100).toFixed(2)), // 57.65%
 
   // Operational Ratios (against total invoice equivalent)
   collectionRatio: Number((((2484314854716 + (746822 * EUR_TO_IRR)) / (2579805154591 + (836400 * EUR_TO_IRR))) * 100).toFixed(2)), // 95.23%
@@ -583,7 +586,7 @@ export const initialFinancialSummary: FinancialSummary = {
 
   traceability: {
     exchangeRateFormula: 'EUR Amount × 556,286 IRR',
-    financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
+    financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۰۳۰,۰۰۰,۰۰۰,۰۰۰ ریال معادل ۵۰۳ میلیارد تومان)',
     latestInvoiceSource: 'Worksheet "Invoice" Row 17 (مرداد 1405)',
     cumulativeIRRSource: 'Worksheet "Invoice" (مبلغ تجمعی ریالی: ۲,۵۷۹,۸۰۵,۱۵۴,۵۹۱ ریال)',
     cumulativeEURSource: 'Worksheet "Invoice" (مبلغ تجمعی ارزی: ۸۳۶,۴۰۰ یورو)',

@@ -67,7 +67,7 @@ export const AdvanceAdjustmentModal: React.FC<AdvanceAdjustmentModalProps> = ({
                 {isFa ? 'ریز اقلام و مستندات پیش‌پرداخت و صورت‌وضعیت‌های تعدیل' : 'Advance Payment & Price Adjustment Invoices Breakdown'}
               </h2>
               <p className="text-[11px] text-slate-300 font-sans">
-                {isFa ? 'مبنای محاسبه درصدهای مالی: ۵,۲۳۰ میلیارد ریال (مبلغ کل قرارداد)' : 'Financial Percentage Calculation Base: 5,230,000,000,000 IRR (Total Contract Base)'}
+                {isFa ? 'مبنای محاسبه درصدهای مالی: ۵,۰۳۰ میلیارد ریال (۵۰۳ میلیارد تومان - مبلغ کل قرارداد)' : 'Financial Percentage Calculation Base: 5,030,000,000,000 IRR (503B Tomans Total Contract Base)'}
               </p>
             </div>
           </div>

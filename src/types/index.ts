@@ -175,7 +175,8 @@ export interface DailyIssue {
   status?: 'open' | 'in_progress' | 'resolved' | null;
 }
 
-export const FINANCIAL_CALCULATION_BASE_IRR = 5230000000000; // 5,230,000,000,000 IRR (5230 میلیارد ریال - بر مبنای عدد کل قرارداد)
+export const FINANCIAL_CALCULATION_BASE_IRR = 5030000000000; // 5,030,000,000,000 IRR (503 میلیارد تومان - مبلغ کل قرارداد)
+export const FINANCIAL_PROGRESS_NUMERATOR_IRR = 3761798160569; // 3,761,798,160,569 IRR (صورت کسر پیشرفت مالی در شیت Invoice)
 export const EUR_TO_IRR = 556286; // 1 EUR = 556,286 IRR (Contractual Exchange Rate)
 
 /**
@@ -193,7 +194,7 @@ export const EXECUTIVE_REPORT_CONFIG = {
     showEmptyPlaceholder: false, // Do NOT show "موردی ثبت نشده است" when empty; collapse/hide
   },
   financial: {
-    calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,230,000,000,000 IRR (5230 میلیارد ریال)
+    calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,030,000,000,000 IRR (503 میلیارد تومان)
     eurToIrrRate: EUR_TO_IRR, // 556,286 IRR/EUR
   },
   pdf: {
@@ -391,11 +392,12 @@ export interface FinancialSummary {
   contractEUREquivalentIRR: number | null;
   totalContractEquivalentIRR: number | null;
 
-  // Dedicated Total Contract Value Financial Percentage Calculation Base (5,230,000,000,000 IRR)
+  // Dedicated Total Contract Value Financial Percentage Calculation Base (5,030,000,000,000 IRR = 503 Billion Tomans)
   financialCalculationBaseIRR: number;
+  financialProgressNumeratorIRR?: number | null; // 3,761,798,160,569 IRR
 
   advancePaymentIRR: number | null;
-  advancePaymentPercentage?: number | null; // Against 5.23T base
+  advancePaymentPercentage?: number | null; // Against 5.03T base
   advancePaymentItems?: AdvancePaymentItem[];
 
   latestInvoiceNumber: number | null;
@@ -418,13 +420,13 @@ export interface FinancialSummary {
   totalOutstandingEquivalentIRR: number | null;
 
   adjustmentIRR: number | null;
-  adjustmentPercentage?: number | null; // Against 5.23T base
+  adjustmentPercentage?: number | null; // Against 5.03T base
   adjustmentItems?: AdjustmentInvoiceItem[];
   adjustmentReceivedIRR?: number | null;
   adjustmentApprovedIRR?: number | null;
 
-  // Progress Percentages (Denominator = 5,230,000,000,000 IRR)
-  financialProgress: number | null; // (totalInvoiceEquivalentIRR / financialCalculationBaseIRR) * 100
+  // Progress Percentages (Denominator = 5,030,000,000,000 IRR = 503 Billion Tomans)
+  financialProgress: number | null; // (3,761,798,160,569 / 5,030,000,000,000) * 100 = 74.79%
   approvedFinancialProgress?: number | null;
   receivedFinancialProgress?: number | null; // (totalReceivedEquivalentIRR / financialCalculationBaseIRR) * 100
 

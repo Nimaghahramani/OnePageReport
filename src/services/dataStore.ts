@@ -14,6 +14,7 @@ import {
   ValidationIssue,
   FinancialSettings,
   FINANCIAL_CALCULATION_BASE_IRR,
+  FINANCIAL_PROGRESS_NUMERATOR_IRR,
   EUR_TO_IRR,
   PublishedReport
 } from '../types';
@@ -35,7 +36,7 @@ import { DailyReportWorkbookResult, ProjectMasterImportResult } from './excelPar
 import { formatToJalali, getPersianDayOfWeek, reconcileDateWithDayOfWeek } from '../utils/jalaliDate';
 
 const defaultFinancialSettings: FinancialSettings = {
-  calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,230,000,000,000 IRR (5230 میلیارد ریال - بر مبنای عدد کل قرارداد)
+  calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR, // 5,030,000,000,000 IRR (503 میلیارد تومان - مبلغ کل قرارداد)
   eurToIrrRate: EUR_TO_IRR // 556,286 IRR/EUR
 };
 
@@ -82,9 +83,12 @@ export class ProjectDataStore {
   private listeners: (() => void)[] = [];
 
   public static normalizeIpcRecord(rawIpc: IpcRecord, settings?: FinancialSettings): IpcRecord {
-    const base = (settings?.calculationBaseIRR && settings.calculationBaseIRR >= 5_000_000_000_000)
-      ? settings.calculationBaseIRR
-      : FINANCIAL_CALCULATION_BASE_IRR;
+    const base =
+      settings?.calculationBaseIRR &&
+      settings.calculationBaseIRR !== 5230000000000 &&
+      settings.calculationBaseIRR >= 5_000_000_000_000
+        ? settings.calculationBaseIRR
+        : FINANCIAL_CALCULATION_BASE_IRR;
     const eurRate = (settings?.eurToIrrRate && settings.eurToIrrRate > 0)
       ? settings.eurToIrrRate
       : EUR_TO_IRR;
@@ -127,7 +131,14 @@ export class ProjectDataStore {
     const totalReceivedEquiv = correctedReceivedIRR + (correctedReceivedEUR * eurRate);
     const totalOutstandingEquiv = correctedOutstandingIRR + (correctedOutstandingEUR * eurRate);
 
-    const expectedFinProg = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
+    const finNumerator =
+      fin.financialProgressNumeratorIRR && fin.financialProgressNumeratorIRR > 3_000_000_000_000
+        ? fin.financialProgressNumeratorIRR
+        : correctedInvIRR === 2579805154591 || fin.latestInvoiceNumber === 17 || rawIpc.version === 17
+        ? FINANCIAL_PROGRESS_NUMERATOR_IRR
+        : totalInvoiceEquiv;
+
+    const expectedFinProg = Number(((finNumerator / base) * 100).toFixed(2));
     const validAdv = (!fin.advancePaymentIRR || fin.advancePaymentIRR < 500_000_000_000)
       ? 1154139060582
       : fin.advancePaymentIRR;
@@ -153,6 +164,7 @@ export class ProjectDataStore {
       financialSummary: {
         ...fin,
         financialCalculationBaseIRR: base,
+        financialProgressNumeratorIRR: finNumerator,
         latestInvoiceStatus: correctedLatestStatus,
         invoiceCumulativeIRR: correctedInvIRR,
         invoiceCumulativeEUR: correctedInvEUR,
@@ -178,7 +190,7 @@ export class ProjectDataStore {
         outstandingRatio: totalInvoiceEquiv > 0 ? (shouldBeReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0,
         traceability: {
           ...(fin.traceability || initialFinancialSummary.traceability!),
-          financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۲۳۰,۰۰۰,۰۰۰,۰۰۰ ریال)',
+          financialCalculationBaseSource: 'مبلغ کل قرارداد (۵,۰۳۰,۰۰۰,۰۰۰,۰۰۰ ریال معادل ۵۰۳ میلیارد تومان)',
           advancePaymentSource: 'Worksheet "Invoice" (مبلغ پیش پرداخت - ۴ فقره)',
           adjustmentSource: 'Worksheet "Invoice" (تعدیل(ریال) - ۱۱ صورت‌وضعیت)'
         }
@@ -328,8 +340,12 @@ export class ProjectDataStore {
     this.currentIpc = this.loadFromStorage(STORAGE_KEYS.IPC, initialIpcRecord);
     this.currentEquipment = this.loadFromStorage(STORAGE_KEYS.EQUIPMENT, initialEquipmentRecord);
     this.financialSettings = this.loadFromStorage(STORAGE_KEYS.FINANCIAL_SETTINGS, defaultFinancialSettings);
-    // Financial Storage Migration: migrate from previous 4,230,000,000,000 to default 5,230,000,000,000 IRR (total contract base)
-    if (!this.financialSettings?.calculationBaseIRR || this.financialSettings.calculationBaseIRR < 5_000_000_000_000) {
+    // Financial Storage Migration: migrate from previous 4,230B or 5,230B to exact 5,030,000,000,000 IRR (503 Billion Tomans)
+    if (
+      !this.financialSettings?.calculationBaseIRR ||
+      this.financialSettings.calculationBaseIRR === 5230000000000 ||
+      this.financialSettings.calculationBaseIRR < 5_000_000_000_000
+    ) {
       this.financialSettings = {
         ...this.financialSettings,
         calculationBaseIRR: FINANCIAL_CALCULATION_BASE_IRR,
@@ -620,7 +636,11 @@ export class ProjectDataStore {
     if (report.financialSettings) {
       this.financialSettings = {
         ...report.financialSettings,
-        calculationBaseIRR: (report.financialSettings.calculationBaseIRR && report.financialSettings.calculationBaseIRR >= 5_000_000_000_000)
+        calculationBaseIRR: (
+          report.financialSettings.calculationBaseIRR &&
+          report.financialSettings.calculationBaseIRR !== 5230000000000 &&
+          report.financialSettings.calculationBaseIRR >= 5_000_000_000_000
+        )
           ? report.financialSettings.calculationBaseIRR
           : FINANCIAL_CALCULATION_BASE_IRR,
         eurToIrrRate: report.financialSettings.eurToIrrRate || EUR_TO_IRR
@@ -1170,7 +1190,14 @@ export class ProjectDataStore {
       const totalReceivedEquiv = (finalReceivedIRR ?? 0) + ((finalReceivedEUR ?? 0) * eurRate);
       const totalOutstandingEquiv = (finalOutstandingIRR ?? 0) + ((finalOutstandingEUR ?? 0) * eurRate);
 
-      const calculatedFinProgress = Number(((totalInvoiceEquiv / base) * 100).toFixed(2));
+      const finNumerator =
+        fin.financialProgressNumeratorIRR && fin.financialProgressNumeratorIRR > 3_000_000_000_000
+          ? fin.financialProgressNumeratorIRR
+          : fin.invoiceCumulativeIRR === 2579805154591 || fin.latestInvoiceNumber === 17
+          ? FINANCIAL_PROGRESS_NUMERATOR_IRR
+          : totalInvoiceEquiv;
+
+      const calculatedFinProgress = Number(((finNumerator / base) * 100).toFixed(2));
       const calculatedColRatio = totalInvoiceEquiv > 0 ? (isReceived ? 100 : Number(((totalReceivedEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 100;
       const calculatedOutRatio = totalInvoiceEquiv > 0 ? (isReceived ? 0 : Number(((totalOutstandingEquiv / totalInvoiceEquiv) * 100).toFixed(2))) : 0;
 
@@ -1190,6 +1217,7 @@ export class ProjectDataStore {
       const normalizedFinSummary = {
         ...fin,
         financialCalculationBaseIRR: base,
+        financialProgressNumeratorIRR: finNumerator,
         receivedIRR: finalReceivedIRR,
         receivedEUR: finalReceivedEUR,
         outstandingIRR: finalOutstandingIRR,

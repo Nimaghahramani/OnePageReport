@@ -233,11 +233,12 @@ export async function getSnapshotByVersion(version: number): Promise<PublishedRe
 
 function normalizeStoredReport(report: PublishedReport | null): PublishedReport | null {
   if (!report) return null;
-  const CONTRACT_BASE = 5230000000000;
+  const CONTRACT_BASE = 5030000000000;
+  const FIN_NUMERATOR_DEFAULT = 3761798160569;
   const EUR_RATE = 556286;
 
   if (report.financialSettings) {
-    if (!report.financialSettings.calculationBaseIRR || report.financialSettings.calculationBaseIRR < 5000000000000) {
+    if (!report.financialSettings.calculationBaseIRR || report.financialSettings.calculationBaseIRR < 5000000000000 || report.financialSettings.calculationBaseIRR === 5230000000000) {
       report.financialSettings.calculationBaseIRR = CONTRACT_BASE;
     }
   }
@@ -249,17 +250,27 @@ function normalizeStoredReport(report: PublishedReport | null): PublishedReport 
 
     const invIRR = (fin.invoiceCumulativeIRR && fin.invoiceCumulativeIRR > 1000000)
       ? (fin.invoiceCumulativeIRR === 2484501777490 ? 2484314854716 : fin.invoiceCumulativeIRR)
-      : (report.ipc.approvedAmount || 2484314854716);
+      : (report.ipc.approvedAmount || 2579805154591);
     const invEUR = (fin.invoiceCumulativeEUR && fin.invoiceCumulativeEUR > 100)
       ? (fin.invoiceCumulativeEUR === 848082.51 ? 746822 : fin.invoiceCumulativeEUR)
-      : 746822;
+      : 836400;
 
     const totalInvEquiv = invIRR + (invEUR * EUR_RATE);
-    const expectedFinProg = Number(((totalInvEquiv / CONTRACT_BASE) * 100).toFixed(2));
+    const finNumerator = (fin.financialProgressNumeratorIRR && fin.financialProgressNumeratorIRR > 0)
+      ? fin.financialProgressNumeratorIRR
+      : ((fin.latestInvoiceNumber === 17 || invIRR === 2579805154591) ? FIN_NUMERATOR_DEFAULT : totalInvEquiv);
+    const expectedFinProg = Number(((finNumerator / CONTRACT_BASE) * 100).toFixed(2));
 
     fin.financialCalculationBaseIRR = CONTRACT_BASE;
+    fin.financialProgressNumeratorIRR = finNumerator;
     fin.financialProgress = expectedFinProg;
     fin.approvedFinancialProgress = expectedFinProg;
+    if (fin.advancePaymentIRR) {
+      fin.advancePaymentPercentage = Number(((fin.advancePaymentIRR / CONTRACT_BASE) * 100).toFixed(2));
+    }
+    if (fin.adjustmentIRR) {
+      fin.adjustmentPercentage = Number(((fin.adjustmentIRR / CONTRACT_BASE) * 100).toFixed(2));
+    }
     if (isReceived) {
       fin.latestInvoiceStatus = 'دریافت شده';
       report.ipc.status = 'دریافت شده' as any;
@@ -290,8 +301,8 @@ function normalizeStoredReport(report: PublishedReport | null): PublishedReport 
   }
 
   if (report.kpis) {
-    const totalInv = report.ipc?.financialSummary?.totalInvoiceEquivalentIRR ?? 2899761478808;
-    const expectedFinProg = Number(((totalInv / CONTRACT_BASE) * 100).toFixed(2));
+    const finNumerator = report.ipc?.financialSummary?.financialProgressNumeratorIRR ?? FIN_NUMERATOR_DEFAULT;
+    const expectedFinProg = Number(((finNumerator / CONTRACT_BASE) * 100).toFixed(2));
     report.kpis.financialProgress = expectedFinProg;
     report.kpis.financialCalculationBaseIRR = CONTRACT_BASE;
     if (report.ipc?.financialSummary?.latestInvoiceStatus === 'دریافت شده') {
@@ -302,8 +313,15 @@ function normalizeStoredReport(report: PublishedReport | null): PublishedReport 
     }
     if (report.kpis.financialSummary) {
       report.kpis.financialSummary.financialCalculationBaseIRR = CONTRACT_BASE;
+      report.kpis.financialSummary.financialProgressNumeratorIRR = finNumerator;
       report.kpis.financialSummary.financialProgress = expectedFinProg;
       report.kpis.financialSummary.approvedFinancialProgress = expectedFinProg;
+      if (report.kpis.financialSummary.advancePaymentIRR) {
+        report.kpis.financialSummary.advancePaymentPercentage = Number(((report.kpis.financialSummary.advancePaymentIRR / CONTRACT_BASE) * 100).toFixed(2));
+      }
+      if (report.kpis.financialSummary.adjustmentIRR) {
+        report.kpis.financialSummary.adjustmentPercentage = Number(((report.kpis.financialSummary.adjustmentIRR / CONTRACT_BASE) * 100).toFixed(2));
+      }
       if (report.ipc?.financialSummary?.latestInvoiceStatus === 'دریافت شده') {
         report.kpis.financialSummary.collectionRatio = 100;
         report.kpis.financialSummary.outstandingRatio = 0;
